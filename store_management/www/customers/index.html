@@ -1,0 +1,531 @@
+{% extends "templates/web.html" %}
+
+{% block header %}{% endblock %}
+
+{% block page_content %}
+{% if frappe.session.user == 'Guest' %}
+	<script>window.location.href = '/app/login';</script>
+{% else %}
+<div class="sm-masters-app">
+	<div class="sm-masters-header">
+		<div class="sm-header-content">
+			<div>
+				<h1>👤 Customers</h1>
+				<p>Manage customer records</p>
+			</div>
+			<button class="sm-btn-primary" onclick="openCreateForm()">+ New Customer</button>
+		</div>
+	</div>
+
+	<main class="sm-masters-content">
+		<div class="sm-list-container" id="customers-list"></div>
+	</main>
+
+	<!-- Modal -->
+	<div class="sm-modal-backdrop" id="modal-backdrop" onclick="closeModal()"></div>
+	<div class="sm-modal" id="customer-modal" aria-hidden="true">
+		<div class="sm-modal-header">
+			<h2 id="modal-title">New Customer</h2>
+			<button class="sm-modal-close" onclick="closeModal()">✕</button>
+		</div>
+		<div class="sm-modal-body" id="modal-form"></div>
+		<div class="sm-modal-footer">
+			<button class="sm-btn-secondary" onclick="closeModal()">Cancel</button>
+			<button class="sm-btn-primary" onclick="saveCustomer()">Save</button>
+		</div>
+	</div>
+</div>
+
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap");
+
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+body {
+	background: #f8fafc;
+	font-family: "Manrope", sans-serif;
+	color: #1e293b;
+}
+
+.sm-masters-app {
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+}
+
+.sm-masters-header {
+	background: white;
+	border-bottom: 1px solid rgba(15, 23, 42, 0.1);
+	padding: 2rem;
+	box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+
+.sm-header-content {
+	max-width: 1400px;
+	margin: 0 auto;
+	width: 100%;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 2rem;
+}
+
+.sm-masters-header h1 {
+	font-size: 2rem;
+	font-weight: 800;
+	margin-bottom: 0.3rem;
+}
+
+.sm-masters-header p {
+	color: #64748b;
+	font-size: 0.95rem;
+}
+
+.sm-masters-content {
+	flex: 1;
+	padding: 2rem;
+	max-width: 1400px;
+	margin: 0 auto;
+	width: 100%;
+}
+
+.sm-list-container {
+	background: white;
+	border-radius: 12px;
+	border: 1px solid rgba(15, 23, 42, 0.1);
+	overflow: hidden;
+}
+
+.sm-list-table {
+	width: 100%;
+}
+
+.sm-table-head {
+	display: grid;
+	grid-template-columns: 1fr 1fr 1fr 200px;
+	gap: 1rem;
+	padding: 1rem;
+	background: #f8fafc;
+	border-bottom: 1px solid rgba(15, 23, 42, 0.1);
+	font-weight: 700;
+	font-size: 0.9rem;
+	color: #64748b;
+}
+
+.sm-table-row {
+	display: grid;
+	grid-template-columns: 1fr 1fr 1fr 200px;
+	gap: 1rem;
+	padding: 1rem;
+	border-bottom: 1px solid rgba(15, 23, 42, 0.05);
+	align-items: center;
+	transition: background 0.2s ease;
+}
+
+.sm-table-row:hover {
+	background: #f8fafc;
+}
+
+.sm-table-row:last-child {
+	border-bottom: 0;
+}
+
+.sm-table-actions {
+	display: flex;
+	gap: 0.5rem;
+	justify-content: flex-end;
+}
+
+.sm-action-btn {
+	padding: 0.5rem 0.75rem;
+	border: 1px solid rgba(15, 23, 42, 0.1);
+	background: white;
+	color: #1e293b;
+	border-radius: 8px;
+	cursor: pointer;
+	font-size: 0.9rem;
+	font-weight: 600;
+	transition: all 0.2s ease;
+}
+
+.sm-action-btn:hover {
+	border-color: #2563eb;
+	color: #2563eb;
+	background: #eff6ff;
+}
+
+.sm-action-btn.delete:hover {
+	border-color: #dc2626;
+	color: #dc2626;
+	background: #fee2e2;
+}
+
+.sm-empty-message {
+	text-align: center;
+	padding: 3rem 2rem;
+	color: #64748b;
+}
+
+.sm-empty-message strong {
+	display: block;
+	margin-bottom: 0.5rem;
+	color: #1e293b;
+	font-size: 1.1rem;
+}
+
+.sm-btn-primary {
+	padding: 0.75rem 1.25rem;
+	background: linear-gradient(135deg, #2563eb, #1d4ed8);
+	color: white;
+	border: 0;
+	border-radius: 10px;
+	cursor: pointer;
+	font-weight: 700;
+	font-size: 1rem;
+	box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+	transition: all 0.2s ease;
+	white-space: nowrap;
+}
+
+.sm-btn-primary:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+}
+
+.sm-btn-secondary {
+	padding: 0.75rem 1.25rem;
+	background: #f8fafc;
+	color: #1e293b;
+	border: 1px solid rgba(15, 23, 42, 0.1);
+	border-radius: 10px;
+	cursor: pointer;
+	font-weight: 700;
+	font-size: 1rem;
+}
+
+.sm-btn-secondary:hover {
+	background: #eff6ff;
+	border-color: #2563eb;
+	color: #2563eb;
+}
+
+/* Modal Styles */
+.sm-modal-backdrop {
+	position: fixed;
+	inset: 0;
+	background: rgba(15, 23, 42, 0.4);
+	backdrop-filter: blur(4px);
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.2s ease;
+	z-index: 99;
+}
+
+.sm-modal-backdrop.open {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.sm-modal {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%) scale(0.95);
+	width: min(600px, 90vw);
+	max-height: 85vh;
+	background: white;
+	border-radius: 16px;
+	box-shadow: 0 20px 60px rgba(15, 23, 42, 0.3);
+	display: grid;
+	grid-template-rows: auto 1fr auto;
+	opacity: 0;
+	pointer-events: none;
+	transition: all 0.2s ease;
+	z-index: 100;
+}
+
+.sm-modal.open {
+	transform: translate(-50%, -50%) scale(1);
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.sm-modal-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 1.5rem;
+	border-bottom: 1px solid rgba(15, 23, 42, 0.1);
+}
+
+.sm-modal-header h2 {
+	font-size: 1.3rem;
+	font-weight: 800;
+}
+
+.sm-modal-close {
+	background: transparent;
+	border: 0;
+	font-size: 1.5rem;
+	cursor: pointer;
+	color: #64748b;
+}
+
+.sm-modal-body {
+	padding: 1.5rem;
+	overflow-y: auto;
+	display: grid;
+	gap: 1rem;
+}
+
+.sm-form-group {
+	display: grid;
+	gap: 0.4rem;
+}
+
+.sm-form-label {
+	font-weight: 700;
+	font-size: 0.95rem;
+}
+
+.sm-form-input,
+.sm-form-select {
+	padding: 0.75rem;
+	border: 1px solid rgba(15, 23, 42, 0.1);
+	border-radius: 8px;
+	font-size: 1rem;
+	font-family: inherit;
+	transition: all 0.2s ease;
+}
+
+.sm-form-input:focus,
+.sm-form-select:focus {
+	outline: 0;
+	border-color: #2563eb;
+	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.sm-modal-footer {
+	display: flex;
+	gap: 1rem;
+	justify-content: flex-end;
+	padding: 1.5rem;
+	border-top: 1px solid rgba(15, 23, 42, 0.1);
+}
+
+.sm-modal-footer .sm-btn-primary,
+.sm-modal-footer .sm-btn-secondary {
+	min-width: 120px;
+}
+
+@media (max-width: 768px) {
+	.sm-header-content {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	.sm-table-head,
+	.sm-table-row {
+		grid-template-columns: 1fr;
+		gap: 0.5rem;
+	}
+
+	.sm-table-row > div:nth-child(n+2) {
+		display: none;
+	}
+
+	.sm-table-actions {
+		grid-column: 1;
+		justify-content: flex-start;
+	}
+}
+</style>
+
+<script>
+let currentCustomer = null;
+let allCustomers = [];
+
+frappe.ready(() => {
+	if (frappe.session.user === 'Guest') {
+		window.location.href = '/app/login';
+		return;
+	}
+	loadCustomers();
+});
+
+function loadCustomers() {
+	frappe.call({
+		method: 'store_management.api.get_master_records',
+		args: { doctype: 'Customer' },
+		callback: function(response) {
+			allCustomers = response.message || [];
+			renderList();
+		}
+	});
+}
+
+function renderList() {
+	const container = document.getElementById('customers-list');
+
+	if (!allCustomers.length) {
+		container.innerHTML = `
+			<div class="sm-empty-message">
+				<strong>No customers found</strong>
+				<p>Click "New Customer" to create your first customer</p>
+			</div>
+		`;
+		return;
+	}
+
+	const rows = allCustomers.map(customer => `
+		<div class="sm-table-row">
+			<div>${escapeHtml(customer.name || '')}</div>
+			<div>${escapeHtml(customer.customer_name || '')}</div>
+			<div>${escapeHtml(customer.territory || '')}</div>
+			<div class="sm-table-actions">
+				<button class="sm-action-btn" onclick="editCustomer('${escapeAttr(customer.name)}')">Edit</button>
+				<button class="sm-action-btn delete" onclick="deleteCustomer('${escapeAttr(customer.name)}')">Delete</button>
+			</div>
+		</div>
+	`).join('');
+
+	container.innerHTML = `
+		<div class="sm-list-table">
+			<div class="sm-table-head">
+				<div>Customer ID</div>
+				<div>Customer Name</div>
+				<div>Territory</div>
+				<div>Actions</div>
+			</div>
+			${rows}
+		</div>
+	`;
+}
+
+function openCreateForm() {
+	currentCustomer = null;
+	renderForm();
+	openModal();
+}
+
+function editCustomer(name) {
+	frappe.call({
+		method: 'store_management.api.get_master_record',
+		args: { doctype: 'Customer', name: name },
+		callback: function(response) {
+			currentCustomer = response.message;
+			renderForm();
+			openModal();
+		}
+	});
+}
+
+function renderForm() {
+	const form = document.getElementById('modal-form');
+	const title = currentCustomer ? `Edit Customer: ${currentCustomer.name}` : 'New Customer';
+	document.getElementById('modal-title').textContent = title;
+
+	const name = currentCustomer ? currentCustomer.name : '';
+	const customerName = currentCustomer ? currentCustomer.customer_name : '';
+	const territory = currentCustomer ? currentCustomer.territory : '';
+	const mobileNo = currentCustomer ? currentCustomer.mobile_no : '';
+
+	form.innerHTML = `
+		<div class="sm-form-group">
+			<label class="sm-form-label">Customer ID</label>
+			<input type="text" class="sm-form-input" id="name" value="${escapeAttr(name)}" placeholder="e.g., CUST001" ${currentCustomer ? 'disabled' : ''}>
+		</div>
+		<div class="sm-form-group">
+			<label class="sm-form-label">Customer Name</label>
+			<input type="text" class="sm-form-input" id="customer_name" value="${escapeAttr(customerName)}" placeholder="Full name">
+		</div>
+		<div class="sm-form-group">
+			<label class="sm-form-label">Territory</label>
+			<input type="text" class="sm-form-input" id="territory" value="${escapeAttr(territory)}" placeholder="e.g., North">
+		</div>
+		<div class="sm-form-group">
+			<label class="sm-form-label">Mobile No</label>
+			<input type="text" class="sm-form-input" id="mobile_no" value="${escapeAttr(mobileNo)}" placeholder="Phone number">
+		</div>
+	`;
+}
+
+function saveCustomer() {
+	const name = document.getElementById('name').value.trim();
+	const customerName = document.getElementById('customer_name').value.trim();
+
+	if (!name || !customerName) {
+		frappe.show_alert({ message: 'Customer ID and Name are required', indicator: 'red' });
+		return;
+	}
+
+	const method = currentCustomer ? 'update_master_record' : 'create_master_record';
+	const args = {
+		doctype: 'Customer',
+		customer_name: customerName,
+		territory: document.getElementById('territory').value.trim(),
+		mobile_no: document.getElementById('mobile_no').value.trim()
+	};
+
+	if (currentCustomer) {
+		args.name = currentCustomer.name;
+	} else {
+		args.name = name;
+	}
+
+	frappe.call({
+		method: `store_management.api.${method}`,
+		args: args,
+		callback: function(response) {
+			frappe.show_alert({ message: `Customer ${currentCustomer ? 'updated' : 'created'} successfully`, indicator: 'green' });
+			closeModal();
+			loadCustomers();
+		}
+	});
+}
+
+function deleteCustomer(name) {
+	if (!confirm('Are you sure you want to delete this customer?')) return;
+
+	frappe.call({
+		method: 'store_management.api.delete_master_record',
+		args: { doctype: 'Customer', name: name },
+		callback: function(response) {
+			frappe.show_alert({ message: 'Customer deleted successfully', indicator: 'green' });
+			loadCustomers();
+		}
+	});
+}
+
+function openModal() {
+	document.getElementById('customer-modal').classList.add('open');
+	document.getElementById('modal-backdrop').classList.add('open');
+}
+
+function closeModal() {
+	document.getElementById('customer-modal').classList.remove('open');
+	document.getElementById('modal-backdrop').classList.remove('open');
+	currentCustomer = null;
+}
+
+function escapeHtml(str) {
+	return String(str || '')
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#39;');
+}
+
+function escapeAttr(str) {
+	return String(str || '')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#39;');
+}
+</script>
+{% endif %}
+{% endblock %}
