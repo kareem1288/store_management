@@ -1,0 +1,726 @@
+{% extends "templates/web.html" %}
+
+{% block header %}{% endblock %}
+
+{% block page_content %}
+{% if frappe.session.user == 'Guest' %}
+	<script>window.location.href = '/app/login';</script>
+{% else %}
+<div class="sm-masters-app" id="sm-masters-app">
+	<section class="sm-masters-shell">
+		<!-- Sidebar Navigation -->
+		<aside class="sm-masters-sidebar">
+			<div class="sm-sidebar-header">
+				<h2>Masters</h2>
+				<p>Manage Core Data</p>
+			</div>
+			<nav class="sm-masters-nav">
+				<button class="sm-nav-item active" data-doctype="Item" onclick="selectDoctype('Item')">
+					📦 Items
+				</button>
+				<button class="sm-nav-item" data-doctype="Item Group" onclick="selectDoctype('Item Group')">
+					📂 Item Groups
+				</button>
+				<button class="sm-nav-item" data-doctype="Customer" onclick="selectDoctype('Customer')">
+					👤 Customers
+				</button>
+				<button class="sm-nav-item" data-doctype="Customer Group" onclick="selectDoctype('Customer Group')">
+					👥 Customer Groups
+				</button>
+				<button class="sm-nav-item" data-doctype="Item Tax Template" onclick="selectDoctype('Item Tax Template')">
+					🏷️ Tax Templates
+				</button>
+				<button class="sm-nav-item" data-doctype="Company" onclick="selectDoctype('Company')">
+					🏢 Companies
+				</button>
+				<button class="sm-nav-item" data-doctype="User" onclick="selectDoctype('User')">
+					👨‍💼 Users
+				</button>
+			</nav>
+		</aside>
+
+		<!-- Main Content -->
+		<main class="sm-masters-content">
+			<div class="sm-masters-toolbar">
+				<div>
+					<h1 id="doctype-title">Items</h1>
+					<p id="doctype-desc">Manage product items</p>
+				</div>
+				<button class="sm-masters-btn sm-btn-primary" onclick="openCreateForm()">
+					+ New Record
+				</button>
+			</div>
+
+			<!-- List View -->
+			<div class="sm-masters-list" id="masters-list"></div>
+		</main>
+	</section>
+
+	<!-- Modal Overlay -->
+	<div class="sm-masters-modal-backdrop" id="modal-backdrop" onclick="closeModal()"></div>
+
+	<!-- Create/Edit Modal -->
+	<div class="sm-masters-modal" id="masters-modal" aria-hidden="true">
+		<div class="sm-modal-header">
+			<h2 id="modal-title">New Record</h2>
+			<button class="sm-modal-close" onclick="closeModal()">✕</button>
+		</div>
+		<div class="sm-modal-body" id="modal-form-container"></div>
+		<div class="sm-modal-footer">
+			<button class="sm-masters-btn sm-btn-secondary" onclick="closeModal()">Cancel</button>
+			<button class="sm-masters-btn sm-btn-primary" onclick="saveRecord()">Save</button>
+		</div>
+	</div>
+</div>
+
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap");
+
+:root {
+	--sm-primary: #2563eb;
+	--sm-primary-dark: #1d4ed8;
+	--sm-success: #16a34a;
+	--sm-danger: #dc2626;
+	--sm-bg: #f8fafc;
+	--sm-surface: #ffffff;
+	--sm-border: rgba(15, 23, 42, 0.1);
+	--sm-text: #1e293b;
+	--sm-muted: #64748b;
+	--sm-shadow: 0 4px 6px rgba(15, 23, 42, 0.1);
+}
+
+body.store-masters-page {
+	background: var(--sm-bg);
+	font-family: "Manrope", sans-serif;
+	color: var(--sm-text);
+}
+
+.sm-masters-app {
+	min-height: 100vh;
+	display: flex;
+}
+
+.sm-masters-shell {
+	width: 100%;
+	display: grid;
+	grid-template-columns: 280px 1fr;
+	gap: 0;
+}
+
+.sm-masters-sidebar {
+	background: var(--sm-surface);
+	border-right: 1px solid var(--sm-border);
+	padding: 2rem 1.5rem;
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+	overflow-y: auto;
+}
+
+.sm-sidebar-header h2 {
+	margin: 0;
+	font-size: 1.5rem;
+	font-weight: 800;
+}
+
+.sm-sidebar-header p {
+	margin: 0.3rem 0 0;
+	color: var(--sm-muted);
+	font-size: 0.9rem;
+}
+
+.sm-masters-nav {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.sm-nav-item {
+	padding: 0.75rem 1rem;
+	border: 0;
+	background: transparent;
+	color: var(--sm-text);
+	border-radius: 12px;
+	cursor: pointer;
+	font-size: 1rem;
+	font-weight: 600;
+	text-align: left;
+	transition: all 0.2s ease;
+}
+
+.sm-nav-item:hover {
+	background: rgba(37, 99, 235, 0.1);
+	color: var(--sm-primary);
+}
+
+.sm-nav-item.active {
+	background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+	color: var(--sm-primary);
+	font-weight: 800;
+}
+
+.sm-masters-content {
+	padding: 2rem;
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+	overflow-y: auto;
+}
+
+.sm-masters-toolbar {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding-bottom: 1rem;
+	border-bottom: 1px solid var(--sm-border);
+}
+
+.sm-masters-toolbar h1 {
+	margin: 0;
+	font-size: 2rem;
+	font-weight: 800;
+}
+
+.sm-masters-toolbar p {
+	margin: 0.3rem 0 0;
+	color: var(--sm-muted);
+	font-size: 0.95rem;
+}
+
+.sm-masters-btn {
+	padding: 0.75rem 1.25rem;
+	border: 0;
+	border-radius: 10px;
+	cursor: pointer;
+	font-size: 1rem;
+	font-weight: 700;
+	transition: all 0.2s ease;
+}
+
+.sm-btn-primary {
+	background: linear-gradient(135deg, var(--sm-primary), var(--sm-primary-dark));
+	color: white;
+	box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.sm-btn-primary:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+}
+
+.sm-btn-secondary {
+	background: var(--sm-bg);
+	color: var(--sm-text);
+	border: 1px solid var(--sm-border);
+}
+
+.sm-btn-secondary:hover {
+	background: rgba(37, 99, 235, 0.05);
+}
+
+.sm-btn-danger {
+	background: var(--sm-danger);
+	color: white;
+}
+
+.sm-btn-danger:hover {
+	opacity: 0.9;
+}
+
+.sm-btn-small {
+	padding: 0.5rem 0.75rem;
+	font-size: 0.9rem;
+}
+
+.sm-masters-list {
+	display: grid;
+	gap: 1rem;
+}
+
+.sm-list-table {
+	background: var(--sm-surface);
+	border: 1px solid var(--sm-border);
+	border-radius: 12px;
+	overflow: hidden;
+}
+
+.sm-table-head {
+	display: grid;
+	grid-template-columns: 1fr 1fr 200px;
+	gap: 1rem;
+	padding: 1rem;
+	background: rgba(248, 250, 252, 0.5);
+	border-bottom: 1px solid var(--sm-border);
+	font-weight: 700;
+	font-size: 0.9rem;
+	color: var(--sm-muted);
+}
+
+.sm-table-row {
+	display: grid;
+	grid-template-columns: 1fr 1fr 200px;
+	gap: 1rem;
+	padding: 1rem;
+	align-items: center;
+	border-bottom: 1px solid var(--sm-border);
+	transition: background 0.2s ease;
+}
+
+.sm-table-row:hover {
+	background: rgba(248, 250, 252, 0.5);
+}
+
+.sm-table-row:last-child {
+	border-bottom: 0;
+}
+
+.sm-table-cell {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.sm-table-actions {
+	display: flex;
+	gap: 0.5rem;
+	justify-content: flex-end;
+}
+
+.sm-action-btn {
+	padding: 0.5rem 0.75rem;
+	border: 1px solid var(--sm-border);
+	background: var(--sm-surface);
+	color: var(--sm-text);
+	border-radius: 8px;
+	cursor: pointer;
+	font-size: 0.9rem;
+	font-weight: 600;
+	transition: all 0.2s ease;
+}
+
+.sm-action-btn:hover {
+	background: var(--sm-bg);
+	border-color: var(--sm-primary);
+	color: var(--sm-primary);
+}
+
+.sm-action-btn.delete:hover {
+	border-color: var(--sm-danger);
+	color: var(--sm-danger);
+}
+
+.sm-empty-message {
+	text-align: center;
+	padding: 3rem 2rem;
+	background: var(--sm-surface);
+	border: 1px dashed var(--sm-border);
+	border-radius: 12px;
+}
+
+.sm-empty-message strong {
+	display: block;
+	margin-bottom: 0.5rem;
+	font-size: 1.1rem;
+}
+
+.sm-empty-message p {
+	color: var(--sm-muted);
+	margin: 0;
+}
+
+/* Modal Styles */
+.sm-masters-modal-backdrop {
+	position: fixed;
+	inset: 0;
+	background: rgba(15, 23, 42, 0.4);
+	backdrop-filter: blur(4px);
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.2s ease;
+	z-index: 99;
+}
+
+.sm-masters-modal-backdrop.open {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.sm-masters-modal {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%) scale(0.95);
+	width: min(600px, 90vw);
+	max-height: 85vh;
+	background: var(--sm-surface);
+	border-radius: 16px;
+	box-shadow: 0 20px 60px rgba(15, 23, 42, 0.3);
+	display: grid;
+	grid-template-rows: auto 1fr auto;
+	gap: 0;
+	opacity: 0;
+	pointer-events: none;
+	transition: all 0.2s ease;
+	z-index: 100;
+}
+
+.sm-masters-modal.open {
+	transform: translate(-50%, -50%) scale(1);
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.sm-modal-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 1.5rem;
+	border-bottom: 1px solid var(--sm-border);
+}
+
+.sm-modal-header h2 {
+	margin: 0;
+	font-size: 1.3rem;
+	font-weight: 800;
+}
+
+.sm-modal-close {
+	background: transparent;
+	border: 0;
+	font-size: 1.5rem;
+	cursor: pointer;
+	color: var(--sm-muted);
+	transition: color 0.2s ease;
+}
+
+.sm-modal-close:hover {
+	color: var(--sm-text);
+}
+
+.sm-modal-body {
+	padding: 1.5rem;
+	overflow-y: auto;
+	display: grid;
+	gap: 1rem;
+}
+
+.sm-form-group {
+	display: grid;
+	gap: 0.4rem;
+}
+
+.sm-form-label {
+	font-weight: 700;
+	font-size: 0.95rem;
+	color: var(--sm-text);
+}
+
+.sm-form-input,
+.sm-form-select,
+.sm-form-textarea {
+	padding: 0.75rem;
+	border: 1px solid var(--sm-border);
+	border-radius: 8px;
+	font-size: 1rem;
+	font-family: inherit;
+	transition: all 0.2s ease;
+}
+
+.sm-form-input:focus,
+.sm-form-select:focus,
+.sm-form-textarea:focus {
+	outline: 0;
+	border-color: var(--sm-primary);
+	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.sm-form-textarea {
+	resize: vertical;
+	min-height: 80px;
+}
+
+.sm-modal-footer {
+	display: flex;
+	gap: 1rem;
+	justify-content: flex-end;
+	padding: 1.5rem;
+	border-top: 1px solid var(--sm-border);
+}
+
+.sm-modal-footer .sm-masters-btn {
+	min-width: 120px;
+}
+
+@media (max-width: 768px) {
+	.sm-masters-shell {
+		grid-template-columns: 1fr;
+	}
+
+	.sm-masters-sidebar {
+		display: none;
+	}
+
+	.sm-table-head,
+	.sm-table-row {
+		grid-template-columns: 1fr;
+	}
+
+	.sm-masters-modal {
+		width: 95vw;
+	}
+
+	.sm-masters-toolbar {
+		flex-direction: column;
+		gap: 1rem;
+		align-items: flex-start;
+	}
+}
+</style>
+
+<script>
+const mastersDoctypes = {
+	'Item': {
+		title: 'Items',
+		desc: 'Manage product items',
+		fields: ['item_code', 'item_name', 'item_group', 'standard_rate', 'is_sales_item']
+	},
+	'Item Group': {
+		title: 'Item Groups',
+		desc: 'Manage item categories',
+		fields: ['name', 'parent_item_group']
+	},
+	'Customer': {
+		title: 'Customers',
+		desc: 'Manage customer records',
+		fields: ['name', 'customer_name', 'customer_type', 'territory']
+	},
+	'Customer Group': {
+		title: 'Customer Groups',
+		desc: 'Manage customer categories',
+		fields: ['name', 'parent_customer_group']
+	},
+	'Item Tax Template': {
+		title: 'Tax Templates',
+		desc: 'Manage tax templates',
+		fields: ['name', 'title']
+	},
+	'Company': {
+		title: 'Companies',
+		desc: 'Manage companies',
+		fields: ['name', 'company_name']
+	},
+	'User': {
+		title: 'Users',
+		desc: 'Manage user accounts',
+		fields: ['name', 'full_name', 'email']
+	}
+};
+
+let currentDoctype = 'Item';
+let currentRecords = [];
+let currentFormData = {};
+let editingRecord = null;
+
+frappe.ready(() => {
+	if (frappe.session.user === 'Guest') {
+		window.location.href = '/app/login';
+		return;
+	}
+
+	loadRecords('Item');
+});
+
+function selectDoctype(doctype) {
+	currentDoctype = doctype;
+	editingRecord = null;
+	currentFormData = {};
+
+	// Update UI
+	document.querySelectorAll('.sm-nav-item').forEach(item => {
+		item.classList.toggle('active', item.dataset.doctype === doctype);
+	});
+
+	const config = mastersDoctypes[doctype];
+	document.getElementById('doctype-title').textContent = config.title;
+	document.getElementById('doctype-desc').textContent = config.desc;
+
+	loadRecords(doctype);
+}
+
+function loadRecords(doctype) {
+	frappe.call({
+		method: 'store_management.api.get_master_records',
+		args: { doctype: doctype },
+		callback: function(response) {
+			currentRecords = response.message || [];
+			renderList();
+		}
+	});
+}
+
+function renderList() {
+	const container = document.getElementById('masters-list');
+
+	if (!currentRecords.length) {
+		container.innerHTML = `
+			<div class="sm-empty-message">
+				<strong>No records found</strong>
+				<p>Click "New Record" to create your first ${mastersDoctypes[currentDoctype].title.toLowerCase()}</p>
+			</div>
+		`;
+		return;
+	}
+
+	const config = mastersDoctypes[currentDoctype];
+	const rows = currentRecords.map(record => {
+		const values = config.fields.slice(0, 2).map(field => record[field] || '-').join(' • ');
+		return `
+			<div class="sm-table-row">
+				<div class="sm-table-cell">${escapeHtml(String(record.name || ''))}</div>
+				<div class="sm-table-cell">${escapeHtml(values)}</div>
+				<div class="sm-table-actions">
+					<button class="sm-action-btn" onclick="editRecord('${escapeAttr(record.name)}')">Edit</button>
+					<button class="sm-action-btn delete" onclick="deleteRecord('${escapeAttr(record.name)}')">Delete</button>
+				</div>
+			</div>
+		`;
+	}).join('');
+
+	const headers = ['Name', 'Details', 'Actions'].map(h => `<div>${h}</div>`).join('');
+
+	container.innerHTML = `
+		<div class="sm-list-table">
+			<div class="sm-table-head">${headers}</div>
+			${rows}
+		</div>
+	`;
+}
+
+function openCreateForm() {
+	editingRecord = null;
+	currentFormData = {};
+	renderForm();
+	openModal();
+}
+
+function editRecord(name) {
+	frappe.call({
+		method: 'store_management.api.get_master_record',
+		args: { doctype: currentDoctype, name: name },
+		callback: function(response) {
+			editingRecord = name;
+			currentFormData = response.message || {};
+			renderForm();
+			openModal();
+		}
+	});
+}
+
+function renderForm() {
+	const config = mastersDoctypes[currentDoctype];
+	const container = document.getElementById('modal-form-container');
+	const title = editingRecord ? `Edit ${currentDoctype}` : `New ${currentDoctype}`;
+
+	document.getElementById('modal-title').textContent = title;
+
+	const formFields = config.fields.map(field => {
+		const value = currentFormData[field] || '';
+		return `
+			<div class="sm-form-group">
+				<label class="sm-form-label">${field}</label>
+				<input 
+					type="text" 
+					class="sm-form-input" 
+					data-field="${field}" 
+					value="${escapeAttr(String(value))}"
+					placeholder="Enter ${field}"
+				>
+			</div>
+		`;
+	}).join('');
+
+	container.innerHTML = formFields;
+}
+
+function saveRecord() {
+	const config = mastersDoctypes[currentDoctype];
+	const formData = {};
+
+	document.querySelectorAll('[data-field]').forEach(input => {
+		formData[input.dataset.field] = input.value.trim();
+	});
+
+	const method = editingRecord 
+		? 'store_management.api.update_master_record'
+		: 'store_management.api.create_master_record';
+
+	const args = {
+		doctype: currentDoctype,
+		...formData
+	};
+
+	if (editingRecord) {
+		args.name = editingRecord;
+	}
+
+	frappe.call({
+		method: method,
+		args: args,
+		callback: function(response) {
+			if (response.message) {
+				frappe.show_alert({
+					message: `${currentDoctype} ${editingRecord ? 'updated' : 'created'} successfully`,
+					indicator: 'green'
+				});
+				closeModal();
+				loadRecords(currentDoctype);
+			}
+		}
+	});
+}
+
+function deleteRecord(name) {
+	if (!confirm(`Are you sure you want to delete this record?`)) return;
+
+	frappe.call({
+		method: 'store_management.api.delete_master_record',
+		args: { doctype: currentDoctype, name: name },
+		callback: function(response) {
+			frappe.show_alert({
+				message: `${currentDoctype} deleted successfully`,
+				indicator: 'green'
+			});
+			loadRecords(currentDoctype);
+		}
+	});
+}
+
+function openModal() {
+	document.getElementById('masters-modal').classList.add('open');
+	document.getElementById('modal-backdrop').classList.add('open');
+}
+
+function closeModal() {
+	document.getElementById('masters-modal').classList.remove('open');
+	document.getElementById('modal-backdrop').classList.remove('open');
+	editingRecord = null;
+	currentFormData = {};
+}
+
+function escapeHtml(str) {
+	return String(str || '')
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#39;');
+}
+
+function escapeAttr(str) {
+	return String(str || '')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#39;');
+}
+</script>
+{% endif %}
+{% endblock %}

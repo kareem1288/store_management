@@ -64,6 +64,13 @@ app_license = "mit"
 # 	"Role": "home_page"
 # }
 
+# Website Routes
+# --------------
+
+website_route_rules = [
+    {"from_route": "/pos", "to_route": "pos"},
+]
+
 # Generators
 # ----------
 

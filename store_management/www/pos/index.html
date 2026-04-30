@@ -1,0 +1,1531 @@
+{% extends "templates/web.html" %}
+
+{% block header %}{% endblock %}
+
+{% block page_content %}
+{% if frappe.session.user == 'Guest' %}
+	<script>window.location.href = '/app/login';</script>
+{% else %}
+<div class="sm-pos-app" id="sm-pos-app">
+	<section class="sm-pos-shell">
+		<div class="sm-pos-hero" id="dashboard-panel">
+			<div class="sm-home-column">
+				<div class="sm-pos-hero-copy">
+					<p class="sm-pos-kicker">Retail Billing</p>
+					<h1>Welcome! (స్వాగతం)</h1>
+					<p class="sm-pos-subtitle">Retail billing | రిటైల్ బిల్లింగ్</p>
+				</div>
+
+				<div class="sm-pos-summary">
+					<div class="sm-stat-card">
+						<div class="sm-stat-icon">
+							<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5h18v9H3zM7 10.5h10m-10 3h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+						</div>
+						<div>
+							<span>Today Sales</span>
+							<strong id="today-sales">Rs 0.00</strong>
+						</div>
+					</div>
+					<div class="sm-stat-card">
+						<div class="sm-stat-icon">
+							<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v18l-2-1.5L13 21l-2-1.5L9 21l-2-1.5L5 21V5a2 2 0 0 1 2-2Zm2 5h6m-6 4h6m-6 4h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+						</div>
+						<div>
+							<span>Today Bills</span>
+							<strong id="today-bills">0</strong>
+						</div>
+					</div>
+					<div class="sm-stat-card">
+						<div class="sm-stat-icon">
+							<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm-7 8a7 7 0 0 1 14 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+						</div>
+						<div>
+							<span>Default Customer</span>
+							<strong id="default-customer">Walk-in</strong>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="sm-bill-column">
+				<div class="sm-hero-topbar">
+					<div class="sm-toolbar-actions">
+						<button class="sm-cta sm-cta-primary" type="button" onclick="startBilling()">
+							<span class="sm-cta-icon">
+								<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h2l2.2 9.2a1 1 0 0 0 1 .8h8.8a1 1 0 0 0 1-.8L21 9H8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="19" r="1.3" fill="currentColor"/><circle cx="18" cy="19" r="1.3" fill="currentColor"/></svg>
+							</span>
+							<span>Start Billing</span>
+						</button>
+						<button class="sm-cta sm-cta-secondary" type="button" onclick="viewReports()">
+							<span class="sm-cta-icon">
+								<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V9m7 10V5m7 14v-8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+							</span>
+							<span>View Reports</span>
+						</button>
+					</div>
+				</div>
+
+				<div class="sm-search-row">
+					<label class="sm-search-box" for="search-input">
+						<span class="sm-search-icon">
+							<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 16l4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+						</span>
+						<input
+							id="search-input"
+							type="text"
+							placeholder="Search Items or Scan Barcode"
+							autocomplete="off"
+						>
+					</label>
+				</div>
+
+				<section class="sm-current-bill">
+					<div class="sm-current-bill-head">
+						<h3>Current Bill</h3>
+						<div class="sm-panel-badge" id="cart-count">0 items</div>
+					</div>
+
+					<div class="sm-bill-table">
+						<div class="sm-bill-table-head">
+							<span>Item Name</span>
+							<span>Qty</span>
+							<span>Unit Price</span>
+							<span>Total</span>
+						</div>
+						<div class="sm-cart-list" id="cart-items"></div>
+					</div>
+
+					<div class="sm-bill-footer">
+						<div class="sm-bill-meta">
+							<div class="sm-mini-total"><span>Subtotal</span><strong id="subtotal">Rs 0.00</strong></div>
+							<div class="sm-mini-total"><span>Tax</span><strong id="tax">Rs 0.00</strong></div>
+							<div class="sm-mini-total"><span>Discount</span><strong id="discount">Rs 0.00</strong></div>
+						</div>
+						<div class="sm-grand-total-box">
+							<span>Total</span>
+							<strong id="total">Rs 0.00</strong>
+						</div>
+					</div>
+
+					<div class="sm-bill-actions">
+						<button class="sm-chip sm-chip-muted" type="button" onclick="showDashboard()">Home</button>
+						<button class="sm-chip sm-chip-accent" type="button" onclick="clearCart()">Clear</button>
+						<button class="sm-main-button" type="button" onclick="openCheckout()">Proceed to Checkout</button>
+					</div>
+				</section>
+			</div>
+		</div>
+
+		<div class="sm-pos-workspace" id="billing-panel">
+			<section class="sm-pos-browser">
+				<div class="sm-toolbar">
+					<div class="sm-toolbar-title">
+						<h2 id="shop-name">Retail POS</h2>
+						<p>Category-wise item selection</p>
+					</div>
+					<div class="sm-toolbar-actions">
+						<div class="sm-screen-badge" id="screen-resolution">Screen: -- x --</div>
+						<button class="sm-chip sm-chip-muted" type="button" onclick="focusSearch()">Scan / Search</button>
+					</div>
+				</div>
+
+				<div class="sm-category-strip" id="category-tabs"></div>
+				<div class="sm-category-groups" id="items-grid"></div>
+			</section>
+		</div>
+	</section>
+
+	<div class="sm-checkout-backdrop" id="checkout-backdrop" onclick="closeCheckout()"></div>
+	<section class="sm-checkout-drawer" id="checkout-drawer" aria-hidden="true">
+		<div class="sm-drawer-head">
+			<div>
+				<p class="sm-pos-kicker">Checkout | చెల్లింపు</p>
+				<h3>Ready to Generate Bill?</h3>
+			</div>
+			<button class="sm-icon-button" type="button" onclick="closeCheckout()">✕</button>
+		</div>
+
+		<div class="sm-checkout-content">
+			<div class="sm-field-grid">
+				<label class="sm-field">
+					<span>Customer Name (optional)</span>
+					<input id="customer-name" type="text" placeholder="Walk-in Customer">
+				</label>
+				<label class="sm-field">
+					<span>Phone Number</span>
+					<input id="customer-phone" type="text" placeholder="Mobile / ఫోన్ నంబర్">
+				</label>
+			</div>
+
+			<label class="sm-field">
+				<span>Discount Amount</span>
+				<input id="discount-input" type="number" min="0" step="0.01" value="0">
+			</label>
+
+			<div class="sm-payment-block">
+				<span class="sm-section-label">Payment Options</span>
+				<div class="sm-payment-options" id="payment-options">
+					<button class="sm-payment-option active" type="button" data-payment="Cash">Cash</button>
+					<button class="sm-payment-option" type="button" data-payment="UPI">UPI</button>
+					<button class="sm-payment-option" type="button" data-payment="Card">Card</button>
+				</div>
+			</div>
+
+			<div class="sm-checkout-summary" id="checkout-cart-items"></div>
+		</div>
+
+		<div class="sm-drawer-footer">
+			<div class="sm-drawer-total">
+				<span>Grand Total</span>
+				<strong id="checkout-total">Rs 0.00</strong>
+			</div>
+			<button class="sm-main-button" type="button" onclick="generateBill()">
+				Generate Bill
+			</button>
+		</div>
+	</section>
+</div>
+
+<script id="sm-pos-bootstrap" type="application/json">{{ pos_bootstrap_json | safe }}</script>
+
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Anek+Telugu:wght@500;700;800&family=Manrope:wght@500;700;800&display=swap");
+
+:root {
+	--sm-bg: linear-gradient(180deg, #ffffff 0%, #fbfdfb 42%, #f3fbf5 100%);
+	--sm-surface: rgba(255, 255, 255, 0.94);
+	--sm-surface-strong: #ffffff;
+	--sm-border: rgba(17, 24, 39, 0.11);
+	--sm-shadow: 0 14px 40px rgba(35, 44, 72, 0.08);
+	--sm-text: #202124;
+	--sm-muted: #6b7280;
+	--sm-success: #16a34a;
+	--sm-blue: #2563eb;
+	--sm-orange: #b45309;
+}
+
+body.store-pos-page {
+	background: var(--sm-bg);
+	font-family: "Manrope", "Anek Telugu", sans-serif;
+	color: var(--sm-text);
+}
+
+.sm-pos-app {
+	min-height: calc(100vh - 4rem);
+	padding: 2rem 0 3rem;
+}
+
+.sm-pos-shell {
+	width: min(100%, calc(100vw - 2rem));
+	margin: 0 auto 0 1rem;
+	display: grid;
+	gap: 1rem;
+}
+
+.sm-pos-hero,
+.sm-pos-browser {
+	background: var(--sm-surface);
+	border: 1px solid var(--sm-border);
+	border-radius: 24px;
+	box-shadow: var(--sm-shadow);
+}
+
+.sm-pos-hero {
+	padding: 0;
+	display: grid;
+	grid-template-columns: 1.05fr 1.45fr;
+	align-items: stretch;
+	background:
+		linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 48%, rgba(244,253,246,0.95) 100%);
+	overflow: hidden;
+}
+
+.sm-home-column,
+.sm-bill-column {
+	padding: 2rem;
+}
+
+.sm-home-column {
+	display: grid;
+	gap: 1.25rem;
+}
+
+.sm-bill-column {
+	display: grid;
+	gap: 1rem;
+	background:
+		radial-gradient(circle at right center, rgba(94, 234, 212, 0.12), transparent 26%),
+		radial-gradient(circle at left bottom, rgba(163, 230, 53, 0.08), transparent 30%);
+}
+
+.sm-pos-kicker {
+	margin: 0 0 0.5rem;
+	font-size: 0.9rem;
+	font-weight: 800;
+	color: #222;
+}
+
+.sm-pos-hero h1,
+.sm-toolbar-title h2,
+.sm-panel-head h3,
+.sm-drawer-head h3 {
+	margin: 0;
+	font-family: "Anek Telugu", "Manrope", sans-serif;
+	font-weight: 800;
+}
+
+.sm-pos-hero h1 {
+	font-size: clamp(2.2rem, 4vw, 3.2rem);
+	line-height: 1.05;
+}
+
+.sm-pos-subtitle,
+.sm-toolbar-title p,
+.sm-panel-head p,
+.sm-stat-card span,
+.sm-field span,
+.sm-section-label {
+	color: var(--sm-muted);
+}
+
+.sm-pos-summary {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 0.75rem;
+}
+
+.sm-stat-card {
+	padding: 1rem 1.1rem;
+	border-radius: 16px;
+	background: #fff;
+	border: 1px solid rgba(17, 24, 39, 0.1);
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 0.9rem;
+	align-items: center;
+}
+
+.sm-stat-card strong {
+	display: block;
+	margin-top: 0.1rem;
+	font-size: 1.2rem;
+}
+
+.sm-stat-icon {
+	width: 46px;
+	height: 46px;
+	border-radius: 14px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background: #f7f8fb;
+	color: #6b7280;
+	border: 1px solid rgba(17, 24, 39, 0.08);
+}
+
+.sm-stat-icon svg,
+.sm-cta-icon svg,
+.sm-search-icon svg {
+	width: 22px;
+	height: 22px;
+}
+
+.sm-hero-topbar {
+	display: flex;
+	justify-content: flex-end;
+}
+
+.sm-cta,
+.sm-main-button,
+.sm-chip,
+.sm-payment-option,
+.sm-icon-button {
+	border: 0;
+	cursor: pointer;
+	transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+	font-family: inherit;
+}
+
+.sm-cta:hover,
+.sm-main-button:hover,
+.sm-chip:hover,
+.sm-payment-option:hover,
+.sm-icon-button:hover {
+	transform: translateY(-1px);
+}
+
+.sm-cta {
+	min-width: 168px;
+	padding: 0.8rem 1rem;
+	border-radius: 12px;
+	font-size: 1rem;
+	font-weight: 800;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.7rem;
+	color: #fff;
+}
+
+.sm-cta-primary {
+	background: linear-gradient(135deg, #1bbf4e, #12853b);
+	box-shadow: 0 8px 18px rgba(18, 133, 59, 0.2);
+}
+
+.sm-cta-secondary {
+	background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+	box-shadow: 0 8px 18px rgba(29, 78, 216, 0.18);
+}
+
+.sm-pos-workspace {
+	display: block;
+}
+
+.sm-pos-browser {
+	padding: 1.25rem;
+}
+
+.sm-toolbar,
+.sm-panel-head,
+.sm-search-row,
+.sm-summary-row,
+.sm-drawer-footer,
+.sm-drawer-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+}
+
+.sm-toolbar-actions {
+	display: flex;
+	gap: 0.65rem;
+	flex-wrap: wrap;
+}
+
+.sm-search-row {
+	margin: 0;
+	align-items: stretch;
+}
+
+.sm-search-box {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0 1rem;
+	background: #fff;
+	border: 1px solid var(--sm-border);
+	border-radius: 14px;
+	min-height: 52px;
+	box-shadow: inset 0 1px 0 rgba(255,255,255,0.9);
+}
+
+.sm-search-box input,
+.sm-field input {
+	width: 100%;
+	border: 0;
+	outline: 0;
+	background: transparent;
+	font-size: 1rem;
+	color: var(--sm-text);
+}
+
+.sm-chip {
+	padding: 0.75rem 1rem;
+	border-radius: 12px;
+	font-size: 0.92rem;
+	font-weight: 800;
+}
+
+.sm-screen-badge {
+	padding: 0.75rem 1rem;
+	border-radius: 12px;
+	font-size: 0.88rem;
+	font-weight: 700;
+	color: #475569;
+	background: #f8fafc;
+	border: 1px solid rgba(17, 24, 39, 0.08);
+	white-space: nowrap;
+}
+
+.sm-chip-muted {
+	background: #eef2ff;
+	color: #244085;
+}
+
+.sm-chip-accent {
+	background: #ffe6cc;
+	color: #9a3412;
+}
+
+.sm-category-strip {
+	display: flex;
+	gap: 0.75rem;
+	overflow-x: auto;
+	padding: 0.25rem 0 0.35rem;
+	scrollbar-width: none;
+}
+
+.sm-category-strip::-webkit-scrollbar {
+	display: none;
+}
+
+.sm-category-pill {
+	padding: 0.72rem 0.95rem;
+	border-radius: 14px;
+	color: #fff;
+	font-size: 0.95rem;
+	font-weight: 800;
+	white-space: nowrap;
+	box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+	opacity: 0.82;
+}
+
+.sm-category-pill.active {
+	opacity: 1;
+	transform: translateY(-1px);
+	outline: 3px solid rgba(255, 255, 255, 0.72);
+}
+
+.sm-category-groups {
+	margin-top: 1.25rem;
+	display: grid;
+	gap: 1.25rem;
+}
+
+.sm-category-section {
+	display: grid;
+	gap: 0.85rem;
+}
+
+.sm-category-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 0.82rem 0.95rem;
+	background: rgba(255, 255, 255, 0.88);
+	border: 1px solid var(--sm-border);
+	border-radius: 16px;
+}
+
+.sm-category-title {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.7rem;
+	font-size: 1.05rem;
+	font-weight: 800;
+}
+
+.sm-category-dot {
+	width: 14px;
+	height: 14px;
+	border-radius: 999px;
+	box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.9);
+}
+
+.sm-category-count {
+	color: var(--sm-muted);
+	font-size: 0.88rem;
+	font-weight: 700;
+}
+
+.sm-items-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(152px, 1fr));
+	gap: 0.85rem;
+}
+
+.sm-item-card {
+	background: var(--sm-surface-strong);
+	border-radius: 18px;
+	overflow: hidden;
+	border: 1px solid var(--sm-border);
+	box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+}
+
+.sm-item-visual {
+	aspect-ratio: 1.02;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0.85rem;
+	font-size: 1.6rem;
+	color: rgba(255, 255, 255, 0.95);
+}
+
+.sm-item-visual img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	border-radius: 14px;
+}
+
+.sm-item-body {
+	padding: 0.8rem;
+	display: grid;
+	gap: 0.28rem;
+}
+
+.sm-item-name {
+	font-size: 0.96rem;
+	font-weight: 800;
+	line-height: 1.2;
+}
+
+.sm-item-meta {
+	font-size: 0.88rem;
+	color: var(--sm-muted);
+}
+
+.sm-item-price-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+	margin-top: 0.25rem;
+}
+
+.sm-item-price {
+	color: var(--sm-success);
+	font-size: 1rem;
+	font-weight: 800;
+}
+
+.sm-add-button {
+	padding: 0.62rem 0.75rem;
+	border-radius: 12px;
+	background: linear-gradient(135deg, #f97316, #ea580c);
+	color: #fff;
+	font-weight: 800;
+}
+
+.sm-panel-badge {
+	padding: 0.45rem 0.7rem;
+	border-radius: 999px;
+	background: #eff6ff;
+	color: #1d4ed8;
+	font-size: 0.82rem;
+	font-weight: 800;
+}
+
+.sm-cart-list,
+.sm-checkout-summary {
+	display: grid;
+	gap: 0;
+}
+
+.sm-cart-list {
+	max-height: 290px;
+	overflow: auto;
+	border-top: 1px solid rgba(17, 24, 39, 0.08);
+}
+
+.sm-cart-item {
+	display: grid;
+	grid-template-columns: minmax(0, 1.8fr) 90px 120px 120px;
+	gap: 0.75rem;
+	padding: 0.9rem 0.8rem;
+	align-items: center;
+	border-bottom: 1px solid rgba(17, 24, 39, 0.08);
+	background: rgba(255,255,255,0.92);
+}
+
+.sm-cart-item-name {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.7rem;
+}
+
+.sm-row-icon {
+	width: 28px;
+	height: 28px;
+	border-radius: 10px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background: #f2f4f7;
+	color: #9ca3af;
+	flex: 0 0 auto;
+}
+
+.sm-row-icon svg {
+	width: 16px;
+	height: 16px;
+}
+
+.sm-cart-item h4 {
+	margin: 0;
+	font-size: 0.98rem;
+	font-weight: 800;
+}
+
+.sm-cart-item p,
+.sm-checkout-item p,
+.sm-empty-state p {
+	margin: 0;
+	color: var(--sm-muted);
+	font-size: 0.88rem;
+}
+
+.sm-qty-controls {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	justify-content: center;
+}
+
+.sm-qty-button {
+	width: 34px;
+	height: 34px;
+	border-radius: 12px;
+	background: #eef2ff;
+	color: #1d4ed8;
+	font-size: 1rem;
+	font-weight: 800;
+}
+
+.sm-main-button {
+	padding: 0.95rem 1.15rem;
+	border-radius: 14px;
+	background: linear-gradient(135deg, #2563eb, #1d4ed8);
+	color: #fff;
+	font-size: 1rem;
+	font-weight: 800;
+	box-shadow: 0 10px 20px rgba(37, 99, 235, 0.16);
+}
+
+.sm-current-bill {
+	display: grid;
+	gap: 0.9rem;
+}
+
+.sm-current-bill-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+}
+
+.sm-current-bill-head h3 {
+	margin: 0;
+	font-size: 1.45rem;
+	font-weight: 800;
+}
+
+.sm-bill-table {
+	border: 1px solid rgba(17, 24, 39, 0.14);
+	border-radius: 14px;
+	overflow: hidden;
+	background: rgba(255,255,255,0.85);
+}
+
+.sm-bill-table-head {
+	display: grid;
+	grid-template-columns: minmax(0, 1.8fr) 90px 120px 120px;
+	gap: 0.75rem;
+	padding: 0.85rem 0.8rem;
+	font-weight: 800;
+	border-bottom: 1px solid rgba(17, 24, 39, 0.1);
+	background: rgba(246, 252, 247, 0.95);
+}
+
+.sm-bill-footer {
+	display: flex;
+	align-items: stretch;
+	justify-content: space-between;
+	gap: 1rem;
+}
+
+.sm-bill-meta {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(120px, 1fr));
+	gap: 0.75rem;
+	flex: 1;
+}
+
+.sm-mini-total,
+.sm-grand-total-box {
+	padding: 0.95rem 1.05rem;
+	border: 1px solid rgba(17, 24, 39, 0.14);
+	border-radius: 14px;
+	background: rgba(255,255,255,0.92);
+}
+
+.sm-mini-total span,
+.sm-grand-total-box span {
+	display: block;
+	color: var(--sm-muted);
+	font-size: 0.84rem;
+	font-weight: 700;
+}
+
+.sm-mini-total strong,
+.sm-grand-total-box strong {
+	display: block;
+	margin-top: 0.2rem;
+	font-size: 1.1rem;
+}
+
+.sm-grand-total-box {
+	min-width: 220px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.sm-bill-actions {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+}
+
+.sm-bill-actions .sm-main-button {
+	width: auto;
+	min-width: 220px;
+}
+
+.sm-receipt-head {
+	text-align: center;
+	padding-bottom: 0.8rem;
+	border-bottom: 1px dashed rgba(15, 23, 42, 0.14);
+}
+
+.sm-receipt-head strong {
+	font-size: 1.25rem;
+	font-weight: 800;
+}
+
+.sm-receipt-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	font-size: 0.94rem;
+}
+
+.sm-receipt-total {
+	padding-top: 0.75rem;
+	border-top: 1px dashed rgba(15, 23, 42, 0.14);
+	font-weight: 800;
+	font-size: 1.1rem;
+}
+
+.sm-empty-state {
+	padding: 2.4rem 1rem;
+	text-align: center;
+	background: rgba(255, 255, 255, 0.75);
+	border: 1px dashed rgba(15, 23, 42, 0.14);
+	border-radius: 24px;
+}
+
+.sm-empty-state strong {
+	display: block;
+	margin-bottom: 0.4rem;
+	font-size: 1.05rem;
+}
+
+.sm-checkout-backdrop {
+	position: fixed;
+	inset: 0;
+	background: rgba(15, 23, 42, 0.4);
+	backdrop-filter: blur(4px);
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.2s ease;
+	z-index: 99;
+}
+
+.sm-checkout-drawer {
+	position: fixed;
+	top: 0;
+	right: 0;
+	width: min(540px, 100vw);
+	height: 100vh;
+	background: #fff;
+	box-shadow: -20px 0 50px rgba(15, 23, 42, 0.2);
+	padding: 1.4rem;
+	display: grid;
+	grid-template-rows: auto 1fr auto;
+	gap: 1.1rem;
+	transform: translateX(100%);
+	transition: transform 0.22s ease;
+	z-index: 100;
+}
+
+.sm-checkout-drawer.open {
+	transform: translateX(0);
+}
+
+.sm-checkout-backdrop.open {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.sm-icon-button {
+	width: 42px;
+	height: 42px;
+	border-radius: 14px;
+	background: #f8fafc;
+	font-size: 1rem;
+	font-weight: 800;
+}
+
+.sm-checkout-content {
+	overflow: auto;
+	display: grid;
+	gap: 1rem;
+}
+
+.sm-field-grid {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 0.9rem;
+}
+
+.sm-field {
+	display: grid;
+	gap: 0.45rem;
+}
+
+.sm-field input {
+	min-height: 52px;
+	padding: 0 0.95rem;
+	background: #f8fafc;
+	border: 1px solid rgba(15, 23, 42, 0.08);
+	border-radius: 16px;
+}
+
+.sm-payment-block {
+	display: grid;
+	gap: 0.75rem;
+}
+
+.sm-payment-options {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 0.7rem;
+}
+
+.sm-payment-option {
+	padding: 0.95rem 0.75rem;
+	border-radius: 18px;
+	background: #f8fafc;
+	color: var(--sm-text);
+	font-size: 1rem;
+	font-weight: 800;
+}
+
+.sm-payment-option.active {
+	background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+	color: #1d4ed8;
+	box-shadow: inset 0 0 0 2px rgba(37, 99, 235, 0.3);
+}
+
+.sm-drawer-total {
+	display: grid;
+}
+
+.sm-drawer-total span {
+	color: var(--sm-muted);
+	font-size: 0.88rem;
+}
+
+.sm-drawer-total strong {
+	font-size: 1.3rem;
+	font-weight: 800;
+}
+
+@media (max-width: 1080px) {
+	.sm-pos-hero,
+	.sm-pos-workspace {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 768px) {
+	.sm-pos-app {
+		padding-top: 1rem;
+	}
+
+	.sm-pos-shell {
+		width: min(100vw - 1rem, 100%);
+		margin: 0 auto;
+	}
+
+	.sm-pos-hero,
+	.sm-pos-browser {
+		border-radius: 24px;
+	}
+
+	.sm-pos-summary,
+	.sm-bill-meta,
+	.sm-field-grid,
+	.sm-payment-options {
+		grid-template-columns: 1fr;
+	}
+
+	.sm-toolbar,
+	.sm-search-row,
+	.sm-drawer-footer,
+	.sm-drawer-head,
+	.sm-bill-actions,
+	.sm-bill-footer,
+	.sm-bill-table-head,
+	.sm-cart-item {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.sm-toolbar-actions {
+		justify-content: stretch;
+	}
+
+	.sm-cta {
+		width: 100%;
+	}
+
+	.sm-hero-topbar .sm-toolbar-actions {
+		flex-direction: column;
+	}
+
+	.sm-grand-total-box {
+		min-width: 0;
+	}
+
+	.sm-bill-table-head,
+	.sm-cart-item {
+		grid-template-columns: 1fr;
+	}
+
+	.sm-items-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+</style>
+
+<script>
+const smPosState = {
+	shopName: "Retail POS",
+	defaultCustomer: "Walk-in Customer",
+	categories: [],
+	items: [],
+	filteredItems: [],
+	cart: [],
+	searchQuery: "",
+	selectedPayment: "Cash",
+	summary: {
+		subtotal: 0,
+		tax: 0,
+		discount: 0,
+		total: 0
+	}
+};
+
+const SM_BOOTSTRAP = parseBootstrapPayload(
+	document.getElementById("sm-pos-bootstrap")?.textContent || "{}"
+);
+
+const SM_GRADIENTS = [
+	"linear-gradient(135deg, #22c55e, #15803d)",
+	"linear-gradient(135deg, #3b82f6, #1d4ed8)",
+	"linear-gradient(135deg, #f97316, #ea580c)",
+	"linear-gradient(135deg, #14b8a6, #0f766e)",
+	"linear-gradient(135deg, #e11d48, #be123c)",
+	"linear-gradient(135deg, #8b5cf6, #6d28d9)",
+	"linear-gradient(135deg, #eab308, #ca8a04)",
+	"linear-gradient(135deg, #06b6d4, #0284c7)"
+];
+
+frappe.ready(() => {
+	bindEvents();
+	loadBootstrap();
+});
+
+function bindEvents() {
+	const searchInput = document.getElementById("search-input");
+	const discountInput = document.getElementById("discount-input");
+	const paymentOptions = document.getElementById("payment-options");
+
+	searchInput.addEventListener("input", debounce(handleSearch, 180));
+	discountInput.addEventListener("input", renderCart);
+	window.addEventListener("resize", updateScreenResolution);
+	paymentOptions.addEventListener("click", event => {
+		const button = event.target.closest("[data-payment]");
+		if (!button) return;
+		selectPayment(button.dataset.payment);
+	});
+
+	updateScreenResolution();
+}
+
+function loadBootstrap() {
+	const payload = SM_BOOTSTRAP || {};
+	smPosState.shopName = payload.shop_name || "Retail POS";
+	smPosState.defaultCustomer = payload.default_customer || "Walk-in Customer";
+	smPosState.categories = payload.categories || [];
+	smPosState.items = payload.items || [];
+	smPosState.filteredItems = smPosState.items.slice();
+
+	renderHeader(payload.summary || {});
+	renderCategoryTabs();
+	renderItems();
+	renderCart();
+
+	if (!smPosState.items.length) {
+		fetchBootstrapFromApi();
+	}
+}
+
+function fetchBootstrapFromApi() {
+	if (!frappe?.call) return;
+
+	frappe.call({
+		method: "store_management.api.get_pos_bootstrap",
+		callback: function(response) {
+			const payload = response.message || {};
+			smPosState.shopName = payload.shop_name || smPosState.shopName;
+			smPosState.defaultCustomer = payload.default_customer || smPosState.defaultCustomer;
+			smPosState.categories = payload.categories || [];
+			smPosState.items = payload.items || [];
+			smPosState.filteredItems = smPosState.items.slice();
+
+			renderHeader(payload.summary || {});
+			renderCategoryTabs();
+			renderItems();
+			renderCart();
+		}
+	});
+}
+
+function renderHeader(summary) {
+	document.getElementById("shop-name").textContent = smPosState.shopName;
+	document.getElementById("today-sales").textContent = formatCurrency(summary.today_sales || 0);
+	document.getElementById("today-bills").textContent = String(summary.today_bills || 0);
+	document.getElementById("default-customer").textContent = smPosState.defaultCustomer;
+	document.getElementById("customer-name").placeholder = smPosState.defaultCustomer;
+}
+
+function updateScreenResolution() {
+	const screenBadge = document.getElementById("screen-resolution");
+	if (!screenBadge) return;
+
+	const width = window.screen?.width || 0;
+	const height = window.screen?.height || 0;
+	const ratio = window.devicePixelRatio ? ` @${window.devicePixelRatio.toFixed(1)}x` : "";
+
+	screenBadge.textContent = `Screen: ${width} x ${height}${ratio}`;
+}
+
+function startBilling() {
+	document.getElementById("billing-panel").scrollIntoView({ behavior: "smooth", block: "start" });
+	focusSearch();
+}
+
+function showDashboard() {
+	document.getElementById("dashboard-panel").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function viewReports() {
+	window.location.href = "/app/query-report/Sales%20Register";
+}
+
+function focusSearch() {
+	document.getElementById("search-input").focus();
+}
+
+function clearSearch() {
+	document.getElementById("search-input").value = "";
+	smPosState.searchQuery = "";
+	applyFilters();
+}
+
+function clearCart() {
+	smPosState.cart = [];
+	renderCart();
+}
+
+function handleSearch(event) {
+	smPosState.searchQuery = (event.target.value || "").trim().toLowerCase();
+
+	if (!smPosState.searchQuery) {
+		applyFilters();
+		return;
+	}
+
+	const localMatches = smPosState.items.filter(item => matchesSearch(item, smPosState.searchQuery));
+	if (localMatches.length) {
+		smPosState.filteredItems = localMatches;
+		renderItems();
+		return;
+	}
+
+	frappe.call({
+		method: "store_management.api.get_pos_items_by_barcode",
+		args: { query: smPosState.searchQuery },
+		callback: function(response) {
+			smPosState.filteredItems = response.message || [];
+			renderItems();
+		}
+	});
+}
+
+function matchesSearch(item, query) {
+	return [
+		item.item_name,
+		item.name,
+		item.item_group,
+		item.description
+	].some(value => (value || "").toLowerCase().includes(query));
+}
+
+function renderCategoryTabs() {
+	const tabs = document.getElementById("category-tabs");
+	const allTab = `
+		<button class="sm-category-pill active" style="background:#334155" type="button" onclick="scrollToCategory('all-items-top')">
+			All Categories
+		</button>
+	`;
+
+	const categoryTabs = smPosState.categories.map(category => `
+		<button
+			class="sm-category-pill"
+			style="background:${category.color}"
+			type="button"
+			onclick="scrollToCategory('category-${slugify(category.name || "")}')"
+		>
+			${escapeHtml(category.name)}
+		</button>
+	`).join("");
+
+	tabs.innerHTML = allTab + categoryTabs;
+}
+
+function applyFilters() {
+	const query = smPosState.searchQuery;
+	smPosState.filteredItems = smPosState.items.filter(item => !query || matchesSearch(item, query));
+
+	renderItems();
+}
+
+function renderItems() {
+	const grid = document.getElementById("items-grid");
+	if (!smPosState.filteredItems.length) {
+		grid.innerHTML = `
+			<div class="sm-empty-state" style="grid-column:1 / -1;">
+				<strong>No items found</strong>
+				<p>Try another search, barcode, or category.</p>
+			</div>
+		`;
+		return;
+	}
+
+	const groupedItems = new Map();
+	smPosState.filteredItems.forEach(item => {
+		const groupName = item.item_group || "General";
+		if (!groupedItems.has(groupName)) {
+			groupedItems.set(groupName, []);
+		}
+		groupedItems.get(groupName).push(item);
+	});
+
+	const groupMarkup = Array.from(groupedItems.entries()).map(([groupName, groupItems], groupIndex) => {
+		const category = smPosState.categories.find(row => row.name === groupName);
+		const color = category?.color || SM_GRADIENTS[groupIndex % SM_GRADIENTS.length];
+		const categoryId = `category-${slugify(groupName)}`;
+
+		return `
+			<section class="sm-category-section" id="${categoryId}">
+				<div class="sm-category-header">
+					<div class="sm-category-title">
+						<span class="sm-category-dot" style="background:${color}"></span>
+						<span>${escapeHtml(groupName)}</span>
+					</div>
+					<div class="sm-category-count">${groupItems.length} items</div>
+				</div>
+				<div class="sm-items-grid">
+					${groupItems.map((item, itemIndex) => renderItemCard(item, itemIndex)).join("")}
+				</div>
+			</section>
+		`;
+	}).join("");
+
+	grid.innerHTML = `<div id="all-items-top"></div>${groupMarkup}`;
+}
+
+function renderItemCard(item, index) {
+	const image = item.image
+		? `<img src="${item.image}" alt="${escapeHtml(item.item_name || item.name)}">`
+		: `<div>${getItemEmoji(item.item_group)}</div>`;
+
+	return `
+		<article class="sm-item-card">
+			<div class="sm-item-visual" style="background:${SM_GRADIENTS[index % SM_GRADIENTS.length]}">
+				${image}
+			</div>
+			<div class="sm-item-body">
+				<div class="sm-item-name">${escapeHtml(item.item_name || item.name)}</div>
+				<div class="sm-item-meta">${escapeHtml(item.item_group || "General")} • ${escapeHtml(item.stock_uom || "Nos")}</div>
+				<div class="sm-item-price-row">
+					<div class="sm-item-price">${formatCurrency(item.standard_rate || 0)}</div>
+					<button class="sm-add-button" type="button" onclick="addToCartByCode('${encodeURIComponent(item.name || "")}')">
+						Add
+					</button>
+				</div>
+			</div>
+		</article>
+	`;
+}
+
+function scrollToCategory(categoryId) {
+	const element = document.getElementById(categoryId);
+	if (!element) return;
+	element.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function getItemEmoji(groupName) {
+	const value = (groupName || "").toLowerCase();
+	if (value.includes("beverage")) return "🥤";
+	if (value.includes("house")) return "🧴";
+	if (value.includes("personal")) return "🪥";
+	if (value.includes("snack")) return "🍪";
+	if (value.includes("rice") || value.includes("grain")) return "🌾";
+	return "🛍️";
+}
+
+function addToCartByCode(encodedItemCode) {
+	const itemCode = decodeURIComponent(encodedItemCode || "");
+	const item = smPosState.items.find(row => row.name === itemCode);
+	if (!item) return;
+
+	const existing = smPosState.cart.find(row => row.name === item.name);
+
+	if (existing) {
+		existing.quantity += 1;
+	} else {
+		smPosState.cart.push({
+			name: item.name,
+			item_name: item.item_name || item.name,
+			item_group: item.item_group,
+			stock_uom: item.stock_uom || "Nos",
+			standard_rate: Number(item.standard_rate || 0),
+			quantity: 1
+		});
+	}
+
+	renderCart();
+}
+
+function updateQuantityByCode(encodedItemCode, change) {
+	const itemCode = decodeURIComponent(encodedItemCode || "");
+	const target = smPosState.cart.find(row => row.name === itemCode);
+	if (!target) return;
+
+	target.quantity += change;
+	if (target.quantity <= 0) {
+		smPosState.cart = smPosState.cart.filter(row => row.name !== itemCode);
+	}
+
+	renderCart();
+}
+
+function renderCart() {
+	const cartWrap = document.getElementById("cart-items");
+	const checkoutList = document.getElementById("checkout-cart-items");
+	const discountInput = document.getElementById("discount-input");
+
+	let subtotal = 0;
+	smPosState.cart.forEach(item => {
+		subtotal += item.quantity * item.standard_rate;
+	});
+
+	const tax = 0;
+	const discount = Math.min(Number(discountInput.value || 0), subtotal);
+	const total = subtotal + tax - discount;
+
+	smPosState.summary = { subtotal, tax, discount, total };
+
+	document.getElementById("cart-count").textContent = `${smPosState.cart.reduce((sum, row) => sum + row.quantity, 0)} items`;
+	document.getElementById("subtotal").textContent = formatCurrency(subtotal);
+	document.getElementById("tax").textContent = formatCurrency(tax);
+	document.getElementById("discount").textContent = formatCurrency(discount);
+	document.getElementById("total").textContent = formatCurrency(total);
+	document.getElementById("checkout-total").textContent = formatCurrency(total);
+
+	if (!smPosState.cart.length) {
+		const emptyMarkup = `
+			<div class="sm-empty-state">
+				<strong>Cart is empty</strong>
+				<p>Select items from categories or search to start billing.</p>
+			</div>
+		`;
+		cartWrap.innerHTML = emptyMarkup;
+		checkoutList.innerHTML = emptyMarkup;
+		return;
+	}
+
+	cartWrap.innerHTML = smPosState.cart.map(item => {
+		const lineTotal = item.quantity * item.standard_rate;
+		return `
+			<div class="sm-cart-item">
+				<div>
+					<div class="sm-cart-item-name">
+						<span class="sm-row-icon">
+							<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v18l-2-1.5L13 21l-2-1.5L9 21l-2-1.5L5 21V5a2 2 0 0 1 2-2Zm2 5h6m-6 4h6m-6 4h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+						</span>
+						<div>
+							<h4>${escapeHtml(item.item_name)}</h4>
+							<p>${escapeHtml(item.stock_uom)} • ${escapeHtml(item.item_group || "General")}</p>
+						</div>
+					</div>
+				</div>
+				<div>
+					<div class="sm-qty-controls">
+						<button class="sm-qty-button" type="button" onclick="updateQuantityByCode('${encodeURIComponent(item.name || "")}', -1)">−</button>
+						<strong>${item.quantity}</strong>
+						<button class="sm-qty-button" type="button" onclick="updateQuantityByCode('${encodeURIComponent(item.name || "")}', 1)">+</button>
+					</div>
+				</div>
+				<div>
+					<strong>${formatCurrency(item.standard_rate)}</strong>
+				</div>
+				<div>
+					<strong>${formatCurrency(lineTotal)}</strong>
+				</div>
+			</div>
+		`;
+	}).join("");
+
+	checkoutList.innerHTML = smPosState.cart.map(item => `
+		<div class="sm-checkout-item">
+			<h4>${escapeHtml(item.item_name)}</h4>
+			<p>${item.quantity} x ${formatCurrency(item.standard_rate)} = ${formatCurrency(item.quantity * item.standard_rate)}</p>
+		</div>
+	`).join("");
+}
+
+function openCheckout() {
+	if (!smPosState.cart.length) {
+		frappe.msgprint("Please add at least one item to the cart.");
+		return;
+	}
+
+	document.getElementById("checkout-drawer").classList.add("open");
+	document.getElementById("checkout-drawer").setAttribute("aria-hidden", "false");
+	document.getElementById("checkout-backdrop").classList.add("open");
+}
+
+function closeCheckout() {
+	document.getElementById("checkout-drawer").classList.remove("open");
+	document.getElementById("checkout-drawer").setAttribute("aria-hidden", "true");
+	document.getElementById("checkout-backdrop").classList.remove("open");
+}
+
+function selectPayment(paymentMode) {
+	smPosState.selectedPayment = paymentMode;
+	document.querySelectorAll(".sm-payment-option").forEach(button => {
+		button.classList.toggle("active", button.dataset.payment === paymentMode);
+	});
+}
+
+function generateBill() {
+	if (!smPosState.cart.length) {
+		frappe.msgprint("Cart is empty.");
+		return;
+	}
+
+	const customerName = document.getElementById("customer-name").value.trim();
+	const customerPhone = document.getElementById("customer-phone").value.trim();
+
+	frappe.call({
+		method: "store_management.api.create_pos_bill",
+		freeze: true,
+		freeze_message: "Generating invoice...",
+		args: {
+			customer: customerName,
+			customer_phone: customerPhone,
+			payment_method: smPosState.selectedPayment,
+			additional_discount_amount: smPosState.summary.discount,
+			items: smPosState.cart.map(item => ({
+				item_code: item.name,
+				qty: item.quantity,
+				rate: item.standard_rate
+			}))
+		},
+		callback: function(response) {
+			const invoice = response.message;
+			if (!invoice || !invoice.name) return;
+
+			frappe.show_alert({
+				message: `Bill ${invoice.name} created successfully`,
+				indicator: "green"
+			});
+
+			window.open(`/printview?doctype=Sales%20Invoice&name=${encodeURIComponent(invoice.name)}&format=Standard&no_letterhead=0&_lang=en`, "_blank");
+
+			smPosState.cart = [];
+			document.getElementById("customer-name").value = "";
+			document.getElementById("customer-phone").value = "";
+			document.getElementById("discount-input").value = "0";
+			closeCheckout();
+			renderCart();
+			loadBootstrap();
+			showDashboard();
+		}
+	});
+}
+
+function formatCurrency(value) {
+	return `Rs ${Number(value || 0).toFixed(2)}`;
+}
+
+function parseBootstrapPayload(rawPayload) {
+	const payload = String(rawPayload || "").trim();
+	if (!payload) return {};
+
+	try {
+		return JSON.parse(payload);
+	} catch (error) {
+		try {
+			return JSON.parse(decodeHtmlEntities(payload));
+		} catch (fallbackError) {
+			console.warn("Unable to parse POS bootstrap payload", fallbackError);
+			return {};
+		}
+	}
+}
+
+function decodeHtmlEntities(value) {
+	const textarea = document.createElement("textarea");
+	textarea.innerHTML = value;
+	return textarea.value;
+}
+
+function escapeHtml(value) {
+	return String(value || "")
+		.replaceAll("&", "&amp;")
+		.replaceAll("<", "&lt;")
+		.replaceAll(">", "&gt;")
+		.replaceAll('"', "&quot;")
+		.replaceAll("'", "&#39;");
+}
+
+function debounce(fn, wait) {
+	let timeoutId;
+	return function debounced(...args) {
+		clearTimeout(timeoutId);
+		timeoutId = setTimeout(() => fn.apply(this, args), wait);
+	};
+}
+
+function slugify(value) {
+	return String(value || "")
+		.toLowerCase()
+		.trim()
+		.replace(/[^a-z0-9]+/g, "-")
+		.replace(/^-+|-+$/g, "");
+}
+</script>
+{% endif %}
+{% endblock %}
