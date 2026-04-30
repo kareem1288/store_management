@@ -7,6 +7,12 @@
 	<script>window.location.href = '/app/login';</script>
 {% else %}
 <div class="sm-pos-app" id="sm-pos-app">
+<!-- Top Navigation -->
+	<div class="sm-top-nav">
+		<a href="/masters" class="sm-nav-link">Masters</a>
+		<a href="/pos" class="sm-nav-link active">POS</a>
+	</div>
+
 	<section class="sm-pos-shell">
 		<div class="sm-pos-hero" id="dashboard-panel">
 			<div class="sm-home-column">
@@ -208,6 +214,35 @@ body.store-pos-page {
 	background: var(--sm-bg);
 	font-family: "Manrope", "Anek Telugu", sans-serif;
 	color: var(--sm-text);
+}
+
+/* Top Navigation */
+.sm-top-nav {
+	display: flex;
+	gap: 0.5rem;
+	padding: 1rem 2rem;
+	background: white;
+	border-bottom: 1px solid rgba(15, 23, 42, 0.1);
+}
+
+.sm-nav-link {
+	padding: 0.6rem 1rem;
+	border-radius: 8px;
+	text-decoration: none;
+	color: #64748b;
+	font-weight: 600;
+	font-size: 0.95rem;
+	transition: all 0.2s ease;
+}
+
+.sm-nav-link:hover {
+	background: #f1f5f9;
+	color: #1e293b;
+}
+
+.sm-nav-link.active {
+	background: #eff6ff;
+	color: #2563eb;
 }
 
 .sm-pos-app {

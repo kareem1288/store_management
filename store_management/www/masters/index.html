@@ -7,6 +7,12 @@
 	<script>window.location.href = '/app/login';</script>
 {% else %}
 <div class="sm-masters-app" id="sm-masters-app">
+	<!-- Top Navigation -->
+	<div class="sm-top-nav">
+		<a href="/masters" class="sm-nav-link active">Masters</a>
+		<a href="/pos" class="sm-nav-link">POS</a>
+	</div>
+
 	<section class="sm-masters-shell">
 		<!-- Sidebar Navigation -->
 		<aside class="sm-masters-sidebar">
@@ -39,16 +45,28 @@
 			</nav>
 		</aside>
 
-		<!-- Main Content -->
+<!-- Main Content -->
 		<main class="sm-masters-content">
 			<div class="sm-masters-toolbar">
 				<div>
 					<h1 id="doctype-title">Items</h1>
 					<p id="doctype-desc">Manage product items</p>
 				</div>
-				<button class="sm-masters-btn sm-btn-primary" onclick="openCreateForm()">
-					+ New Record
-				</button>
+				<div class="sm-toolbar-actions">
+					<div class="sm-search-box">
+						<input 
+							type="text" 
+							id="search-input" 
+							class="sm-search-input" 
+							placeholder="Search..." 
+							oninput="handleSearch(this.value)"
+						>
+						<span class="sm-search-icon">🔍</span>
+					</div>
+					<button class="sm-masters-btn sm-btn-primary" onclick="openCreateForm()">
+						+ New Record
+					</button>
+				</div>
 			</div>
 
 			<!-- List View -->
@@ -95,9 +113,39 @@ body.store-masters-page {
 	color: var(--sm-text);
 }
 
+/* Top Navigation */
+.sm-top-nav {
+	display: flex;
+	gap: 0.5rem;
+	padding: 1rem 2rem;
+	background: white;
+	border-bottom: 1px solid rgba(15, 23, 42, 0.1);
+}
+
+.sm-nav-link {
+	padding: 0.6rem 1rem;
+	border-radius: 8px;
+	text-decoration: none;
+	color: #64748b;
+	font-weight: 600;
+	font-size: 0.95rem;
+	transition: all 0.2s ease;
+}
+
+.sm-nav-link:hover {
+	background: #f1f5f9;
+	color: #1e293b;
+}
+
+.sm-nav-link.active {
+	background: #eff6ff;
+	color: #2563eb;
+}
+
 .sm-masters-app {
 	min-height: 100vh;
 	display: flex;
+	flex-direction: column;
 }
 
 .sm-masters-shell {
@@ -175,6 +223,42 @@ body.store-masters-page {
 	border-bottom: 1px solid var(--sm-border);
 }
 
+.sm-toolbar-actions {
+	display: flex;
+	gap: 1rem;
+	align-items: center;
+}
+
+.sm-search-box {
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+
+.sm-search-input {
+	padding: 0.6rem 1rem 0.6rem 2.5rem;
+	border: 1px solid var(--sm-border);
+	border-radius: 10px;
+	font-size: 0.95rem;
+	font-family: inherit;
+	width: 220px;
+	transition: all 0.2s ease;
+}
+
+.sm-search-input:focus {
+	outline: 0;
+	border-color: var(--sm-primary);
+	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+	width: 280px;
+}
+
+.sm-search-icon {
+	position: absolute;
+	left: 0.75rem;
+	font-size: 0.9rem;
+	pointer-events: none;
+}
+
 .sm-masters-toolbar h1 {
 	margin: 0;
 	font-size: 2rem;
@@ -246,7 +330,6 @@ body.store-masters-page {
 
 .sm-table-head {
 	display: grid;
-	grid-template-columns: 1fr 1fr 200px;
 	gap: 1rem;
 	padding: 1rem;
 	background: rgba(248, 250, 252, 0.5);
@@ -254,16 +337,17 @@ body.store-masters-page {
 	font-weight: 700;
 	font-size: 0.9rem;
 	color: var(--sm-muted);
+	grid-template-columns: repeat(3, 1fr) 180px;
 }
 
 .sm-table-row {
 	display: grid;
-	grid-template-columns: 1fr 1fr 200px;
 	gap: 1rem;
 	padding: 1rem;
 	align-items: center;
 	border-bottom: 1px solid var(--sm-border);
 	transition: background 0.2s ease;
+	grid-template-columns: repeat(3, 1fr) 180px;
 }
 
 .sm-table-row:hover {
@@ -283,7 +367,8 @@ body.store-masters-page {
 .sm-table-actions {
 	display: flex;
 	gap: 0.5rem;
-	justify-content: flex-end;
+	justify-content: flex-start;
+	align-items: center;
 }
 
 .sm-action-btn {
@@ -400,12 +485,11 @@ body.store-masters-page {
 .sm-modal-body {
 	padding: 1.5rem;
 	overflow-y: auto;
-	display: grid;
-	gap: 1rem;
 }
 
 .sm-form-group {
-	display: grid;
+	display: flex;
+	flex-direction: column;
 	gap: 0.4rem;
 }
 
@@ -413,6 +497,11 @@ body.store-masters-page {
 	font-weight: 700;
 	font-size: 0.95rem;
 	color: var(--sm-text);
+}
+
+.sm-form-label .required {
+	color: var(--sm-danger);
+	margin-left: 2px;
 }
 
 .sm-form-input,
@@ -424,6 +513,8 @@ body.store-masters-page {
 	font-size: 1rem;
 	font-family: inherit;
 	transition: all 0.2s ease;
+	width: 100%;
+	box-sizing: border-box;
 }
 
 .sm-form-input:focus,
@@ -432,6 +523,101 @@ body.store-masters-page {
 	outline: 0;
 	border-color: var(--sm-primary);
 	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.sm-form-input[type="number"],
+.sm-form-input[type="currency"] {
+	text-align: left;
+}
+
+.sm-form-checkbox {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	cursor: pointer;
+}
+
+.sm-form-checkbox input {
+	width: 18px;
+	height: 18px;
+	cursor: pointer;
+}
+
+.sm-form-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+	margin-bottom: 0.5rem;
+}
+
+.sm-form-row .sm-form-group {
+	flex: 1;
+	min-width: 200px;
+}
+
+.sm-form-row .sm-form-group.full-width {
+	flex: 1 1 100%;
+	min-width: 100%;
+}
+
+.sm-link-input {
+	position: relative;
+}
+
+.sm-link-btn {
+	padding: 0.75rem;
+	border: 1px solid var(--sm-border);
+	border-radius: 8px;
+	background: var(--sm-surface);
+	cursor: pointer;
+	text-align: left;
+	min-height: 46px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	transition: all 0.2s ease;
+}
+
+.sm-link-btn:hover {
+	border-color: var(--sm-primary);
+}
+
+.sm-link-btn .sm-link-value {
+	flex: 1;
+	color: var(--sm-text);
+}
+
+.sm-link-btn .sm-link-placeholder {
+	color: var(--sm-muted);
+}
+
+.sm-link-dropdown {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	right: 0;
+	background: var(--sm-surface);
+	border: 1px solid var(--sm-primary);
+	border-top: 0;
+	border-radius: 0 0 8px 8px;
+	max-height: 200px;
+	overflow-y: auto;
+	z-index: 10;
+	display: none;
+}
+
+.sm-link-dropdown.open {
+	display: block;
+}
+
+.sm-link-option {
+	padding: 0.75rem 1rem;
+	cursor: pointer;
+	transition: background 0.2s ease;
+}
+
+.sm-link-option:hover {
+	background: rgba(37, 99, 235, 0.1);
 }
 
 .sm-form-textarea {
@@ -482,32 +668,42 @@ const mastersDoctypes = {
 	'Item': {
 		title: 'Items',
 		desc: 'Manage product items',
-		fields: ['item_code', 'item_name', 'item_group', 'standard_rate', 'is_sales_item']
+		fields: ['name', 'item_name', 'item_group'],
+		searchField: 'item_name',
+		formFields: [
+			{ name: 'item_code', label: 'Item Code', type: 'text', required: true },
+			{ name: 'item_name', label: 'Item Name', type: 'text', required: true },
+			{ name: 'item_group', label: 'Item Group', type: 'link', doctype: 'Item Group', required: true },
+			{ name: 'stock_uom', label: 'UOM', type: 'link', doctype: 'UOM', required: true },
+			{ name: 'is_stock_item', label: 'Is Stock Item', type: 'checkbox', fullWidth: true, checked: true },
+			{ name: 'opening_stock', label: 'Opening Stock', type: 'number' },
+			{ name: 'standard_rate', label: 'Standard Rate', type: 'currency' }
+		]
 	},
 	'Item Group': {
 		title: 'Item Groups',
 		desc: 'Manage item categories',
-		fields: ['name', 'parent_item_group']
+		fields: ['name', 'item_group_name', 'parent_item_group']
 	},
 	'Customer': {
 		title: 'Customers',
 		desc: 'Manage customer records',
-		fields: ['name', 'customer_name', 'customer_type', 'territory']
+		fields: ['name', 'customer_name', 'customer_group','customer_type','territory']
 	},
 	'Customer Group': {
 		title: 'Customer Groups',
 		desc: 'Manage customer categories',
-		fields: ['name', 'parent_customer_group']
+		fields: ['name', 'customer_group_name', 'parent_customer_group']
 	},
 	'Item Tax Template': {
 		title: 'Tax Templates',
 		desc: 'Manage tax templates',
-		fields: ['name', 'title']
+		fields: ['name', 'title', 'description']
 	},
 	'Company': {
 		title: 'Companies',
 		desc: 'Manage companies',
-		fields: ['name', 'company_name']
+		fields: ['name', 'default_currency', 'country','company_name']
 	},
 	'User': {
 		title: 'Users',
@@ -520,6 +716,7 @@ let currentDoctype = 'Item';
 let currentRecords = [];
 let currentFormData = {};
 let editingRecord = null;
+let searchQuery = '';
 
 frappe.ready(() => {
 	if (frappe.session.user === 'Guest') {
@@ -534,6 +731,8 @@ function selectDoctype(doctype) {
 	currentDoctype = doctype;
 	editingRecord = null;
 	currentFormData = {};
+	searchQuery = '';
+	document.getElementById('search-input').value = '';
 
 	// Update UI
 	document.querySelectorAll('.sm-nav-item').forEach(item => {
@@ -545,6 +744,11 @@ function selectDoctype(doctype) {
 	document.getElementById('doctype-desc').textContent = config.desc;
 
 	loadRecords(doctype);
+}
+
+function handleSearch(query) {
+	searchQuery = query.trim().toLowerCase();
+	renderList();
 }
 
 function loadRecords(doctype) {
@@ -560,24 +764,71 @@ function loadRecords(doctype) {
 
 function renderList() {
 	const container = document.getElementById('masters-list');
+	const config = mastersDoctypes[currentDoctype];
+	const fields = config.fields;
 
-	if (!currentRecords.length) {
+	// Filter records based on search query
+	let filteredRecords = currentRecords;
+	if (searchQuery) {
+		const searchField = config.searchField || 'name';
+		filteredRecords = currentRecords.filter(record => {
+			// Search in name field
+			if (record.name && record.name.toLowerCase().includes(searchQuery)) {
+				return true;
+			}
+			// Search in the designated search field (e.g., item_name for Items)
+			if (searchField && record[searchField] && String(record[searchField]).toLowerCase().includes(searchQuery)) {
+				return true;
+			}
+			return false;
+		});
+	}
+
+	if (!filteredRecords.length) {
+		const message = searchQuery 
+			? `No matching records found for "${searchQuery}"`
+			: `No records found. Click "New Record" to create your first ${config.title.toLowerCase()}`;
 		container.innerHTML = `
 			<div class="sm-empty-message">
-				<strong>No records found</strong>
-				<p>Click "New Record" to create your first ${mastersDoctypes[currentDoctype].title.toLowerCase()}</p>
+				<strong>${searchQuery ? 'No results' : 'No records found'}</strong>
+				<p>${message}</p>
 			</div>
 		`;
 		return;
 	}
 
-	const config = mastersDoctypes[currentDoctype];
-	const rows = currentRecords.map(record => {
-		const values = config.fields.slice(0, 2).map(field => record[field] || '-').join(' • ');
+	// Build column headers
+	const columnLabels = {
+		'name': 'ID',
+		'item_name': 'Item Name',
+		'item_group': 'Item Group',
+		'item_group_name': 'Item Group Name',
+		'parent_item_group': 'Parent Item Group',
+		'customer_name': 'Customer Name',
+		'customer_group': 'Customer Group',
+		'customer_group_name': 'Customer Group Name',
+		'parent_customer_group': 'Parent Customer Group',
+		'title': 'Title',
+		'description': 'Description',
+		'company_name': 'Company Name',
+		'default_currency': 'Default Currency',
+		'country': 'Country',
+		'full_name': 'Full Name',
+		'email': 'Email',
+		'user_type': 'User Type'
+	};
+	
+const displayFields = fields.slice(0, 3);
+	const headers = displayFields.map(f => `<div>${columnLabels[f] || f}</div>`).join('');
+	const headersWithActions = headers + '<div>Actions</div>';
+
+	const rows = filteredRecords.map(record => {
+		const cells = displayFields.map(field => {
+			return `<div class="sm-table-cell">${escapeHtml(String(record[field] || '-'))}</div>`;
+		}).join('');
 		return `
 			<div class="sm-table-row">
-				<div class="sm-table-cell">${escapeHtml(String(record.name || ''))}</div>
-				<div class="sm-table-cell">${escapeHtml(values)}</div>
+				${cells}
 				<div class="sm-table-actions">
 					<button class="sm-action-btn" onclick="editRecord('${escapeAttr(record.name)}')">Edit</button>
 					<button class="sm-action-btn delete" onclick="deleteRecord('${escapeAttr(record.name)}')">Delete</button>
@@ -586,11 +837,9 @@ function renderList() {
 		`;
 	}).join('');
 
-	const headers = ['Name', 'Details', 'Actions'].map(h => `<div>${h}</div>`).join('');
-
 	container.innerHTML = `
 		<div class="sm-list-table">
-			<div class="sm-table-head">${headers}</div>
+			<div class="sm-table-head">${headersWithActions}</div>
 			${rows}
 		</div>
 	`;
@@ -623,31 +872,170 @@ function renderForm() {
 
 	document.getElementById('modal-title').textContent = title;
 
-	const formFields = config.fields.map(field => {
-		const value = currentFormData[field] || '';
-		return `
-			<div class="sm-form-group">
-				<label class="sm-form-label">${field}</label>
-				<input 
-					type="text" 
-					class="sm-form-input" 
-					data-field="${field}" 
-					value="${escapeAttr(String(value))}"
-					placeholder="Enter ${field}"
-				>
-			</div>
-		`;
-	}).join('');
+	// Check if doctype has custom formFields configuration
+	let formFields;
+	if (config.formFields) {
+		formFields = renderCustomFormFields(config.formFields);
+	} else {
+		// Fallback to simple field rendering
+		formFields = config.fields.map(field => {
+			const value = currentFormData[field] || '';
+			return `
+				<div class="sm-form-group">
+					<label class="sm-form-label">${field}</label>
+					<input 
+						type="text" 
+						class="sm-form-input" 
+						data-field="${field}" 
+						value="${escapeAttr(String(value))}"
+						placeholder="Enter ${field}"
+					>
+				</div>
+			`;
+		}).join('');
+	}
 
 	container.innerHTML = formFields;
+}
+
+function renderCustomFormFields(fields) {
+	let html = '<div class="sm-form-row">';
+	
+	fields.forEach((field, index) => {
+		const value = currentFormData[field.name] || '';
+		const isFullWidth = field.fullWidth === true;
+		
+		html += `<div class="sm-form-group${isFullWidth ? ' full-width' : ''}">`;
+		
+if (field.type === 'checkbox') {
+			// Use saved value if exists, otherwise use default checked property
+			const isChecked = (value === true || value === 1 || value === '1') ? true : (value === false || value === 0 || value === '0') ? false : (field.checked === true);
+			html += `
+				<label class="sm-form-checkbox">
+					<input 
+						type="checkbox" 
+						data-field="${field.name}" 
+						${isChecked ? 'checked' : ''}
+					>
+					<span>${field.label}</span>
+				</label>
+			`;
+		} else if (field.type === 'link') {
+			html += `
+				<label class="sm-form-label">${field.label}${field.required ? '<span class="required">*</span>' : ''}</label>
+				<div class="sm-link-input" data-link-doctype="${field.doctype}" data-field="${field.name}">
+					<button type="button" class="sm-link-btn" onclick="openLinkDropdown('${field.name}')">
+						<span class="${value ? 'sm-link-value' : 'sm-link-placeholder'}">${value || 'Select ' + field.label + '...'}</span>
+						<span>▾</span>
+					</button>
+					<div class="sm-link-dropdown" id="dropdown-${field.name}"></div>
+					<input type="hidden" data-field="${field.name}" value="${escapeAttr(String(value))}">
+				</div>
+			`;
+		} else {
+			const inputType = field.type === 'number' || field.type === 'currency' ? field.type : 'text';
+			const inputClass = field.type === 'number' || field.type === 'currency' ? `sm-form-input ${inputType}` : 'sm-form-input';
+			html += `
+				<label class="sm-form-label">${field.label}${field.required ? '<span class="required">*</span>' : ''}</label>
+				<input 
+					type="${inputType}" 
+					class="${inputClass}" 
+					data-field="${field.name}" 
+					value="${escapeAttr(String(value))}"
+					placeholder="Enter ${field.label}"
+					${field.required ? 'required' : ''}
+				>
+			`;
+		}
+		
+		html += '</div>';
+		
+		// Handle row breaks: fullWidth fields get their own row, otherwise pair fields
+		if ((index + 1) % 2 === 0 || isFullWidth) {
+			html += '</div><div class="sm-form-row">';
+		}
+	});
+	
+	html += '</div>';
+	return html;
+}
+
+let linkSearchTimeout = null;
+
+function openLinkDropdown(fieldName) {
+	const dropdown = document.getElementById(`dropdown-${fieldName}`);
+	if (dropdown.classList.contains('open')) {
+		dropdown.classList.remove('open');
+		return;
+	}
+	
+	const linkInput = document.querySelector(`[data-field="${fieldName}"]`);
+	const doctype = linkInput.closest('.sm-link-input').dataset.linkDoctype;
+	const currentValue = linkInput.value;
+	
+	// Clear any existing timeout
+	if (linkSearchTimeout) clearTimeout(linkSearchTimeout);
+	
+	// Debounce the API call
+	linkSearchTimeout = setTimeout(() => {
+		frappe.call({
+			method: 'store_management.api.get_master_records',
+			args: { doctype: doctype },
+			callback: function(response) {
+				const records = response.message || [];
+				let optionsHtml = '';
+				
+				if (records.length === 0) {
+					optionsHtml = '<div class="sm-link-option">No records found</div>';
+				} else {
+					records.forEach(record => {
+						const name = record.name;
+						const isSelected = name === currentValue;
+						optionsHtml += `<div class="sm-link-option${isSelected ? ' selected' : ''}" onclick="selectLinkOption('${fieldName}', '${escapeAttr(name)}')">${escapeHtml(name)}</div>`;
+					});
+				}
+				
+				dropdown.innerHTML = optionsHtml;
+				dropdown.classList.add('open');
+			}
+		});
+	}, 150);
+}
+
+function selectLinkOption(fieldName, value) {
+	const linkInput = document.querySelector(`.sm-link-input[data-field="${fieldName}"]`);
+	const hiddenInput = linkInput.querySelector('input[type="hidden"]');
+	const btn = linkInput.querySelector('.sm-link-btn');
+	const valueSpan = btn.querySelector('.sm-link-value');
+	const placeholderSpan = btn.querySelector('.sm-link-placeholder');
+	
+	hiddenInput.value = value;
+	if (value) {
+		valueSpan.classList.remove('sm-link-placeholder');
+		valueSpan.classList.add('sm-link-value');
+		valueSpan.textContent = value;
+	} else {
+		valueSpan.classList.remove('sm-link-value');
+		valueSpan.classList.add('sm-link-placeholder');
+	}
+	
+	const dropdown = document.getElementById(`dropdown-${fieldName}`);
+	dropdown.classList.remove('open');
 }
 
 function saveRecord() {
 	const config = mastersDoctypes[currentDoctype];
 	const formData = {};
 
-	document.querySelectorAll('[data-field]').forEach(input => {
-		formData[input.dataset.field] = input.value.trim();
+document.querySelectorAll('[data-field]').forEach(input => {
+		let val = input.value;
+		// Handle checkbox inputs
+		if (input.type === 'checkbox') {
+			val = input.checked ? 1 : 0;
+		} else {
+			val = val.trim();
+		}
+		formData[input.dataset.field] = val;
 	});
 
 	const method = editingRecord 
