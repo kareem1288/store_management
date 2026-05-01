@@ -4,7 +4,7 @@
 
 {% block page_content %}
 {% if frappe.session.user == 'Guest' %}
-	<script>window.location.href = '/app/login';</script>
+	<script>window.location.href = '/login?redirect-to=/pos';</script>
 {% else %}
 <div class="sm-pos-app" id="sm-pos-app">
 <!-- Top Navigation -->

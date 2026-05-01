@@ -4,7 +4,7 @@
 
 {% block page_content %}
 {% if frappe.session.user == 'Guest' %}
-	<script>window.location.href = '/app/login';</script>
+	<script>window.location.href = '/login?redirect-to=/pos';</script>
 {% else %}
 <div class="sm-masters-app" id="sm-masters-app">
 	<!-- Top Navigation -->
@@ -543,6 +543,56 @@ body.store-masters-page {
 	cursor: pointer;
 }
 
+.sm-image-field {
+	display: grid;
+	gap: 0.75rem;
+}
+
+.sm-image-preview {
+	width: 100%;
+	min-height: 180px;
+	border: 1px dashed var(--sm-border);
+	border-radius: 12px;
+	background: #f8fafc;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+}
+
+.sm-image-preview img {
+	width: 100%;
+	max-height: 240px;
+	object-fit: contain;
+	display: block;
+}
+
+.sm-image-placeholder {
+	color: var(--sm-muted);
+	font-size: 0.95rem;
+}
+
+.sm-image-actions {
+	display: flex;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+}
+
+.sm-image-btn {
+	padding: 0.65rem 1rem;
+	border: 1px solid var(--sm-border);
+	border-radius: 8px;
+	background: var(--sm-surface);
+	color: var(--sm-text);
+	font-size: 0.92rem;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.sm-image-btn:hover {
+	background: rgba(37, 99, 235, 0.05);
+}
+
 .sm-form-row {
 	display: flex;
 	flex-wrap: wrap;
@@ -610,6 +660,36 @@ body.store-masters-page {
 	display: block;
 }
 
+.sm-link-search {
+	padding: 0.75rem;
+	border-bottom: 1px solid var(--sm-border);
+	background: var(--sm-surface);
+	position: sticky;
+	top: 0;
+	z-index: 1;
+}
+
+.sm-link-search-input {
+	width: 100%;
+	padding: 0.65rem 0.75rem;
+	border: 1px solid var(--sm-border);
+	border-radius: 8px;
+	background: #fff;
+	color: var(--sm-text);
+	font-size: 0.92rem;
+}
+
+.sm-link-search-input:focus {
+	outline: 0;
+	border-color: var(--sm-primary);
+	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.sm-link-options {
+	max-height: 150px;
+	overflow-y: auto;
+}
+
 .sm-link-option {
 	padding: 0.75rem 1rem;
 	cursor: pointer;
@@ -670,6 +750,10 @@ const mastersDoctypes = {
 		desc: 'Manage product items',
 		fields: ['name', 'item_name', 'item_group'],
 		searchField: 'item_name',
+		defaults: {
+			item_group: 'All Item Groups',
+			stock_uom: 'Nos'
+		},
 		formFields: [
 			{ name: 'item_code', label: 'Item Code', type: 'text', required: true },
 			{ name: 'item_name', label: 'Item Name', type: 'text', required: true },
@@ -677,7 +761,8 @@ const mastersDoctypes = {
 			{ name: 'stock_uom', label: 'UOM', type: 'link', doctype: 'UOM', required: true },
 			{ name: 'is_stock_item', label: 'Is Stock Item', type: 'checkbox', fullWidth: true, checked: true },
 			{ name: 'opening_stock', label: 'Opening Stock', type: 'number' },
-			{ name: 'standard_rate', label: 'Standard Rate', type: 'currency' }
+			{ name: 'standard_rate', label: 'Standard Rate', type: 'currency' },
+			{ name: 'image', label: 'Item Image', type: 'image', fullWidth: true }
 		]
 	},
 	'Item Group': {
@@ -717,12 +802,15 @@ let currentRecords = [];
 let currentFormData = {};
 let editingRecord = null;
 let searchQuery = '';
+let linkOptionCache = {};
 
 frappe.ready(() => {
 	if (frappe.session.user === 'Guest') {
 		window.location.href = '/app/login';
 		return;
 	}
+
+	document.addEventListener('click', handleOutsideDropdownClick);
 
 	loadRecords('Item');
 });
@@ -847,7 +935,7 @@ const displayFields = fields.slice(0, 3);
 
 function openCreateForm() {
 	editingRecord = null;
-	currentFormData = {};
+	currentFormData = { ...(mastersDoctypes[currentDoctype]?.defaults || {}) };
 	renderForm();
 	openModal();
 }
@@ -932,6 +1020,28 @@ if (field.type === 'checkbox') {
 					<input type="hidden" data-field="${field.name}" value="${escapeAttr(String(value))}">
 				</div>
 			`;
+		} else if (field.type === 'image') {
+			const imageUrl = String(value || '').trim();
+			html += `
+				<label class="sm-form-label">${field.label}${field.required ? '<span class="required">*</span>' : ''}</label>
+				<div class="sm-image-field">
+					<div class="sm-image-preview" id="preview-${field.name}">
+						${imageUrl ? `<img src="${escapeAttr(imageUrl)}" alt="${escapeAttr(field.label)}">` : '<div class="sm-image-placeholder">No image selected</div>'}
+					</div>
+					<div class="sm-image-actions">
+						<button type="button" class="sm-image-btn" onclick="openImageUploader('${field.name}')">Upload Image</button>
+						<button type="button" class="sm-image-btn" onclick="clearImageField('${field.name}')">Clear</button>
+					</div>
+					<input
+						type="text"
+						class="sm-form-input"
+						data-field="${field.name}"
+						value="${escapeAttr(imageUrl)}"
+						placeholder="Image URL or file path"
+						oninput="updateImagePreview('${field.name}', this.value)"
+					>
+				</div>
+			`;
 		} else {
 			const inputType = field.type === 'number' || field.type === 'currency' ? field.type : 'text';
 			const inputClass = field.type === 'number' || field.type === 'currency' ? `sm-form-input ${inputType}` : 'sm-form-input';
@@ -960,18 +1070,63 @@ if (field.type === 'checkbox') {
 	return html;
 }
 
+function openImageUploader(fieldName) {
+	if (!frappe.ui || !frappe.ui.FileUploader) {
+		frappe.msgprint('File uploader is not available in this context.');
+		return;
+	}
+
+	new frappe.ui.FileUploader({
+		allow_multiple: false,
+		restrictions: {
+			allowed_file_types: ['image/*']
+		},
+		on_success(file) {
+			const input = document.querySelector(`input[data-field="${fieldName}"]`);
+			if (!input) return;
+
+			const fileUrl = file.file_url || file.file_name || '';
+			input.value = fileUrl;
+			updateImagePreview(fieldName, fileUrl);
+		}
+	});
+}
+
+function clearImageField(fieldName) {
+	const input = document.querySelector(`input[data-field="${fieldName}"]`);
+	if (!input) return;
+
+	input.value = '';
+	updateImagePreview(fieldName, '');
+}
+
+function updateImagePreview(fieldName, value) {
+	const preview = document.getElementById(`preview-${fieldName}`);
+	if (!preview) return;
+
+	const imageUrl = String(value || '').trim();
+	preview.innerHTML = imageUrl
+		? `<img src="${escapeAttr(imageUrl)}" alt="${escapeAttr(fieldName)}">`
+		: '<div class="sm-image-placeholder">No image selected</div>';
+}
+
 let linkSearchTimeout = null;
 
 function openLinkDropdown(fieldName) {
 	const dropdown = document.getElementById(`dropdown-${fieldName}`);
+	closeAllLinkDropdowns(fieldName);
+
 	if (dropdown.classList.contains('open')) {
 		dropdown.classList.remove('open');
 		return;
 	}
-	
-	const linkInput = document.querySelector(`[data-field="${fieldName}"]`);
-	const doctype = linkInput.closest('.sm-link-input').dataset.linkDoctype;
-	const currentValue = linkInput.value;
+
+	const linkInput = document.querySelector(`.sm-link-input[data-field="${fieldName}"]`);
+	if (!linkInput) return;
+
+	const hiddenInput = linkInput.querySelector('input[type="hidden"]');
+	const doctype = linkInput.dataset.linkDoctype;
+	const currentValue = hiddenInput ? hiddenInput.value : '';
 	
 	// Clear any existing timeout
 	if (linkSearchTimeout) clearTimeout(linkSearchTimeout);
@@ -983,51 +1138,98 @@ function openLinkDropdown(fieldName) {
 			args: { doctype: doctype },
 			callback: function(response) {
 				const records = response.message || [];
-				let optionsHtml = '';
-				
-				if (records.length === 0) {
-					optionsHtml = '<div class="sm-link-option">No records found</div>';
-				} else {
-					records.forEach(record => {
-						const name = record.name;
-						const isSelected = name === currentValue;
-						optionsHtml += `<div class="sm-link-option${isSelected ? ' selected' : ''}" onclick="selectLinkOption('${fieldName}', '${escapeAttr(name)}')">${escapeHtml(name)}</div>`;
-					});
-				}
-				
-				dropdown.innerHTML = optionsHtml;
+				linkOptionCache[fieldName] = records.map(record => record.name);
+				dropdown.innerHTML = `
+					<div class="sm-link-search">
+						<input
+							type="text"
+							class="sm-link-search-input"
+							placeholder="Search ${escapeAttr(doctype)}"
+							oninput="filterLinkOptions('${fieldName}', this.value)"
+							onclick="event.stopPropagation()"
+						>
+					</div>
+					<div class="sm-link-options" id="options-${fieldName}">
+						${buildLinkOptionsHtml(fieldName, linkOptionCache[fieldName], currentValue)}
+					</div>
+				`;
 				dropdown.classList.add('open');
+				const searchInput = dropdown.querySelector('.sm-link-search-input');
+				if (searchInput) searchInput.focus();
 			}
 		});
 	}, 150);
 }
 
+function buildLinkOptionsHtml(fieldName, names, currentValue) {
+	if (!names || !names.length) {
+		return '<div class="sm-link-option">No records found</div>';
+	}
+
+	return names.map(name => {
+		const isSelected = name === currentValue;
+		return `<div class="sm-link-option${isSelected ? ' selected' : ''}" onclick="selectLinkOption('${fieldName}', '${escapeAttr(name)}')">${escapeHtml(name)}</div>`;
+	}).join('');
+}
+
+function filterLinkOptions(fieldName, query) {
+	const optionsWrap = document.getElementById(`options-${fieldName}`);
+	const linkInput = document.querySelector(`.sm-link-input[data-field="${fieldName}"]`);
+	const hiddenInput = linkInput ? linkInput.querySelector('input[type="hidden"]') : null;
+	const currentValue = hiddenInput ? hiddenInput.value : '';
+	const allNames = linkOptionCache[fieldName] || [];
+	const normalizedQuery = String(query || '').trim().toLowerCase();
+	const filteredNames = normalizedQuery
+		? allNames.filter(name => String(name || '').toLowerCase().includes(normalizedQuery))
+		: allNames;
+
+	if (optionsWrap) {
+		optionsWrap.innerHTML = buildLinkOptionsHtml(fieldName, filteredNames, currentValue);
+	}
+}
+
 function selectLinkOption(fieldName, value) {
 	const linkInput = document.querySelector(`.sm-link-input[data-field="${fieldName}"]`);
+	if (!linkInput) return;
+
 	const hiddenInput = linkInput.querySelector('input[type="hidden"]');
 	const btn = linkInput.querySelector('.sm-link-btn');
-	const valueSpan = btn.querySelector('.sm-link-value');
-	const placeholderSpan = btn.querySelector('.sm-link-placeholder');
-	
-	hiddenInput.value = value;
-	if (value) {
-		valueSpan.classList.remove('sm-link-placeholder');
-		valueSpan.classList.add('sm-link-value');
-		valueSpan.textContent = value;
-	} else {
-		valueSpan.classList.remove('sm-link-value');
-		valueSpan.classList.add('sm-link-placeholder');
+	const textSpan = btn.querySelector('span');
+
+	if (hiddenInput) {
+		hiddenInput.value = value;
 	}
-	
+
+	if (textSpan) {
+		textSpan.className = value ? 'sm-link-value' : 'sm-link-placeholder';
+		textSpan.textContent = value || 'Select...';
+	}
+
 	const dropdown = document.getElementById(`dropdown-${fieldName}`);
 	dropdown.classList.remove('open');
+}
+
+function closeAllLinkDropdowns(exceptFieldName = null) {
+	document.querySelectorAll('.sm-link-dropdown.open').forEach(dropdown => {
+		if (exceptFieldName && dropdown.id === `dropdown-${exceptFieldName}`) {
+			return;
+		}
+		dropdown.classList.remove('open');
+	});
+}
+
+function handleOutsideDropdownClick(event) {
+	if (event.target.closest('.sm-link-input')) {
+		return;
+	}
+	closeAllLinkDropdowns();
 }
 
 function saveRecord() {
 	const config = mastersDoctypes[currentDoctype];
 	const formData = {};
 
-document.querySelectorAll('[data-field]').forEach(input => {
+document.querySelectorAll('input[data-field], textarea[data-field], select[data-field]').forEach(input => {
 		let val = input.value;
 		// Handle checkbox inputs
 		if (input.type === 'checkbox') {
