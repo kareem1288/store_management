@@ -1,4 +1,4 @@
-{% extends "templates/web.html" %}
+	{% extends "templates/web.html" %}
 
 {% block header %}{% endblock %}
 
@@ -690,6 +690,56 @@ body.store-masters-page {
 	overflow-y: auto;
 }
 
+/* Multi-select Styles */
+.sm-multiselect-container {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.sm-multiselect-search {
+	padding-bottom: 0.5rem;
+}
+
+.sm-multiselect-search .sm-form-input {
+	width: 100%;
+}
+
+.sm-multiselect-options {
+	max-height: 150px;
+	overflow-y: auto;
+	border: 1px solid var(--sm-border);
+	border-radius: 8px;
+	padding: 0.5rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.sm-multiselect-checkbox {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.5rem;
+	border-radius: 6px;
+	cursor: pointer;
+	transition: background 0.2s ease;
+}
+
+.sm-multiselect-checkbox:hover {
+	background: rgba(37, 99, 235, 0.05);
+}
+
+.sm-multiselect-checkbox input {
+	width: 16px;
+	height: 16px;
+	cursor: pointer;
+}
+
+.sm-multiselect-checkbox span {
+	font-size: 0.95rem;
+}
+
 .sm-link-option {
 	padding: 0.75rem 1rem;
 	cursor: pointer;
@@ -790,10 +840,18 @@ const mastersDoctypes = {
 		desc: 'Manage companies',
 		fields: ['name', 'default_currency', 'country','company_name']
 	},
-	'User': {
+'User': {
 		title: 'Users',
 		desc: 'Manage user accounts',
-		fields: ['name', 'full_name', 'email']
+		fields: ['name', 'full_name', 'email'],
+		formFields: [
+			{ name: 'email', label: 'Email', type: 'text', required: true, fullWidth: true },
+			{ name: 'first_name', label: 'First Name', type: 'text', required: true },
+			{ name: 'last_name', label: 'Last Name', type: 'text' },
+{ name: 'role_profiles', label: 'Role Profiles (Multi-select)', type: 'multiselect', doctype: 'Role Profile', fullWidth: true },
+			{ name: 'new_password', label: 'Set Password', type: 'text', fullWidth: true },
+			{ name: 'send_welcome_email', label: 'Send Welcome Email', type: 'checkbox', fullWidth: true }
+		]
 	}
 };
 
@@ -1017,9 +1075,23 @@ if (field.type === 'checkbox') {
 						<span>▾</span>
 					</button>
 					<div class="sm-link-dropdown" id="dropdown-${field.name}"></div>
-					<input type="hidden" data-field="${field.name}" value="${escapeAttr(String(value))}">
+<input type="hidden" data-field="${field.name}" value="${escapeAttr(String(value))}">
 				</div>
 			`;
+		} else if (field.type === 'multiselect') {
+			// Multi-select checkbox list for roles
+			const currentValues = String(value || '').split(',').filter(v => v.trim());
+			html += `
+				<label class="sm-form-label">${field.label}${field.required ? '<span class="required">*</span>' : ''}</label>
+				<div class="sm-multiselect-container" id="multiselect-${field.name}" data-doctype="${field.doctype}" data-field="${field.name}">
+					<div class="sm-multiselect-search">
+						<input type="text" class="sm-form-input" placeholder="Search ${field.doctype}..." oninput="filterMultiselectOptions('${field.name}', this.value)">
+					</div>
+					<div class="sm-multiselect-options" id="multiselect-options-${field.name}"></div>
+				</div>
+			`;
+			// Store for later loading
+			setTimeout(() => loadMultiselectOptions(field.name, field.doctype, currentValues), 100);
 		} else if (field.type === 'image') {
 			const imageUrl = String(value || '').trim();
 			html += `
@@ -1223,6 +1295,119 @@ function handleOutsideDropdownClick(event) {
 		return;
 	}
 	closeAllLinkDropdowns();
+}
+
+// Multi-select functions for roles
+let multiselectCache = {};
+let multiselectSelectedCache = {};
+
+function loadMultiselectOptions(fieldName, doctype, currentValues) {
+	frappe.call({
+		method: 'store_management.api.get_master_records',
+		args: { doctype: doctype },
+		callback: function(response) {
+			const records = response.message || [];
+			multiselectCache[fieldName] = records.map(record => record.name);
+			multiselectSelectedCache[fieldName] = currentValues || [];
+			renderMultiselectOptions(fieldName);
+		}
+	});
+}
+
+function renderMultiselectOptions(fieldName) {
+	const container = document.getElementById(`multiselect-options-${fieldName}`);
+	if (!container) return;
+
+	const allOptions = multiselectCache[fieldName] || [];
+	const selected = multiselectSelectedCache[fieldName] || [];
+	
+	// Sort: selected items first, then unselected
+	const sortedOptions = [...allOptions].sort((a, b) => {
+		const aSelected = selected.includes(a);
+		const bSelected = selected.includes(b);
+		if (aSelected && !bSelected) return -1;
+		if (!aSelected && bSelected) return 1;
+		return a.localeCompare(b);
+	});
+	
+	container.innerHTML = sortedOptions.map(name => {
+		const isChecked = selected.includes(name);
+		return `
+			<label class="sm-multiselect-checkbox">
+				<input type="checkbox" data-field="${fieldName}" value="${escapeAttr(name)}" ${isChecked ? 'checked' : ''} onchange="toggleMultiselectOption('${fieldName}', '${escapeAttr(name)}', this.checked)">
+				<span>${escapeHtml(name)}</span>
+			</label>
+		`;
+	}).join('');
+	
+	// Also update hidden input with selected values
+	updateMultiselectHidden(fieldName);
+}
+
+function toggleMultiselectOption(fieldName, value, isChecked) {
+	if (!multiselectSelectedCache[fieldName]) {
+		multiselectSelectedCache[fieldName] = [];
+	}
+	
+	if (isChecked) {
+		if (!multiselectSelectedCache[fieldName].includes(value)) {
+			multiselectSelectedCache[fieldName].push(value);
+		}
+	} else {
+		multiselectSelectedCache[fieldName] = multiselectSelectedCache[fieldName].filter(v => v !== value);
+	}
+	
+	updateMultiselectHidden(fieldName);
+}
+
+function updateMultiselectHidden(fieldName) {
+	// We need to create or update a hidden input for saving
+	let hiddenInput = document.querySelector(`input[data-field="${fieldName}"][type="hidden"]`);
+	if (!hiddenInput) {
+		const container = document.getElementById(`multiselect-${fieldName}`);
+		if (container) {
+			hiddenInput = document.createElement('input');
+			hiddenInput.type = 'hidden';
+			hiddenInput.dataset.field = fieldName;
+			container.appendChild(hiddenInput);
+		}
+	}
+	
+	if (hiddenInput) {
+		hiddenInput.value = (multiselectSelectedCache[fieldName] || []).join(', ');
+	}
+}
+
+function filterMultiselectOptions(fieldName, query) {
+	const container = document.getElementById(`multiselect-options-${fieldName}`);
+	if (!container) return;
+
+	const allOptions = multiselectCache[fieldName] || [];
+	const normalizedQuery = String(query || '').trim().toLowerCase();
+	const filteredOptions = normalizedQuery
+		? allOptions.filter(name => String(name || '').toLowerCase().includes(normalizedQuery))
+		: allOptions;
+
+	const selected = multiselectSelectedCache[fieldName] || [];
+	
+	// Sort: selected items first, then unselected
+	const sortedOptions = [...filteredOptions].sort((a, b) => {
+		const aSelected = selected.includes(a);
+		const bSelected = selected.includes(b);
+		if (aSelected && !bSelected) return -1;
+		if (!aSelected && bSelected) return 1;
+		return a.localeCompare(b);
+	});
+	
+	container.innerHTML = sortedOptions.map(name => {
+		const isChecked = selected.includes(name);
+		return `
+			<label class="sm-multiselect-checkbox">
+				<input type="checkbox" data-field="${fieldName}" value="${escapeAttr(name)}" ${isChecked ? 'checked' : ''} onchange="toggleMultiselectOption('${fieldName}', '${escapeAttr(name)}', this.checked)">
+				<span>${escapeHtml(name)}</span>
+			</label>
+		`;
+	}).join('');
 }
 
 function saveRecord() {

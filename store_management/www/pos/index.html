@@ -53,7 +53,7 @@
 				</div>
 			</div>
 
-			<div class="sm-bill-column">
+<div class="sm-bill-column">
 				<div class="sm-hero-topbar">
 					<div class="sm-toolbar-actions">
 						<button class="sm-cta sm-cta-primary" type="button" onclick="startBilling()">
@@ -69,20 +69,6 @@
 							<span>View Reports</span>
 						</button>
 					</div>
-				</div>
-
-				<div class="sm-search-row">
-					<label class="sm-search-box" for="search-input">
-						<span class="sm-search-icon">
-							<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 16l4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-						</span>
-						<input
-							id="search-input"
-							type="text"
-							placeholder="Search Items or Scan Barcode"
-							autocomplete="off"
-						>
-					</label>
 				</div>
 
 				<section class="sm-current-bill">
@@ -101,11 +87,11 @@
 						<div class="sm-cart-list" id="cart-items"></div>
 					</div>
 
-					<div class="sm-bill-footer">
+<div class="sm-bill-footer">
 						<div class="sm-bill-meta">
 							<div class="sm-mini-total"><span>Subtotal</span><strong id="subtotal">Rs 0.00</strong></div>
 							<div class="sm-mini-total"><span>Tax</span><strong id="tax">Rs 0.00</strong></div>
-							<div class="sm-mini-total"><span>Discount</span><strong id="discount">Rs 0.00</strong></div>
+							<div class="sm-mini-total"><span>Discount</span><strong id="discount">0%</strong></div>
 						</div>
 						<div class="sm-grand-total-box">
 							<span>Total</span>
@@ -122,17 +108,31 @@
 			</div>
 		</div>
 
-		<div class="sm-pos-workspace" id="billing-panel">
+<div class="sm-pos-workspace" id="billing-panel">
 			<section class="sm-pos-browser">
 				<div class="sm-toolbar">
 					<div class="sm-toolbar-title">
 						<h2 id="shop-name">Retail POS</h2>
 						<p>Category-wise item selection</p>
 					</div>
-					<div class="sm-toolbar-actions">
-						<div class="sm-screen-badge" id="screen-resolution">Screen: -- x --</div>
-						<button class="sm-chip sm-chip-muted" type="button" onclick="focusSearch()">Scan / Search</button>
-					</div>
+
+				</div>
+
+<div class="sm-search-row">
+					<label class="sm-search-box" for="search-input">
+						<span class="sm-search-icon">
+							<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 16l4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+						</span>
+						<input
+							id="search-input"
+							type="text"
+							placeholder="Search Items or Scan Barcode"
+							autocomplete="off"
+						>
+						<button type="button" class="sm-scan-button" id="scan-barcode-btn" onclick="startBarcodeScan()">
+							<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5v4m0 10v4M21 5v4m0 10v4M5 3h4m10 0h4M5 17h4m10 0h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+						</button>
+					</label>
 				</div>
 
 				<div class="sm-category-strip" id="category-tabs"></div>
@@ -163,9 +163,9 @@
 				</label>
 			</div>
 
-			<label class="sm-field">
-				<span>Discount Amount</span>
-				<input id="discount-input" type="number" min="0" step="0.01" value="0">
+<label class="sm-field">
+				<span>Discount (%)</span>
+				<input id="discount-input" type="number" min="0" max="100" step="0.5" value="0" placeholder="0">
 			</label>
 
 			<div class="sm-payment-block">
@@ -189,7 +189,30 @@
 				Generate Bill
 			</button>
 		</div>
-	</section>
+</section>
+</div>
+
+<div class="sm-scan-modal" id="scan-modal" onclick="closeScanModal(event)">
+	<div class="sm-scan-modal-content" onclick="event.stopPropagation()">
+		<h3>Scan Barcode</h3>
+		<div id="camera-viewport" class="sm-camera-viewport">
+			<video id="camera-video" playsinline></video>
+			<canvas id="camera-canvas" class="sm-camera-canvas"></canvas>
+		</div>
+		<div class="sm-scan-controls">
+			<button type="button" class="sm-camera-btn" id="start-camera-btn" onclick="startCamera()">
+				<svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="13" r="4"/></svg>
+				Start Camera
+			</button>
+			<button type="button" class="sm-camera-btn sm-camera-stop" id="stop-camera-btn" onclick="stopCamera()" style="display:none;">
+				Stop Camera
+			</button>
+		</div>
+		<div class="sm-scan-divider"><span>or enter manually</span></div>
+		<input type="text" id="barcode-input" placeholder="Enter barcode manually" autocomplete="off">
+		<button class="sm-main-button" type="button" onclick="processBarcode()">Add Item</button>
+		<button class="sm-chip sm-chip-muted" type="button" onclick="closeScanModalDirect()">Cancel</button>
+	</div>
 </div>
 
 <script id="sm-pos-bootstrap" type="application/json">{{ pos_bootstrap_json | safe }}</script>
@@ -300,13 +323,26 @@ body.store-pos-page {
 	color: #222;
 }
 
+.sm-checkout-drawer .sm-pos-kicker {
+	color: #22c55e;
+	font-size: 0.75rem;
+	font-weight: 700;
+}
+
 .sm-pos-hero h1,
 .sm-toolbar-title h2,
-.sm-panel-head h3,
+.sm-panel-head h3 {
+	margin: 0;
+	font-family: "Anek Telugu", "Manrope", sans-serif;
+	font-weight: 800;
+}
+
 .sm-drawer-head h3 {
 	margin: 0;
 	font-family: "Anek Telugu", "Manrope", sans-serif;
 	font-weight: 800;
+	color: #f1f5f9;
+	font-size: 1.1rem;
 }
 
 .sm-pos-hero h1 {
@@ -424,12 +460,20 @@ body.store-pos-page {
 .sm-panel-head,
 .sm-search-row,
 .sm-summary-row,
-.sm-drawer-footer,
-.sm-drawer-head {
+.sm-drawer-footer {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	gap: 1rem;
+}
+
+.sm-drawer-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+	padding-bottom: 0.5rem;
+	border-bottom: 1px solid #e2e8f0;
 }
 
 .sm-toolbar-actions {
@@ -464,6 +508,152 @@ body.store-pos-page {
 	background: transparent;
 	font-size: 1rem;
 	color: var(--sm-text);
+}
+
+.sm-scan-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	border-radius: 8px;
+	background: #e2e8f0;
+	border: none;
+	cursor: pointer;
+	color: #64748b;
+	transition: all 0.2s ease;
+}
+
+.sm-scan-button:hover {
+	background: #22c55e;
+	color: #fff;
+}
+
+.sm-scan-button svg {
+	width: 18px;
+	height: 18px;
+}
+
+.sm-scan-modal {
+	position: fixed;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.7);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 200;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.2s ease;
+}
+
+.sm-scan-modal.open {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.sm-scan-modal-content {
+	background: #fff;
+	border-radius: 16px;
+	padding: 1.5rem;
+	width: min(400px, 90vw);
+	text-align: center;
+}
+
+.sm-scan-modal-content h3 {
+	margin: 0 0 1rem;
+	color: #1e293b;
+}
+
+.sm-scan-modal-content input {
+	width: 100%;
+	padding: 0.75rem;
+	font-size: 1.25rem;
+	border: 2px solid #e2e8f0;
+	border-radius: 8px;
+	text-align: center;
+	margin-bottom: 1rem;
+}
+
+.sm-scan-modal-content input:focus {
+	border-color: #22c55e;
+	outline: none;
+}
+
+.sm-camera-viewport {
+	width: 100%;
+	height: 200px;
+	background: #1e293b;
+	border-radius: 12px;
+	overflow: hidden;
+	position: relative;
+	margin-bottom: 0.75rem;
+}
+
+#camera-video {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.sm-camera-canvas {
+	display: none;
+}
+
+.sm-scan-controls {
+	display: flex;
+	gap: 0.5rem;
+	margin-bottom: 0.75rem;
+}
+
+.sm-camera-btn {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	padding: 0.75rem;
+	border-radius: 10px;
+	background: #22c55e;
+	color: #fff;
+	border: none;
+	font-size: 0.95rem;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.sm-camera-btn svg {
+	width: 20px;
+	height: 20px;
+}
+
+.sm-camera-btn:hover {
+	background: #16a34a;
+}
+
+.sm-camera-stop {
+	background: #ef4444;
+}
+
+.sm-camera-stop:hover {
+	background: #dc2626;
+}
+
+.sm-scan-divider {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	margin: 0.75rem 0;
+	color: #64748b;
+	font-size: 0.85rem;
+}
+
+.sm-scan-divider::before,
+.sm-scan-divider::after {
+	content: "";
+	flex: 1;
+	height: 1px;
+	background: #e2e8f0;
 }
 
 .sm-chip {
@@ -651,6 +841,21 @@ body.store-pos-page {
 	gap: 0;
 }
 
+.sm-checkout-item {
+	padding: 0.5rem;
+	background: #f1f5f9;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	margin-bottom: 0.4rem;
+}
+
+.sm-checkout-item h4 {
+	margin: 0 0 0.25rem;
+	font-size: 0.85rem;
+	font-weight: 700;
+	color: #1e293b;
+}
+
 .sm-cart-list {
 	max-height: 290px;
 	overflow: auto;
@@ -700,8 +905,8 @@ body.store-pos-page {
 .sm-checkout-item p,
 .sm-empty-state p {
 	margin: 0;
-	color: var(--sm-muted);
-	font-size: 0.88rem;
+	color: #94a3b8;
+	font-size: 0.82rem;
 }
 
 .sm-qty-controls {
@@ -722,13 +927,18 @@ body.store-pos-page {
 }
 
 .sm-main-button {
-	padding: 0.95rem 1.15rem;
-	border-radius: 14px;
-	background: linear-gradient(135deg, #2563eb, #1d4ed8);
+	padding: 0.85rem 1rem;
+	border-radius: 12px;
+	background: linear-gradient(135deg, #22c55e, #16a34a);
 	color: #fff;
-	font-size: 1rem;
+	font-size: 0.95rem;
 	font-weight: 800;
-	box-shadow: 0 10px 20px rgba(37, 99, 235, 0.16);
+	box-shadow: 0 8px 16px rgba(34, 197, 94, 0.25);
+}
+
+.sm-checkout-drawer .sm-main-button {
+	width: 100%;
+	margin-top: 0.5rem;
 }
 
 .sm-current-bill {
@@ -864,8 +1074,8 @@ body.store-pos-page {
 .sm-checkout-backdrop {
 	position: fixed;
 	inset: 0;
-	background: rgba(15, 23, 42, 0.4);
-	backdrop-filter: blur(4px);
+	background: rgba(0, 0, 0, 0.6);
+	backdrop-filter: blur(6px);
 	opacity: 0;
 	pointer-events: none;
 	transition: opacity 0.2s ease;
@@ -876,14 +1086,14 @@ body.store-pos-page {
 	position: fixed;
 	top: 0;
 	right: 0;
-	width: min(540px, 100vw);
+	width: min(420px, 100vw);
 	height: 100vh;
-	background: #fff;
+	background: #f8fafc;
 	box-shadow: -20px 0 50px rgba(15, 23, 42, 0.2);
-	padding: 1.4rem;
+	padding: 1rem;
 	display: grid;
 	grid-template-rows: auto 1fr auto;
-	gap: 1.1rem;
+	gap: 0.75rem;
 	transform: translateX(100%);
 	transition: transform 0.22s ease;
 	z-index: 100;
@@ -899,37 +1109,53 @@ body.store-pos-page {
 }
 
 .sm-icon-button {
-	width: 42px;
-	height: 42px;
-	border-radius: 14px;
-	background: #f8fafc;
-	font-size: 1rem;
-	font-weight: 800;
+	width: 32px;
+	height: 32px;
+	border-radius: 8px;
+	background: #f1f5f9;
+	color: #64748b;
+	font-size: 0.9rem;
+	font-weight: 600;
+	border: 1px solid #cbd5e1;
+}
+
+.sm-checkout-drawer .sm-icon-button {
+	width: 28px;
+	height: 28px;
+	font-size: 0.8rem;
 }
 
 .sm-checkout-content {
 	overflow: auto;
 	display: grid;
-	gap: 1rem;
+	gap: 0.6rem;
 }
 
 .sm-field-grid {
 	display: grid;
 	grid-template-columns: repeat(2, 1fr);
-	gap: 0.9rem;
+	gap: 0.5rem;
 }
 
 .sm-field {
 	display: grid;
-	gap: 0.45rem;
+	gap: 0.3rem;
 }
 
 .sm-field input {
-	min-height: 52px;
-	padding: 0 0.95rem;
-	background: #f8fafc;
-	border: 1px solid rgba(15, 23, 42, 0.08);
-	border-radius: 16px;
+	min-height: 42px;
+	padding: 0 0.75rem;
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+	color: #1e293b;
+	font-size: 0.9rem;
+}
+
+.sm-field span {
+	color: #64748b;
+	font-size: 0.8rem;
+	font-weight: 600;
 }
 
 .sm-payment-block {
@@ -940,36 +1166,44 @@ body.store-pos-page {
 .sm-payment-options {
 	display: grid;
 	grid-template-columns: repeat(3, 1fr);
-	gap: 0.7rem;
+	gap: 0.4rem;
 }
 
 .sm-payment-option {
-	padding: 0.95rem 0.75rem;
-	border-radius: 18px;
-	background: #f8fafc;
-	color: var(--sm-text);
-	font-size: 1rem;
-	font-weight: 800;
+	padding: 0.45rem 0.35rem;
+	border-radius: 8px;
+	background: #fff;
+	color: #64748b;
+	font-size: 0.75rem;
+	font-weight: 600;
+	border: 1px solid #e2e8f0;
 }
 
 .sm-payment-option.active {
-	background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-	color: #1d4ed8;
-	box-shadow: inset 0 0 0 2px rgba(37, 99, 235, 0.3);
+	background: linear-gradient(135deg, #22c55e, #16a34a);
+	color: #fff;
+	box-shadow: inset 0 0 0 2px #86efac;
 }
 
 .sm-drawer-total {
-	display: grid;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0.75rem;
+	background: #e2e8f0;
+	border-radius: 10px;
 }
 
 .sm-drawer-total span {
-	color: var(--sm-muted);
-	font-size: 0.88rem;
+	color: #64748b;
+	font-size: 0.85rem;
+	font-weight: 600;
 }
 
 .sm-drawer-total strong {
-	font-size: 1.3rem;
+	font-size: 1.25rem;
 	font-weight: 800;
+	color: #16a34a;
 }
 
 @media (max-width: 1080px) {
@@ -1193,6 +1427,7 @@ function handleSearch(event) {
 	if (localMatches.length) {
 		smPosState.filteredItems = localMatches;
 		renderItems();
+		scrollToBillingPanel();
 		return;
 	}
 
@@ -1202,6 +1437,214 @@ function handleSearch(event) {
 		callback: function(response) {
 			smPosState.filteredItems = response.message || [];
 			renderItems();
+			scrollToBillingPanel();
+		}
+	});
+}
+
+function scrollToBillingPanel() {
+	const billingPanel = document.getElementById("billing-panel");
+	if (billingPanel) {
+		billingPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+	}
+}
+
+let lastKeyTime = 0;
+let inputBuffer = "";
+let videoStream = null;
+let barcodeDetector = null;
+
+// Check if BarcodeDetector API is available
+const hasBarcodeDetector = "BarcodeDetector" in window;
+
+function startBarcodeScan() {
+	const modal = document.getElementById("scan-modal");
+	const input = document.getElementById("barcode-input");
+	if (modal && input) {
+		modal.classList.add("open");
+		input.value = "";
+		inputBuffer = "";
+		input.focus();
+		lastKeyTime = 0;
+		
+		// Initialize BarcodeDetector if available
+		if (hasBarcodeDetector && !barcodeDetector) {
+			barcodeDetector = new BarcodeDetector({ formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "qr_code"] });
+		}
+		
+		// Remove old listeners to avoid duplicates
+		input.onkeydown = null;
+		input.oninput = null;
+		
+		// Handle barcode scanner input (very fast typing) or manual Enter
+		input.onkeydown = function(e) {
+			const currentTime = Date.now();
+			const timeDiff = currentTime - lastKeyTime;
+			lastKeyTime = currentTime;
+			
+			// If keys pressed very fast (<50ms), it's likely a barcode scanner
+			if (timeDiff < 50 && e.key.length === 1) {
+				inputBuffer += e.key;
+			}
+			
+			// Scanner sends Enter after barcode
+			if (e.key === "Enter") {
+				// Check if we have buffer from fast scanning
+				if (inputBuffer.length > 0) {
+					input.value = inputBuffer;
+					inputBuffer = "";
+				}
+				processBarcode();
+			}
+		};
+		
+		// Also handle manual typing that might be slow
+		input.oninput = function(e) {
+			if (e.inputType === "insertText" && e.data) {
+				lastKeyTime = Date.now();
+			}
+		};
+	}
+}
+
+function startCamera() {
+	const video = document.getElementById("camera-video");
+	const startBtn = document.getElementById("start-camera-btn");
+	const stopBtn = document.getElementById("stop-camera-btn");
+	
+	if (!video) return;
+	
+	// Get navigator from window to ensure we have the real one
+	var nav = window.navigator;
+	var mediaDevices = nav && nav.mediaDevices;
+	
+	if (!mediaDevices) {
+		frappe.msgprint("Camera not available. Use manual entry.");
+		return;
+	}
+	
+	// Try to access camera
+	var constraints = { 
+		video: {
+			facingMode: "environment"
+		}
+	};
+	
+	mediaDevices.getUserMedia(constraints)
+	.then(function(stream) {
+		videoStream = stream;
+		video.srcObject = stream;
+		video.play();
+		
+		startBtn.style.display = "none";
+		stopBtn.style.display = "flex";
+		
+		scanFrame();
+	})
+	.catch(function(err) {
+		console.error("Camera error:", err);
+		frappe.msgprint("Camera not working: " + err.message);
+	});
+}
+
+async function scanFrame() {
+	const video = document.getElementById("camera-video");
+	
+	if (!videoStream || video.paused || video.ended) return;
+	
+	try {
+		if (hasBarcodeDetector && barcodeDetector) {
+			const barcodes = await barcodeDetector.detect(video);
+			if (barcodes.length > 0) {
+				const barcode = barcodes[0].rawValue;
+				processBarcodeValue(barcode);
+				return;
+			}
+		}
+	} catch (err) {
+		console.warn("Barcode detection error:", err);
+	}
+	
+	// Continue scanning
+	requestAnimationFrame(scanFrame);
+}
+
+function processBarcodeValue(barcode) {
+	stopCamera();
+	
+	const input = document.getElementById("barcode-input");
+	if (input) input.value = barcode;
+	
+	frappe.call({
+		method: "store_management.api.get_pos_items_by_barcode",
+		args: { query: barcode },
+		callback: function(response) {
+			const items = response.message || [];
+			if (!items.length) {
+				frappe.msgprint("No item found for barcode: " + barcode);
+				return;
+			}
+			const item = items[0];
+			addToCartByCode(item.name);
+			closeScanModalDirect();
+			frappe.show_alert({ message: "Added: " + item.item_name, indicator: "green" });
+		}
+	});
+}
+
+function stopCamera() {
+	if (videoStream) {
+		videoStream.getTracks().forEach(track => track.stop());
+		videoStream = null;
+	}
+	const video = document.getElementById("camera-video");
+	if (video) video.srcObject = null;
+	
+	const startBtn = document.getElementById("start-camera-btn");
+	const stopBtn = document.getElementById("stop-camera-btn");
+	if (startBtn) startBtn.style.display = "flex";
+	if (stopBtn) stopBtn.style.display = "none";
+}
+
+function closeScanModal(event) {
+	if (event && event.target !== event.currentTarget) return;
+	closeScanModalDirect();
+}
+
+function closeScanModalDirect() {
+	stopCamera();
+	const modal = document.getElementById("scan-modal");
+	if (modal) {
+		modal.classList.remove("open");
+	}
+}
+
+function processBarcode() {
+	const input = document.getElementById("barcode-input");
+	const barcode = (input.value || "").trim();
+	if (!barcode) {
+		frappe.msgprint("Please enter a barcode");
+		return;
+	}
+
+	frappe.call({
+		method: "store_management.api.get_pos_items_by_barcode",
+		args: { query: barcode },
+		callback: function(response) {
+			const items = response.message || [];
+			if (!items.length) {
+				frappe.msgprint("No item found for barcode: " + barcode);
+				return;
+			}
+
+			const item = items[0];
+			addToCartByCode(item.name);
+			closeScanModalDirect();
+
+			frappe.show_alert({
+				message: `Added: ${item.item_name}`,
+				indicator: "green"
+			});
 		}
 	});
 }
@@ -1375,8 +1818,9 @@ function renderCart() {
 		subtotal += item.quantity * item.standard_rate;
 	});
 
-	const tax = 0;
-	const discount = Math.min(Number(discountInput.value || 0), subtotal);
+const tax = 0;
+	const discountPercent = Math.max(0, Math.min(Number(discountInput.value || 0), 100));
+	const discount = subtotal * (discountPercent / 100);
 	const total = subtotal + tax - discount;
 
 	smPosState.summary = { subtotal, tax, discount, total };
@@ -1384,7 +1828,7 @@ function renderCart() {
 	document.getElementById("cart-count").textContent = `${smPosState.cart.reduce((sum, row) => sum + row.quantity, 0)} items`;
 	document.getElementById("subtotal").textContent = formatCurrency(subtotal);
 	document.getElementById("tax").textContent = formatCurrency(tax);
-	document.getElementById("discount").textContent = formatCurrency(discount);
+document.getElementById("discount").textContent = `${discountPercent}%`;
 	document.getElementById("total").textContent = formatCurrency(total);
 	document.getElementById("checkout-total").textContent = formatCurrency(total);
 

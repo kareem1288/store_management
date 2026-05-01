@@ -214,12 +214,22 @@ def get_pos_items_by_barcode(query):
 	if not query:
 		return []
 
+	# First try exact match
 	barcodes = frappe.get_all(
 		"Item Barcode",
-		filters={"barcode": ["like", f"%{query}%"]},
+		filters={"barcode": query},
 		pluck="parent",
-		limit_page_length=0,
+		limit_page_length=1,
 	)
+
+	# If no exact match, try partial match
+	if not barcodes:
+		barcodes = frappe.get_all(
+			"Item Barcode",
+			filters={"barcode": ["like", f"%{query}%"]},
+			pluck="parent",
+			limit_page_length=0,
+		)
 
 	if not barcodes:
 		return []
@@ -334,7 +344,30 @@ def get_master_record(doctype, name):
 	if not frappe.db.exists(doctype, name):
 		frappe.throw(f"{doctype} {name} not found")
 	
-	return frappe.get_doc(doctype, name).as_dict()
+	doc = frappe.get_doc(doctype, name)
+	result = doc.as_dict()
+	
+	# For User doctype, include role profiles
+	if doctype == "User":
+		role_profiles = []
+		if hasattr(doc, "role_profiles") and doc.role_profiles:
+			role_profiles = [rp.role_profile for rp in doc.role_profiles]
+		elif hasattr(doc, "user_roles") and doc.user_roles:
+			# Get role profiles from assigned roles
+			user_roles = [ur.role for ur in doc.user_roles]
+			# Find role profiles that contain these roles
+			all_profiles = frappe.get_all("Role Profile", pluck="name")
+			for profile in all_profiles:
+				try:
+					profile_doc = frappe.get_doc("Role Profile", profile)
+					profile_roles = [rp.role for rp in profile_doc.roles]
+					if any(r in user_roles for r in profile_roles):
+						role_profiles.append(profile)
+				except:
+					pass
+		result["role_profiles"] = ",".join(role_profiles) if role_profiles else ""
+	
+	return result
 
 
 @frappe.whitelist()
@@ -343,38 +376,112 @@ def create_master_record(doctype, **kwargs):
 	if not frappe.db.exists("DocType", doctype):
 		frappe.throw(f"DocType {doctype} not found")
 	
+# Handle role profiles for User doctype
+	role_profiles_str = kwargs.pop("role_profiles", None) if doctype == "User" else None
+
 	# Remove doctype from kwargs if present
 	kwargs.pop("doctype", None)
-	
+
+	# For User doctype, set role_profile_name if role profiles were selected
+	if doctype == "User" and role_profiles_str:
+		profiles = [p.strip() for p in role_profiles_str.split(",") if p.strip()]
+		if profiles:
+			# Use first selected profile as role_profile_name
+			kwargs["role_profile_name"] = profiles[0]
+
 	doc = frappe.get_doc({
 		"doctype": doctype,
 		**kwargs
 	})
-	
+
 	doc.insert()
+
+# Add roles from ALL selected role profiles (including the first one)
+	if doctype == "User" and role_profiles_str:
+		profiles = [p.strip() for p in role_profiles_str.split(",") if p.strip()]
+		if profiles:
+			# Get existing roles from database to ensure we have the latest data
+			existing_roles = set()
+			if doc.roles:
+				for role in doc.roles:
+					existing_roles.add(role.role)
+
+			# Add roles from ALL selected profiles
+			for profile in profiles:
+				if frappe.db.exists("Role Profile", profile):
+					profile_doc = frappe.get_doc("Role Profile", profile)
+					for rp in profile_doc.roles:
+						if frappe.db.exists("Role", rp.role) and rp.role not in existing_roles:
+							# Check if role is already assigned to user in database
+							if not frappe.db.exists("Has Role", {"parent": doc.name, "role": rp.role}):
+								frappe.get_doc({
+									"doctype": "Has Role",
+									"parent": doc.name,
+									"parenttype": "User",
+									"parentfield": "roles",
+									"role": rp.role
+								}).insert(ignore_permissions=True)
+							existing_roles.add(rp.role)
+
+		doc.reload()
+
 	return {"name": doc.name}
 
+import frappe
 
 @frappe.whitelist()
 def update_master_record(doctype, name, **kwargs):
 	"""Update an existing master record"""
+
 	if not frappe.db.exists("DocType", doctype):
 		frappe.throw(f"DocType {doctype} not found")
-	
+
 	if not frappe.db.exists(doctype, name):
 		frappe.throw(f"{doctype} {name} not found")
-	
-	# Remove doctype and name from kwargs
+
 	kwargs.pop("doctype", None)
 	kwargs.pop("name", None)
-	
+
+	role_profiles_str = kwargs.pop("role_profiles", None) if doctype == "User" else None
+
 	doc = frappe.get_doc(doctype, name)
+
+	# Update normal fields
 	doc.update(kwargs)
-	doc.save()
-	
+
+	# Handle multiple role profiles (Frappe v16)
+	if doctype == "User" and role_profiles_str:
+
+		profiles = [p.strip() for p in role_profiles_str.split(",") if p.strip()]
+
+		# Clear existing role profiles
+		doc.set("role_profiles", [])
+
+		existing_roles = {d.role for d in doc.roles}
+
+		for profile in profiles:
+
+			if frappe.db.exists("Role Profile", profile):
+
+				# Add role profile row
+				doc.append("role_profiles", {
+					"role_profile": profile
+				})
+
+				# Fetch roles from profile
+				profile_doc = frappe.get_doc("Role Profile", profile)
+
+				for rp in profile_doc.roles:
+					if rp.role not in existing_roles and frappe.db.exists("Role", rp.role):
+
+						doc.append("roles", {
+							"role": rp.role
+						})
+
+						existing_roles.add(rp.role)
+
+	doc.save(ignore_permissions=True)
 	return {"name": doc.name}
-
-
 @frappe.whitelist()
 def delete_master_record(doctype, name):
 	"""Delete a master record"""
