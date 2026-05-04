@@ -126,6 +126,32 @@ def _get_default_customer():
 	return customers[0] if customers else None
 
 
+def _get_default_company():
+	if not frappe.db.exists("DocType", "Company"):
+		return None
+
+	default_company = None
+
+	try:
+		default_company = frappe.defaults.get_user_default("Company")
+	except Exception:
+		default_company = None
+
+	if default_company and frappe.db.exists("Company", default_company):
+		return default_company
+
+	try:
+		default_company = frappe.db.get_single_value("Global Defaults", "default_company")
+	except Exception:
+		default_company = None
+
+	if default_company and frappe.db.exists("Company", default_company):
+		return default_company
+
+	companies = frappe.get_all("Company", pluck="name", limit=1)
+	return companies[0] if companies else None
+
+
 def _resolve_customer(customer=None, customer_phone=None):
 	if customer and frappe.db.exists("Customer", customer):
 		return customer

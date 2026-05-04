@@ -884,10 +884,36 @@ frappe.ready(() => {
 		return;
 	}
 
+	hideStoreProfileMenuItems();
 	document.addEventListener('click', handleOutsideDropdownClick);
 
 	loadRecords('Item');
 });
+
+function hideStoreProfileMenuItems() {
+	const hiddenLabels = new Set(['My Account', 'Switch To Desk', 'Switch to Desk']);
+
+	const removeHiddenItems = () => {
+		document.querySelectorAll('.dropdown-menu a, .dropdown-menu button').forEach(item => {
+			const label = item.textContent.replace(/\s+/g, ' ').trim();
+			if (!hiddenLabels.has(label)) return;
+
+			const menu = item.closest('.dropdown-menu');
+			const menuRow = item.closest('li');
+			if (menuRow && menu?.contains(menuRow)) {
+				menuRow.remove();
+				return;
+			}
+
+			item.remove();
+		});
+	};
+
+	removeHiddenItems();
+
+	const observer = new MutationObserver(removeHiddenItems);
+	observer.observe(document.body, { childList: true, subtree: true });
+}
 
 function selectDoctype(doctype) {
 	currentDoctype = doctype;
