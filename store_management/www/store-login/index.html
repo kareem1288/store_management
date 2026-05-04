@@ -1,338 +1,592 @@
 {% extends "templates/web.html" %}
 
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+
 {% block head_include %}
 <style>
 :root {
     color-scheme: light;
-    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+    min-height: 100%;
+    overflow: hidden;
+}
+
 body {
     margin: 0;
+    background: #f8fbff;
+    color: #0d1731;
+}
+
+body main.container {
+    width: 100%;
+    max-width: none;
+    padding: 0;
+}
+
+body .page-content-wrapper,
+body .page_content {
+    height: 100vh;
     min-height: 100vh;
-    background: radial-gradient(circle at top, rgba(37, 99, 235, 0.16), transparent 22%), linear-gradient(180deg, #eff6ff 0%, #f8fbff 100%);
-    color: #0f172a;
+    overflow: hidden;
+}
+
+body .page-breadcrumbs,
+body .page-header-wrapper,
+body .page-footer {
+    display: none;
 }
 
 .page-shell {
+    height: 100vh;
     min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 21px 20px;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 25% 55%, rgba(86, 118, 255, 0.08), transparent 25%),
+        radial-gradient(circle at 74% 41%, rgba(124, 145, 255, 0.05), transparent 25%),
+        #fbfdff;
+}
+
+.login-shell {
+    width: calc(100vw - 40px);
+    max-width: none;
+    height: calc(100vh - 42px);
+    min-height: 0;
+    display: flex;
+    overflow: hidden;
+    border: 1px solid #d7e1ef;
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 18px 46px rgba(27, 43, 76, 0.08);
+}
+
+.left-panel,
+.right-panel {
+    position: relative;
+    height: 100%;
+    min-height: 0;
+}
+
+.left-panel {
+    flex: 0 0 48.2%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 28px 24px 36px;
-    gap: 24px;
-}
-.login-shell {
-    width: min(1220px, calc(100% - 48px));
-    display: grid;
-    grid-template-columns: minmax(360px, 1.4fr) minmax(340px, 0.9fr);
-    gap: 32px;
-    background: rgba(255, 255, 255, 0.96);
-    border-radius: 40px;
-    box-shadow: 0 36px 110px rgba(15, 23, 42, 0.12);
-    border: 1px solid rgba(148, 163, 184, 0.18);
+    padding: 106px 48px 76px;
     overflow: hidden;
+    background:
+        radial-gradient(circle at 77% 47%, rgba(76, 96, 217, 0.07) 0 146px, transparent 147px),
+        linear-gradient(180deg, #fbfdff 0%, #f6f9ff 100%);
+    border-right: 1px solid #edf2fa;
 }
-.left-panel {
+
+.brand-block {
     position: relative;
-    padding: 48px 42px 42px;
-    background: linear-gradient(180deg, #f8fbff 0%, #f1f7ff 100%);
+    z-index: 2;
+    text-align: center;
 }
-.left-panel::before {
-    content: "";
-    position: absolute;
-    width: 240px;
-    height: 240px;
-    border-radius: 50%;
-    background: rgba(59, 130, 246, 0.15);
-    top: -90px;
-    right: -70px;
-    filter: blur(2px);
-}
-.left-panel::after {
-    content: "";
-    position: absolute;
-    width: 132px;
-    height: 132px;
-    border-radius: 50%;
-    background: rgba(37, 99, 235, 0.08);
-    bottom: -60px;
-    left: -40px;
-    filter: blur(2px);
-}
-.brand-line {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    position: relative;
-    z-index: 1;
-}
+
 .brand-mark {
+    width: 70px;
+    height: 70px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 56px;
-    height: 56px;
-    border-radius: 18px;
-    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    border-radius: 11px;
+    background: linear-gradient(145deg, #5c66f3 0%, #2036d4 100%);
+    box-shadow: 0 16px 32px rgba(36, 57, 208, 0.20);
     color: #ffffff;
-    font-size: 1.5rem;
+    font-size: 48px;
     font-weight: 800;
-    box-shadow: 0 18px 40px rgba(37, 99, 235, 0.18);
+    line-height: 1;
+    letter-spacing: 0;
 }
-.left-brand {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    position: relative;
-    z-index: 1;
-}
-.left-brand span {
-    color: #2563eb;
-    font-weight: 700;
-    font-size: 0.95rem;
-}
-.left-copy {
-    margin-top: 32px;
-    position: relative;
-    z-index: 1;
-}
-.left-eyebrow {
-    margin: 0 0 16px;
-    color: #0f172a;
-    font-size: 0.95rem;
+
+.brand-title {
+    margin: 24px 0 0;
+    color: #101a35;
+    font-size: 39px;
     font-weight: 800;
-    text-transform: none;
-    letter-spacing: normal;
+    line-height: 1.08;
 }
-.left-title {
-    margin: 0;
-    font-size: clamp(2.4rem, 4vw, 3.6rem);
-    line-height: 1.02;
-    color: #0f172a;
-    letter-spacing: -0.03em;
+
+.brand-subtitle {
+    margin: 12px 0 0;
+    color: #51617f;
+    font-size: 19px;
+    font-weight: 500;
+    line-height: 1.5;
 }
-.left-subtitle {
-    margin: 18px 0 0;
-    max-width: 520px;
-    color: #475569;
-    font-size: 1rem;
-    line-height: 1.75;
-}
-.illustration-card {
-    position: relative;
-    margin-top: 38px;
-    border-radius: 32px;
-    overflow: hidden;
-    background: linear-gradient(180deg, #ffffff 0%, #eef4ff 100%);
-    border: 1px solid rgba(37, 99, 235, 0.14);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.72);
-}
-.illustration-inner {
+
+.retail-scene {
     position: relative;
     z-index: 1;
-    display: grid;
-    place-items: center;
-    padding: 34px;
+    width: 94%;
+    max-width: 620px;
+    height: 382px;
+    margin: 18px auto 0;
+    aspect-ratio: 620 / 382;
 }
-.illustration-inner svg {
+
+.dot-grid {
+    position: absolute;
+    left: -34px;
+    top: 2px;
+    width: 138px;
+    height: 138px;
+    opacity: 0.45;
+    background-image: radial-gradient(#9fb0f4 1.55px, transparent 1.55px);
+    background-size: 16px 16px;
+}
+
+.scene-glow {
+    position: absolute;
+    inset: 32px 76px 14px 104px;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(68, 94, 224, 0.13), rgba(77, 104, 228, 0) 67%);
+    filter: blur(4px);
+}
+
+.pos-illustration {
+    position: absolute;
+    inset: 0;
     width: 100%;
-    max-width: 520px;
-    height: auto;
+    height: 100%;
+    overflow: visible;
+    filter: drop-shadow(0 30px 28px rgba(58, 82, 174, 0.20));
 }
+
+.feature-row {
+    width: 88%;
+    max-width: 570px;
+    display: flex;
+    gap: 30px;
+    margin: auto auto 84px;
+    position: relative;
+    z-index: 2;
+}
+
+.feature-item {
+    flex: 1 1 0;
+    display: flex;
+    gap: 14px;
+    align-items: start;
+    min-width: 0;
+}
+
+.feature-icon {
+    width: 52px;
+    height: 52px;
+    display: flex;
+    flex: 0 0 52px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    color: #2557ec;
+    background: linear-gradient(180deg, #ffffff 0%, #f2f6ff 100%);
+    box-shadow: 0 12px 28px rgba(36, 57, 208, 0.12);
+}
+
+.feature-copy strong {
+    display: block;
+    color: #0d1731;
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.25;
+}
+
+.feature-copy span {
+    display: block;
+    margin-top: 8px;
+    color: #53617d;
+    font-size: 13px;
+    line-height: 1.58;
+}
+
 .right-panel {
-    background: #ffffff;
-    border-radius: 36px;
-    padding: 40px 34px;
-    box-shadow: 0 36px 108px rgba(15, 23, 42, 0.12);
-    border: 1px solid rgba(148, 163, 184, 0.16);
-    max-width: 460px;
-}
-.login-card-heading {
+    flex: 1 1 51.8%;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    margin-bottom: 26px;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 94px 48px 58px;
+    background:
+        radial-gradient(circle at 54% 45%, rgba(30, 64, 175, 0.025), transparent 30%),
+        #ffffff;
 }
+
+.login-card {
+    width: 100%;
+    max-width: 596px;
+    padding: 68px 63px 64px;
+    border: 1px solid #e6ebf3;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 22px 54px rgba(28, 44, 82, 0.08);
+}
+
+.login-card-heading {
+    margin-bottom: 38px;
+}
+
 .login-card-heading h1 {
     margin: 0;
-    font-size: 2.4rem;
-    line-height: 1.05;
-    color: #0f172a;
+    color: #0e1831;
+    font-size: 30px;
+    font-weight: 800;
+    line-height: 1.18;
 }
+
 .login-card-heading p {
-    margin: 0;
-    font-size: 1rem;
-    color: #64748b;
+    margin: 12px 0 0;
+    color: #566783;
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 1.4;
 }
+
 .login-form {
-    display: grid;
-    gap: 22px;
+    display: flex;
+    flex-direction: column;
 }
+
 .form-field {
     position: relative;
 }
+
 .form-field label {
     display: block;
-    margin-bottom: 12px;
-    font-size: 0.95rem;
-    color: #334155;
-    font-weight: 700;
+    margin-bottom: 13px;
+    color: #0d1731;
+    font-size: 16px;
+    font-weight: 750;
+    line-height: 1.2;
 }
-.form-icon {
-    position: absolute;
-    left: 3%;
-    top: 67%;
-    transform: translateY(-50%);
-    display: grid;
-    place-items: center;
-    width: 42px;
-    height: 42px;
-    border-radius: 14px;
-    background: #eef2ff;
-    color: #2563eb;
-    font-size: 1rem;
+
+.input-shell {
+    position: relative;
 }
-.form-field input {
-    width: 100%;
-    border-radius: 22px;
-    border: 1px solid rgba(148, 163, 184, 0.24);
-    background: #f8faff;
-    color: #0f172a;
-    font-size: 1rem;
-    padding: 18px 18px 18px 62px;
-    outline: none;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-.form-field input:focus {
-    border-color: rgba(37, 99, 235, 0.5);
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
-}
-.password-row {
-    display: grid;
-}
+
+.input-icon,
 .toggle-password {
     position: absolute;
-    right: 18px;
-    top: 66%;
-    transform: translateY(-50%);
-    cursor: pointer;
-    color: #2563eb;
-    font-weight: 700;
-}
-.remember-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-    font-size: 0.95rem;
-    color: #475569;
-}
-.remember-row label {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    cursor: pointer;
-    font-weight: 500;
-}
-.remember-row input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    border-radius: 6px;
-    accent-color: #2563eb;
-    border: 1px solid rgba(148, 163, 184, 0.35);
-}
-.remember-row a {
-    color: #2563eb;
-    text-decoration: none;
-}
-.remember-row a:hover {
-    text-decoration: underline;
-}
-.btn-submit {
-    width: 100%;
-    border: none;
-    border-radius: 22px;
-    padding: 18px;
-    font-size: 1rem;
-    color: #ffffff;
-    cursor: pointer;
-    background: linear-gradient(90deg, #2563eb 0%, #2563ff 100%);
-    box-shadow: 0 18px 32px rgba(37, 99, 235, 0.22);
-    transition: transform 0.2s ease, filter 0.2s ease;
-}
-.btn-submit:hover {
-    transform: translateY(-1px);
-    filter: saturate(1.05);
-}
-.divider {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    color: #94a3b8;
-    font-size: 0.95rem;
-    margin: 0;
-}
-.divider::before,
-.divider::after {
-    content: "";
-    flex: 1;
-    height: 1px;
-    background: rgba(148, 163, 184, 0.35);
-}
-.google-button {
+    top: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    transform: translateY(-50%);
+    color: #526487;
+
+}
+
+.input-icon {
+    left: 20px;
+    width: 24px;
+    height: 24px;
+}
+
+.form-field input[type="text"],
+.form-field input[type="password"] {
     width: 100%;
-    padding: 16px;
-    border-radius: 20px;
-    border: 1px solid rgba(148, 163, 184, 0.25);
+    height: 61px;
+    border: 1px solid #d8e0ec;
+    border-radius: 9px;
+    outline: none;
     background: #ffffff;
-    color: #0f172a;
-    font-weight: 700;
+    color: #111b34;
+    font-size: 16px;
+    font-weight: 400;
+    padding: 0 56px 0 61px;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.form-field input::placeholder {
+    color: #72809a;
+    opacity: 1;
+}
+
+.form-field input:focus {
+    border-color: #8ba2f8;
+    box-shadow: 0 0 0 4px rgba(37, 87, 236, 0.09);
+}
+
+.toggle-password {
+    right: 19px;
+    width: 24px;
+    height: 24px;
+    border: 0;
+    padding: 0;
+    background: transparent;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.google-button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
+
+.remember-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    margin-top: 0;
+    color: #101a35;
+    font-size: 16px;
+    line-height: 1.25;
 }
-.google-icon {
-    width: 18px;
-    height: 18px;
+
+.remember-row label {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    cursor: pointer;
+    white-space: nowrap;
 }
-.footer-copy {
+
+.remember-row input[type="checkbox"] {
+    width: 21px;
+    height: 21px;
     margin: 0;
-    text-align: center;
-    color: #94a3b8;
-    font-size: 0.92rem;
-    margin-top: 14px;
+    border-radius: 4px;
+    accent-color: #2563eb;
 }
-@media (max-width: 1000px) {
+
+.remember-row a {
+    color: #0c55ff;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.remember-row a:hover {
+    text-decoration: underline;
+}
+
+.btn-submit {
+    width: 100%;
+    height: 60px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.btn-submit {
+    border: 0;
+    color: #ffffff;
+    font-weight: 750;
+    background: linear-gradient(101deg, #4267ff 0%, #1643eb 100%);
+    box-shadow: 0 15px 26px rgba(31, 72, 236, 0.25);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+}
+
+.btn-submit:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 18px 30px rgba(31, 72, 236, 0.29);
+    filter: saturate(1.03);
+}
+
+.login-form > .form-field + .form-field {
+    margin-top: 38px;
+}
+
+.login-form > .remember-row {
+    margin-top: 29px;
+}
+
+.login-form > .btn-submit {
+    margin-top: 31px;
+}
+
+.footer-copy {
+    margin: 52px 0 0;
+    color: #61708d;
+    font-size: 15px;
+    line-height: 1.4;
+    text-align: center;
+}
+
+.message-container {
+    padding: 12px 16px;
+    margin-bottom: 24px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.4;
+    border: 1px solid;
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: all 0.25s ease;
+    position: relative;
+}
+
+.message-container .close-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: inherit;
+    opacity: 0.7;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.message-container .close-btn:hover {
+    opacity: 1;
+}
+
+.message-container.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.message-container.success {
+    background: #ecfdf5;
+    color: #166534;
+    border-color: #bbf7d0;
+}
+
+.message-container.error {
+    background: #fef2f2;
+    color: #dc2626;
+    border-color: #fecaca;
+}
+
+.message-container .icon {
+    margin-right: 8px;
+}
+
+.icon-svg {
+    display: block;
+    width: 24px;
+    height: 24px;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+}
+
+@media (max-width: 900px) {
+    .login-shell {
+        flex-direction: column;
+        max-width: 760px;
+    }
+
+    .left-panel {
+        flex: none;
+        width: 100%;
+        min-height: auto;
+        padding: 58px 32px 42px;
+        border-right: 0;
+        border-bottom: 1px solid #edf2fa;
+    }
+
+    .right-panel {
+        flex: none;
+        width: 100%;
+        min-height: auto;
+        padding: 42px 32px 36px;
+    }
+
+    .feature-row {
+        margin-bottom: 10px;
+    }
+}
+
+@media (max-width: 720px) {
+    .page-shell {
+        padding: 12px;
+    }
 
     .login-shell {
-        grid-template-columns: 1fr;
+        min-height: calc(100vh - 24px);
+        border-radius: 16px;
     }
-    .left-panel,
+
+    .left-panel {
+        padding: 38px 18px 30px;
+    }
+
+    .brand-mark {
+        width: 58px;
+        height: 58px;
+        font-size: 40px;
+    }
+
+    .brand-title {
+        font-size: 31px;
+    }
+
+    .brand-subtitle {
+        font-size: 16px;
+    }
+
+    .retail-scene {
+        width: 100%;
+        max-width: 520px;
+        height: 320px;
+        margin-top: 28px;
+    }
+
+    .feature-row {
+        width: 100%;
+        flex-direction: column;
+        gap: 18px;
+        margin-top: 8px;
+    }
+
+    .feature-item {
+        max-width: 320px;
+        margin: 0 auto;
+    }
+
     .right-panel {
-        padding: 32px 28px;
+        padding: 28px 16px 28px;
     }
-}
-@media (max-width: 680px) {
-    .page-shell {
-        padding: 18px 16px 26px;
+
+    .login-card {
+        padding: 34px 22px 30px;
     }
-    .login-shell {
-        gap: 22px;
+
+    .login-card-heading h1 {
+        font-size: 26px;
     }
-    .left-panel,
-    .right-panel {
-        padding: 24px 20px;
-        border-radius: 28px;
+
+    .login-card-heading p,
+    .btn-submit {
+        font-size: 16px;
     }
-    .left-title {
-        font-size: 2.1rem;
+
+    .remember-row {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .footer-copy {
+        margin-top: 28px;
     }
 }
 </style>
@@ -340,79 +594,205 @@ body {
 
 {% block page_content %}
 <section class="page-shell">
-
     <div class="login-shell">
         <div class="left-panel">
-            <div class="brand-line">
-                <div class="brand-mark">E</div>
-                <div class="left-brand">
-                    <p class="left-eyebrow">Retail Billing</p>
+            <div class="brand-block">
+                <div class="brand-mark" aria-hidden="true">E</div>
+                <h1 class="brand-title">Retail Billing</h1>
+                <p class="brand-subtitle">Smart billing for modern retail businesses</p>
+            </div>
+
+            <div class="retail-scene" aria-hidden="true">
+                <div class="dot-grid"></div>
+                <div class="scene-glow"></div>
+                <svg class="pos-illustration" viewBox="0 0 620 382" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="screenFrame" x1="185" y1="52" x2="468" y2="285" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#B3C0FF"/>
+                            <stop offset="1" stop-color="#7185E7"/>
+                        </linearGradient>
+                        <linearGradient id="screenFace" x1="198" y1="76" x2="444" y2="255" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#FFFFFF"/>
+                            <stop offset="1" stop-color="#F7FAFF"/>
+                        </linearGradient>
+                        <linearGradient id="blueButton" x1="414" y1="198" x2="483" y2="241" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#3D68FF"/>
+                            <stop offset="1" stop-color="#1646E8"/>
+                        </linearGradient>
+                        <linearGradient id="plantLeaf" x1="62" y1="232" x2="155" y2="293" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#72D1BC"/>
+                            <stop offset="1" stop-color="#258E82"/>
+                        </linearGradient>
+                        <linearGradient id="paperBlue" x1="464" y1="167" x2="549" y2="281" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#EEF4FF"/>
+                            <stop offset="1" stop-color="#C7D3FF"/>
+                        </linearGradient>
+                    </defs>
+
+                    <ellipse cx="306" cy="343" rx="241" ry="28" fill="#D7E0FF" opacity="0.54"/>
+
+                    <path d="M87 286C95 255 92 231 73 209C101 208 122 236 116 268C138 239 158 231 181 236C170 264 145 282 117 285C99 300 88 301 87 286Z" fill="url(#plantLeaf)"/>
+                    <path d="M112 287C104 262 89 235 70 211M111 286C126 265 148 247 178 236M112 286C112 266 116 246 125 225" stroke="#1E7A73" stroke-width="2" opacity="0.45"/>
+                    <path d="M71 292H145L137 351C135 362 126 369 115 369H101C90 369 81 362 79 351L71 292Z" fill="#F8FBFF"/>
+                    <ellipse cx="108" cy="292" rx="37" ry="11" fill="#D3DDF6"/>
+                    <ellipse cx="108" cy="292" rx="25" ry="7" fill="#31406A"/>
+                    <path d="M80 305C86 320 129 320 136 305L132 350C130 358 123 362 115 362H101C93 362 86 358 84 350L80 305Z" fill="#FFFFFF"/>
+
+                    <path d="M236 262H345L361 319C364 332 354 344 341 344H223C210 344 201 331 205 319L236 262Z" fill="#EEF3FF" stroke="#C5D1FA" stroke-width="2"/>
+                    <path d="M262 259H320V321H240L262 259Z" fill="#FFFFFF" opacity="0.84"/>
+                    <rect x="212" y="315" width="146" height="28" rx="14" fill="#E9EEFB"/>
+
+                    <g transform="translate(186 47) rotate(-9 147 104)">
+                        <rect x="0" y="0" width="292" height="198" rx="16" fill="url(#screenFrame)"/>
+                        <rect x="12" y="13" width="268" height="172" rx="12" fill="url(#screenFace)"/>
+                        <circle cx="252" cy="28" r="4" fill="#CCD6F1"/>
+                        <circle cx="269" cy="25" r="4" fill="#CCD6F1"/>
+                        <circle cx="29" cy="33" r="5" fill="#A9B9FF"/>
+                        <rect x="47" y="29" width="26" height="5" rx="2.5" fill="#D7DDEA"/>
+                        <rect x="90" y="28" width="7" height="7" rx="3.5" fill="#D7DDEA"/>
+                        <rect x="105" y="26" width="27" height="5" rx="2.5" fill="#D7DDEA"/>
+                        <rect x="20" y="55" width="63" height="112" rx="6" fill="#F6F8FD"/>
+                        <rect x="96" y="55" width="112" height="112" rx="6" fill="#F6F8FD"/>
+                        <rect x="216" y="55" width="58" height="112" rx="6" fill="#F6F8FD"/>
+                        <rect x="31" y="74" width="31" height="5" rx="2.5" fill="#DEE5F2"/>
+                        <rect x="31" y="96" width="43" height="6" rx="3" fill="#E8EDF7"/>
+                        <rect x="31" y="113" width="28" height="5" rx="2.5" fill="#E8EDF7"/>
+                        <rect x="31" y="139" width="41" height="6" rx="3" fill="#E8EDF7"/>
+                        <circle cx="106" cy="73" r="5" fill="#E3E8F3"/>
+                        <rect x="119" y="69" width="43" height="6" rx="3" fill="#DDE4F1"/>
+                        <rect x="100" y="92" width="74" height="6" rx="3" fill="#E5EBF5"/>
+                        <circle cx="106" cy="111" r="6" fill="#E3E8F3"/>
+                        <rect x="119" y="107" width="65" height="6" rx="3" fill="#E2E8F3"/>
+                        <circle cx="106" cy="134" r="6" fill="#E3E8F3"/>
+                        <rect x="119" y="130" width="76" height="6" rx="3" fill="#E2E8F3"/>
+                        <circle cx="106" cy="154" r="6" fill="#E3E8F3"/>
+                        <rect x="119" y="151" width="45" height="6" rx="3" fill="#E2E8F3"/>
+                        <rect x="228" y="70" width="16" height="5" rx="2.5" fill="#D2D9EA"/>
+                        <text x="224" y="91" fill="#1B2743" font-family="Inter, Arial, sans-serif" font-size="9" font-weight="800">Total</text>
+                        <text x="224" y="116" fill="#1B2743" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="800" textLength="46" lengthAdjust="spacingAndGlyphs">₹2,450.00</text>
+                        <rect x="222" y="137" width="48" height="24" rx="5" fill="url(#blueButton)"/>
+                        <text x="240" y="153" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="7" font-weight="800">Next</text>
+                    </g>
+
+                    <path d="M432 239H543C558 239 570 251 570 266V328H405V266C405 251 417 239 432 239Z" fill="#E8EEFF"/>
+                    <path d="M432 220H543C554 220 563 229 563 240V271H412V240C412 229 421 220 432 220Z" fill="#F9FBFF"/>
+                    <path d="M449 199C450 189 459 183 469 185L528 199C540 202 547 214 544 226L537 253L436 228L449 199Z" fill="url(#paperBlue)"/>
+                    <path d="M466 203L522 216M462 219L526 234M459 235L514 248" stroke="#D4DDF6" stroke-width="3" stroke-linecap="round"/>
+                    <rect x="438" y="279" width="78" height="15" rx="4" fill="#8EA0EA"/>
+                    <path d="M415 330H566L555 356H425L415 330Z" fill="#F9FBFF" stroke="#C7D2F3" stroke-width="2"/>
+                    <rect x="456" y="346" width="66" height="3" rx="1.5" fill="#C1CCEC"/>
+
+                    <g transform="translate(340 300) rotate(-17 56 47)">
+                        <rect x="8" y="10" width="82" height="116" rx="14" fill="#F8FBFF" stroke="#C7D2F3" stroke-width="2"/>
+                        <rect x="18" y="26" width="62" height="78" rx="6" fill="#EEF3FF"/>
+                        <path d="M25 36H71M25 49H63M25 62H68" stroke="#DDE5F4" stroke-width="4" stroke-linecap="round"/>
+                        <rect x="44" y="84" width="27" height="14" rx="3" fill="#2456EF"/>
+                        <circle cx="49" cy="114" r="3" fill="#CED8F4"/>
+                    </g>
+                </svg>
+            </div>
+
+            <div class="feature-row" aria-label="Retail Billing benefits">
+                <div class="feature-item">
+                    <div class="feature-icon" aria-hidden="true">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            <path d="m9 12 2 2 4-5"/>
+                        </svg>
+                    </div>
+                    <div class="feature-copy">
+                        <strong>Secure &amp; Reliable</strong>
+                        <span>Your data is safe with us</span>
+                    </div>
                 </div>
-            </div>
-
-            <div class="left-copy">
-                <h1 class="left-title">Smart billing for modern retail businesses</h1>
-                <p class="left-subtitle">Create invoices quickly, manage inventory and track sales with a modern POS workflow built for retail teams.</p>
-            </div>
-
-            <div class="illustration-card">
-                <div class="illustration-inner">
-                    <svg viewBox="0 0 740 540" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <rect x="60" y="82" width="540" height="336" rx="38" fill="#FFFFFF" stroke="#DDE8FF" stroke-width="2"/>
-                        <rect x="96" y="124" width="156" height="18" rx="9" fill="#EFF6FF"/>
-                        <rect x="96" y="160" width="330" height="18" rx="9" fill="#EFF6FF"/>
-                        <rect x="96" y="196" width="420" height="18" rx="9" fill="#E2E8F0"/>
-                        <rect x="96" y="232" width="210" height="18" rx="9" fill="#E2E8F0"/>
-                        <rect x="96" y="278" width="360" height="20" rx="10" fill="#EFF6FF"/>
-                        <rect x="96" y="320" width="220" height="44" rx="22" fill="#2563EB"/>
-                        <circle cx="572" cy="220" r="42" fill="#2563EB" fill-opacity="0.16"/>
-                        <circle cx="620" cy="320" r="28" fill="#2563EB" fill-opacity="0.16"/>
-                        <path d="M84 120C84 98.9086 101.909 81 123 81H597C618.091 81 636 98.9086 636 120V180H84V120Z" fill="#EEF2FF"/>
-                        <rect x="588" y="120" width="80" height="80" rx="24" fill="#2563EB"/>
-                        <path d="M608 146H660" stroke="white" stroke-width="4" stroke-linecap="round"/>
-                        <path d="M608 174H660" stroke="white" stroke-width="4" stroke-linecap="round"/>
-                        <path d="M608 202H648" stroke="white" stroke-width="4" stroke-linecap="round"/>
-                    </svg>
+                <div class="feature-item">
+                    <div class="feature-icon" aria-hidden="true">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <path d="M13 2 3 14h8l-1 8 11-14h-8l0-6z"/>
+                        </svg>
+                    </div>
+                    <div class="feature-copy">
+                        <strong>Fast &amp; Efficient</strong>
+                        <span>Streamline your billing process</span>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon" aria-hidden="true">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <path d="M4 20h16"/>
+                            <path d="M7 20V10"/>
+                            <path d="M12 20V4"/>
+                            <path d="M17 20v-7"/>
+                        </svg>
+                    </div>
+                    <div class="feature-copy">
+                        <strong>Insightful Reports</strong>
+                        <span>Make better decisions with real-time data</span>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="right-panel">
-            <div class="login-card-heading">
-                <h1>Welcome Back! 👋</h1>
-                <p>Sign in to continue to Retail Billing</p>
+            <div class="login-card">
+                <div class="login-card-heading">
+                    <h1>Welcome Back! 👋</h1>
+                    <p>Sign in to continue to Retail Billing</p>
+                </div>
+
+                <form class="login-form" id="store-login-form">
+                    <div class="form-field">
+                        <label for="login_email">Email / Username</label>
+                        <div class="input-shell">
+                            <span class="input-icon" aria-hidden="true">
+                                <svg class="icon-svg" viewBox="0 0 24 24">
+                                    <path d="M20 21a8 8 0 0 0-16 0"/>
+                                    <circle cx="12" cy="7" r="4"/>
+                                </svg>
+                            </span>
+                            <input id="login_email" name="login_email" type="text" placeholder="Enter your email or username" autocomplete="username" required>
+                        </div>
+                    </div>
+
+                    <div class="form-field password-row">
+                        <label for="login_password">Password</label>
+                        <div class="input-shell">
+                            <span class="input-icon" aria-hidden="true">
+                                <svg class="icon-svg" viewBox="0 0 24 24">
+                                    <rect x="4" y="11" width="16" height="10" rx="2"/>
+                                    <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+                                </svg>
+                            </span>
+                            <input id="login_password" name="login_password" type="password" placeholder="Enter your password" autocomplete="current-password" required>
+                            <button class="toggle-password" id="toggle-password" type="button" onclick="togglePasswordVisibility()" aria-label="Show password">
+                                <svg class="icon-svg eye-on" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                                <svg class="icon-svg eye-off" viewBox="0 0 24 24" aria-hidden="true" hidden>
+                                    <path d="m2 2 20 20"/>
+                                    <path d="M10.6 10.6A3 3 0 0 0 12 15a3 3 0 0 0 2.4-1.2"/>
+                                    <path d="M8.3 5.4A10.6 10.6 0 0 1 12 5c6.5 0 10 7 10 7a17.2 17.2 0 0 1-2.1 3.1"/>
+                                    <path d="M6.6 6.6C3.7 8.5 2 12 2 12s3.5 7 10 7a10.8 10.8 0 0 0 5.4-1.5"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="remember-row">
+                        <label>
+                            <input type="checkbox" checked>
+                            Remember me
+                        </label>
+                        <a href="/store-login/forgot-password">Forgot Password?</a>
+                    </div>
+                    <div class="message-container" id="login-message" style="display: none;">
+                      <span class="icon" id="message-icon"></span>
+                    </div>
+
+                    <button class="btn-submit" type="submit">Sign In</button>
+                </form>
             </div>
-
-            <form class="login-form" id="store-login-form">
-                <div class="form-field">
-                    <label for="login_email">Email / Username</label>
-                    <span class="form-icon">👤</span>
-                    <input id="login_email" name="login_email" type="text" placeholder="Enter your email or username" autocomplete="username" required>
-                </div>
-
-                <div class="form-field password-row">
-                    <label for="login_password">Password</label>
-                    <span class="form-icon">🔒</span>
-                    <input id="login_password" name="login_password" type="password" placeholder="Enter your password" autocomplete="current-password" required>
-                    <span class="toggle-password" id="toggle-password" onclick="togglePasswordVisibility()">Show</span>
-                </div>
-
-                <div class="remember-row">
-                    <label>
-                        <input type="checkbox" checked>
-                        Remember me
-                    </label>
-
-
-
-                    <a href="/store-login/forgot-password">Forgot Password?</a>
-
-
-
-                </div>
-                <button class="btn-submit" type="submit">Sign In</button>
-                
-            </form>
         </div>
     </div>
 </section>
@@ -420,78 +800,143 @@ body {
 
 {% block script %}
 <script>
-const redirectTo = '/masters';
+const redirectTo = '/pos';
+
 function sanitizeRedirect(path) {
-    if (!path) {
-        return '/masters';
-    }
+    if (!path) return '/pos';
     try {
         const url = new URL(path, window.location.origin);
-        if (url.origin !== window.location.origin) {
-            return '/masters';
-        }
-        return url.pathname + url.search + url.hash || '/masters';
+        if (url.origin !== window.location.origin) return '/pos';
+        return url.pathname + url.search + url.hash || '/pos';
     } catch (e) {
-        return '/masters';
+        return '/pos';
     }
 }
 
 function togglePasswordVisibility() {
     const toggle = document.getElementById('toggle-password');
     const password = document.getElementById('login_password');
+    const eyeOn = toggle.querySelector('.eye-on');
+    const eyeOff = toggle.querySelector('.eye-off');
+
     if (password.type === 'password') {
         password.type = 'text';
-        toggle.textContent = 'Hide';
+        toggle.setAttribute('aria-label', 'Hide password');
+        eyeOn.hidden = true;
+        eyeOff.hidden = false;
     } else {
         password.type = 'password';
-        toggle.textContent = 'Show';
+        toggle.setAttribute('aria-label', 'Show password');
+        eyeOn.hidden = false;
+        eyeOff.hidden = true;
     }
 }
 
 function submitLogin(event) {
     event.preventDefault();
+
+    const messageEl = document.getElementById('login-message');
+    const submitBtn = document.querySelector('.btn-submit');
+
+    messageEl.style.display = 'none';
+    messageEl.className = 'message-container';
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Signing in...';
+
     const email = document.getElementById('login_email').value.trim();
     const password = document.getElementById('login_password').value;
+
     if (!email || !password) {
-        frappe.msgprint('Both login and password required');
+        showMessage('Please enter both email/username and password.', 'error');
+        resetButton(submitBtn);
         return;
     }
 
-    frappe.call({
-        type: 'POST',
-        url: '/login',
-        args: {
-            cmd: 'login',
-            usr: email,
-            pwd: password
+    const formData = new URLSearchParams();
+    formData.append('usr', email);
+    formData.append('pwd', password);
+
+    fetch('/api/method/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json'
         },
-        freeze: true,
-        callback: function (data) {
-            if (data && data.message === 'Logged In') {
-                window.location.href = '/masters';
-            }
-        },
-        error: function (xhr) {
-            frappe.msgprint((xhr && xhr.responseJSON && xhr.responseJSON._server_messages) ? JSON.parse(xhr.responseJSON._server_messages)[0].message : 'Invalid login or password');
+        credentials: 'same-origin',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        resetButton(submitBtn);
+
+        if (data.message === 'Logged In') {
+            showMessage('Login successful...', 'success');
+
+            setTimeout(() => {
+                window.location.href = sanitizeRedirect(redirectTo);
+            }, 1200);
+
+        } else {
+            showMessage('Invalid username or password.', 'error');
+            shakeInputs();
         }
+
+    })
+    .catch(() => {
+        resetButton(submitBtn);
+        showMessage('Login failed. Please try again.', 'error');
+        shakeInputs();
     });
 }
 
+function showMessage(text, type) {
+    const messageEl = document.getElementById('login-message');
 
+    let iconSVG = '';
+    if (type === 'success') {
+        iconSVG = '<svg class="icon-svg" viewBox="0 0 24 24"><path d="m9 12 2 2 4-5"/></svg>';
+    } else if (type === 'error') {
+        iconSVG = '<svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>';
+    }
 
-function initLoginPage() {
+    messageEl.innerHTML = `<span class="icon">${iconSVG}</span><span>${text}</span>
+        <button class="close-btn" onclick="this.parentElement.style.display='none'">&times;</button>`;
+
+    messageEl.className = `message-container ${type} show`;
+    messageEl.style.display = 'block';
+}
+
+function resetButton(btn) {
+    btn.disabled = false;
+    btn.textContent = 'Sign In';
+}
+
+function shakeInputs() {
+    const inputs = document.querySelectorAll('.form-field input');
+
+    inputs.forEach(input => {
+        const icon = input.parentElement.querySelector('.input-icon');
+        input.style.borderColor = '#ef4444';
+        if (icon) icon.style.color = '#ef4444';
+        input.style.transform = 'translateX(-3px)';
+
+        setTimeout(() => input.style.transform = 'translateX(3px)', 100);
+        setTimeout(() => input.style.transform = 'translateX(0)', 200);
+
+        setTimeout(() => {
+            input.style.borderColor = '';
+            if (icon) icon.style.color = '';
+        }, 400);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('store-login-form');
-    if (form) form.addEventListener('submit', submitLogin);
-    
-    const googleBtn = document.getElementById('google-login');
-    if (googleBtn) googleBtn.addEventListener('click', function () {
-        window.location.href = '/login?redirect-to=' + encodeURIComponent(redirectTo || '/masters');
-    });
-    
-
-}
-
-document.addEventListener('DOMContentLoaded', initLoginPage);
+    if (form) {
+        form.addEventListener('submit', submitLogin);
+    }
+});
 </script>
-
 {% endblock %}

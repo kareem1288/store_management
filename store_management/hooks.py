@@ -67,11 +67,11 @@ home_page = "store-login"
 # Website Routes
 # --------------
 
-website_route_rules = [
+website_route_rules = [ 
     {"from_route": "/login", "to_route": "store-login"},
-    {"from_route": "/app/", "to_route": "/masters"},
-    {"from_route": "/desk", "to_route": "/masters"},
 ]
+
+before_request = ["store_management.utils.prevent_desk_routes"]
 
 # Generators
 # ----------

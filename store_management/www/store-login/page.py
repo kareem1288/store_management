@@ -10,4 +10,7 @@ def get_context(context):
     context.redirect_to = "/masters"
     context.no_cache = 1
     context.no_header = True
+    context.no_breadcrumbs = True
+    context.full_width = True
+    context.show_sidebar = 0
     context.title = "Retail Billing Login"
