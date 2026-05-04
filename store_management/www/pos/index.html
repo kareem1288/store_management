@@ -6,14 +6,14 @@
 {% if frappe.session.user == 'Guest' %}
 	<script>window.location.href = '/login?redirect-to=/pos';</script>
 {% else %}
-<div class="sm-pos-app" id="sm-pos-app">
+<div class="sm-page-app sm-pos-app" id="sm-pos-app">
 <!-- Top Navigation -->
 	<div class="sm-top-nav">
 		<a href="/masters" class="sm-nav-link">Masters</a>
 		<a href="/pos" class="sm-nav-link active">POS</a>
 	</div>
 
-	<section class="sm-pos-shell">
+	<section class="sm-page-shell sm-pos-shell">
 		<div class="sm-pos-hero" id="dashboard-panel">
 			<div class="sm-home-column">
 				<div class="sm-pos-hero-copy">
@@ -268,9 +268,20 @@ body.store-pos-page {
 	color: #2563eb;
 }
 
-.sm-pos-app {
+.sm-page-app {
 	min-height: calc(100vh - 4rem);
 	padding: 2rem 0 3rem;
+}
+
+.sm-pos-app {
+	/* page-specific wrapper hook */
+}
+
+.sm-page-shell {
+	width: min(100%, calc(100vw - 2rem));
+	margin: 0 auto 0 1rem;
+	display: grid;
+	gap: 1rem;
 }
 
 .sm-pos-shell {

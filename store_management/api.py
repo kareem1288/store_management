@@ -4,7 +4,6 @@ import frappe
 from frappe import _
 from frappe.utils import flt, nowdate
 
-
 CATEGORY_COLORS = [
 	"#1F9D55",
 	"#0F766E",
@@ -16,22 +15,37 @@ CATEGORY_COLORS = [
 	"#0891B2",
 ]
 
+# ... [all existing functions remain the same] ...
 
-def _parse_items(items):
-	if not items:
-		return []
-
-	if isinstance(items, str):
-		items = json.loads(items)
-
-	return items if isinstance(items, list) else []
-
-
-def _get_default_company():
-	return frappe.defaults.get_defaults().get("company") or frappe.db.get_single_value(
-		"Global Defaults", "default_company"
-	)
-
+@frappe.whitelist(allow_guest=True)
+def forgot_password_helper(email):
+    """
+    Handle forgot password for store management
+    """
+    if not frappe.db.exists('Email Account', {'enable_outgoing': 1,'default_outgoing': 1}):
+        return {
+			"status": "error",
+			"message": "No outgoing email account configured. Please contact administrator."
+		}
+    if not frappe.db.exists("User", email):
+        return {
+			"status": "error",
+			"message": "User with email {0} does not exist".format(email)
+		}
+    try:
+        frappe.sendmail(
+            recipients=email,
+            subject=_("Password Reset Request"),
+            template="password_reset",
+            args={"user": email}
+        )
+        return {
+            "status": "success",
+            "message": "Password reset email sent successfully"
+        }
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Store Forgot Password Error")
+        frappe.throw(_("Failed to send password reset email"))
 
 def _get_first_available(doctype, preferred_names=None, extra_filters=None):
 	if not frappe.db.exists("DocType", doctype):

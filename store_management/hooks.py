@@ -57,7 +57,7 @@ app_license = "mit"
 # ----------
 
 # application home page (will override Website Settings)
-home_page = "pos"
+home_page = "store-login"
 
 # website user home page (by Role)
 # role_home_page = {
@@ -68,7 +68,9 @@ home_page = "pos"
 # --------------
 
 website_route_rules = [
-    {"from_route": "/pos", "to_route": "pos"},
+    {"from_route": "/login", "to_route": "store-login"},
+    {"from_route": "/app/", "to_route": "/masters"},
+    {"from_route": "/desk", "to_route": "/masters"},
 ]
 
 # Generators

@@ -6,7 +6,7 @@
 {% if frappe.session.user == 'Guest' %}
 	<script>window.location.href = '/login?redirect-to=/pos';</script>
 {% else %}
-<div class="sm-masters-app" id="sm-masters-app">
+<div class="sm-page-app sm-masters-app" id="sm-masters-app">
 	<!-- Top Navigation -->
 	<div class="sm-top-nav">
 		<a href="/masters" class="sm-nav-link active">Masters</a>
@@ -142,18 +142,34 @@ body.store-masters-page {
 	color: #2563eb;
 }
 
-.sm-masters-app {
-	min-height: 100vh;
-	display: flex;
-	flex-direction: column;
+
+.sm-page-app {
+	min-height: calc(100vh - 4rem);
+	padding: 2rem 0 3rem;
 }
 
-.sm-masters-shell {
-	width: 100%;
-	display: grid;
-	grid-template-columns: 280px 1fr;
-	gap: 0;
+.sm-masters-app {
+	/* page-specific wrapper hook */
 }
+
+
+.sm-page-shell {
+	width: min(100%, calc(100vw - 2rem));
+	margin: 0 auto 0 1rem;
+	display: grid;
+	gap: 1rem;
+}
+
+
+.sm-masters-shell {
+	width: min(100%, calc(100vw - 2rem));
+	margin: 0 auto 0 1rem;
+	display: grid;
+	grid-template-columns: minmax(260px, 320px) 1fr;
+	gap: 1rem;
+	align-items: start;
+}
+
 
 .sm-masters-sidebar {
 	background: var(--sm-surface);

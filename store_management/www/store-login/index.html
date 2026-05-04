@@ -1,0 +1,497 @@
+{% extends "templates/web.html" %}
+
+{% block head_include %}
+<style>
+:root {
+    color-scheme: light;
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(circle at top, rgba(37, 99, 235, 0.16), transparent 22%), linear-gradient(180deg, #eff6ff 0%, #f8fbff 100%);
+    color: #0f172a;
+}
+
+.page-shell {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 28px 24px 36px;
+    gap: 24px;
+}
+.login-shell {
+    width: min(1220px, calc(100% - 48px));
+    display: grid;
+    grid-template-columns: minmax(360px, 1.4fr) minmax(340px, 0.9fr);
+    gap: 32px;
+    background: rgba(255, 255, 255, 0.96);
+    border-radius: 40px;
+    box-shadow: 0 36px 110px rgba(15, 23, 42, 0.12);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    overflow: hidden;
+}
+.left-panel {
+    position: relative;
+    padding: 48px 42px 42px;
+    background: linear-gradient(180deg, #f8fbff 0%, #f1f7ff 100%);
+}
+.left-panel::before {
+    content: "";
+    position: absolute;
+    width: 240px;
+    height: 240px;
+    border-radius: 50%;
+    background: rgba(59, 130, 246, 0.15);
+    top: -90px;
+    right: -70px;
+    filter: blur(2px);
+}
+.left-panel::after {
+    content: "";
+    position: absolute;
+    width: 132px;
+    height: 132px;
+    border-radius: 50%;
+    background: rgba(37, 99, 235, 0.08);
+    bottom: -60px;
+    left: -40px;
+    filter: blur(2px);
+}
+.brand-line {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+    z-index: 1;
+}
+.brand-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    color: #ffffff;
+    font-size: 1.5rem;
+    font-weight: 800;
+    box-shadow: 0 18px 40px rgba(37, 99, 235, 0.18);
+}
+.left-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    position: relative;
+    z-index: 1;
+}
+.left-brand span {
+    color: #2563eb;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+.left-copy {
+    margin-top: 32px;
+    position: relative;
+    z-index: 1;
+}
+.left-eyebrow {
+    margin: 0 0 16px;
+    color: #0f172a;
+    font-size: 0.95rem;
+    font-weight: 800;
+    text-transform: none;
+    letter-spacing: normal;
+}
+.left-title {
+    margin: 0;
+    font-size: clamp(2.4rem, 4vw, 3.6rem);
+    line-height: 1.02;
+    color: #0f172a;
+    letter-spacing: -0.03em;
+}
+.left-subtitle {
+    margin: 18px 0 0;
+    max-width: 520px;
+    color: #475569;
+    font-size: 1rem;
+    line-height: 1.75;
+}
+.illustration-card {
+    position: relative;
+    margin-top: 38px;
+    border-radius: 32px;
+    overflow: hidden;
+    background: linear-gradient(180deg, #ffffff 0%, #eef4ff 100%);
+    border: 1px solid rgba(37, 99, 235, 0.14);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.72);
+}
+.illustration-inner {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    padding: 34px;
+}
+.illustration-inner svg {
+    width: 100%;
+    max-width: 520px;
+    height: auto;
+}
+.right-panel {
+    background: #ffffff;
+    border-radius: 36px;
+    padding: 40px 34px;
+    box-shadow: 0 36px 108px rgba(15, 23, 42, 0.12);
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    max-width: 460px;
+}
+.login-card-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 26px;
+}
+.login-card-heading h1 {
+    margin: 0;
+    font-size: 2.4rem;
+    line-height: 1.05;
+    color: #0f172a;
+}
+.login-card-heading p {
+    margin: 0;
+    font-size: 1rem;
+    color: #64748b;
+}
+.login-form {
+    display: grid;
+    gap: 22px;
+}
+.form-field {
+    position: relative;
+}
+.form-field label {
+    display: block;
+    margin-bottom: 12px;
+    font-size: 0.95rem;
+    color: #334155;
+    font-weight: 700;
+}
+.form-icon {
+    position: absolute;
+    left: 3%;
+    top: 67%;
+    transform: translateY(-50%);
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    background: #eef2ff;
+    color: #2563eb;
+    font-size: 1rem;
+}
+.form-field input {
+    width: 100%;
+    border-radius: 22px;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    background: #f8faff;
+    color: #0f172a;
+    font-size: 1rem;
+    padding: 18px 18px 18px 62px;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.form-field input:focus {
+    border-color: rgba(37, 99, 235, 0.5);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
+}
+.password-row {
+    display: grid;
+}
+.toggle-password {
+    position: absolute;
+    right: 18px;
+    top: 66%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #2563eb;
+    font-weight: 700;
+}
+.remember-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.95rem;
+    color: #475569;
+}
+.remember-row label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-weight: 500;
+}
+.remember-row input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    border-radius: 6px;
+    accent-color: #2563eb;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+}
+.remember-row a {
+    color: #2563eb;
+    text-decoration: none;
+}
+.remember-row a:hover {
+    text-decoration: underline;
+}
+.btn-submit {
+    width: 100%;
+    border: none;
+    border-radius: 22px;
+    padding: 18px;
+    font-size: 1rem;
+    color: #ffffff;
+    cursor: pointer;
+    background: linear-gradient(90deg, #2563eb 0%, #2563ff 100%);
+    box-shadow: 0 18px 32px rgba(37, 99, 235, 0.22);
+    transition: transform 0.2s ease, filter 0.2s ease;
+}
+.btn-submit:hover {
+    transform: translateY(-1px);
+    filter: saturate(1.05);
+}
+.divider {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    color: #94a3b8;
+    font-size: 0.95rem;
+    margin: 0;
+}
+.divider::before,
+.divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: rgba(148, 163, 184, 0.35);
+}
+.google-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    padding: 16px;
+    border-radius: 20px;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    background: #ffffff;
+    color: #0f172a;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.google-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
+}
+.google-icon {
+    width: 18px;
+    height: 18px;
+}
+.footer-copy {
+    margin: 0;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 0.92rem;
+    margin-top: 14px;
+}
+@media (max-width: 1000px) {
+
+    .login-shell {
+        grid-template-columns: 1fr;
+    }
+    .left-panel,
+    .right-panel {
+        padding: 32px 28px;
+    }
+}
+@media (max-width: 680px) {
+    .page-shell {
+        padding: 18px 16px 26px;
+    }
+    .login-shell {
+        gap: 22px;
+    }
+    .left-panel,
+    .right-panel {
+        padding: 24px 20px;
+        border-radius: 28px;
+    }
+    .left-title {
+        font-size: 2.1rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block page_content %}
+<section class="page-shell">
+
+    <div class="login-shell">
+        <div class="left-panel">
+            <div class="brand-line">
+                <div class="brand-mark">E</div>
+                <div class="left-brand">
+                    <p class="left-eyebrow">Retail Billing</p>
+                </div>
+            </div>
+
+            <div class="left-copy">
+                <h1 class="left-title">Smart billing for modern retail businesses</h1>
+                <p class="left-subtitle">Create invoices quickly, manage inventory and track sales with a modern POS workflow built for retail teams.</p>
+            </div>
+
+            <div class="illustration-card">
+                <div class="illustration-inner">
+                    <svg viewBox="0 0 740 540" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <rect x="60" y="82" width="540" height="336" rx="38" fill="#FFFFFF" stroke="#DDE8FF" stroke-width="2"/>
+                        <rect x="96" y="124" width="156" height="18" rx="9" fill="#EFF6FF"/>
+                        <rect x="96" y="160" width="330" height="18" rx="9" fill="#EFF6FF"/>
+                        <rect x="96" y="196" width="420" height="18" rx="9" fill="#E2E8F0"/>
+                        <rect x="96" y="232" width="210" height="18" rx="9" fill="#E2E8F0"/>
+                        <rect x="96" y="278" width="360" height="20" rx="10" fill="#EFF6FF"/>
+                        <rect x="96" y="320" width="220" height="44" rx="22" fill="#2563EB"/>
+                        <circle cx="572" cy="220" r="42" fill="#2563EB" fill-opacity="0.16"/>
+                        <circle cx="620" cy="320" r="28" fill="#2563EB" fill-opacity="0.16"/>
+                        <path d="M84 120C84 98.9086 101.909 81 123 81H597C618.091 81 636 98.9086 636 120V180H84V120Z" fill="#EEF2FF"/>
+                        <rect x="588" y="120" width="80" height="80" rx="24" fill="#2563EB"/>
+                        <path d="M608 146H660" stroke="white" stroke-width="4" stroke-linecap="round"/>
+                        <path d="M608 174H660" stroke="white" stroke-width="4" stroke-linecap="round"/>
+                        <path d="M608 202H648" stroke="white" stroke-width="4" stroke-linecap="round"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="login-card-heading">
+                <h1>Welcome Back! 👋</h1>
+                <p>Sign in to continue to Retail Billing</p>
+            </div>
+
+            <form class="login-form" id="store-login-form">
+                <div class="form-field">
+                    <label for="login_email">Email / Username</label>
+                    <span class="form-icon">👤</span>
+                    <input id="login_email" name="login_email" type="text" placeholder="Enter your email or username" autocomplete="username" required>
+                </div>
+
+                <div class="form-field password-row">
+                    <label for="login_password">Password</label>
+                    <span class="form-icon">🔒</span>
+                    <input id="login_password" name="login_password" type="password" placeholder="Enter your password" autocomplete="current-password" required>
+                    <span class="toggle-password" id="toggle-password" onclick="togglePasswordVisibility()">Show</span>
+                </div>
+
+                <div class="remember-row">
+                    <label>
+                        <input type="checkbox" checked>
+                        Remember me
+                    </label>
+
+
+
+                    <a href="/store-login/forgot-password">Forgot Password?</a>
+
+
+
+                </div>
+                <button class="btn-submit" type="submit">Sign In</button>
+                
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block script %}
+<script>
+const redirectTo = '/masters';
+function sanitizeRedirect(path) {
+    if (!path) {
+        return '/masters';
+    }
+    try {
+        const url = new URL(path, window.location.origin);
+        if (url.origin !== window.location.origin) {
+            return '/masters';
+        }
+        return url.pathname + url.search + url.hash || '/masters';
+    } catch (e) {
+        return '/masters';
+    }
+}
+
+function togglePasswordVisibility() {
+    const toggle = document.getElementById('toggle-password');
+    const password = document.getElementById('login_password');
+    if (password.type === 'password') {
+        password.type = 'text';
+        toggle.textContent = 'Hide';
+    } else {
+        password.type = 'password';
+        toggle.textContent = 'Show';
+    }
+}
+
+function submitLogin(event) {
+    event.preventDefault();
+    const email = document.getElementById('login_email').value.trim();
+    const password = document.getElementById('login_password').value;
+    if (!email || !password) {
+        frappe.msgprint('Both login and password required');
+        return;
+    }
+
+    frappe.call({
+        type: 'POST',
+        url: '/login',
+        args: {
+            cmd: 'login',
+            usr: email,
+            pwd: password
+        },
+        freeze: true,
+        callback: function (data) {
+            if (data && data.message === 'Logged In') {
+                window.location.href = '/masters';
+            }
+        },
+        error: function (xhr) {
+            frappe.msgprint((xhr && xhr.responseJSON && xhr.responseJSON._server_messages) ? JSON.parse(xhr.responseJSON._server_messages)[0].message : 'Invalid login or password');
+        }
+    });
+}
+
+
+
+function initLoginPage() {
+    const form = document.getElementById('store-login-form');
+    if (form) form.addEventListener('submit', submitLogin);
+    
+    const googleBtn = document.getElementById('google-login');
+    if (googleBtn) googleBtn.addEventListener('click', function () {
+        window.location.href = '/login?redirect-to=' + encodeURIComponent(redirectTo || '/masters');
+    });
+    
+
+}
+
+document.addEventListener('DOMContentLoaded', initLoginPage);
+</script>
+
+{% endblock %}
