@@ -152,6 +152,31 @@ def _get_default_company():
 	return companies[0] if companies else None
 
 
+def _parse_items(items):
+	"""Parse cart items from JSON/list into validated format."""
+	if not items:
+		return []
+	try:
+		if isinstance(items, str):
+			items_list = json.loads(items)
+		else:
+			items_list = items
+		parsed = []
+		for row in items_list:
+			item_code = row.get("item_code") or row.get("name")
+			qty = flt(row.get("qty") or row.get("quantity") or 0)
+			rate = flt(row.get("rate") or row.get("standard_rate") or 0)
+			if item_code and qty > 0 and rate > 0:
+				parsed.append({
+					"item_code": item_code,
+					"qty": qty,
+					"rate": rate
+				})
+		return parsed
+	except (json.JSONDecodeError, TypeError, ValueError):
+		return []
+
+
 def _resolve_customer(customer=None, customer_phone=None):
 	if customer and frappe.db.exists("Customer", customer):
 		return customer
