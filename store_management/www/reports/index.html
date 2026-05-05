@@ -1,0 +1,605 @@
+{% extends "templates/web.html" %}
+
+{% block header %}{% endblock %}
+
+{% block page_content %}
+{% if frappe.session.user == 'Guest' %}
+	<script>window.location.href = '/login?redirect-to=/reports';</script>
+{% else %}
+<div class="sm-page-app sm-reports-app" id="sm-reports-app">
+	<!-- Top Navigation -->
+	<div class="sm-top-nav">
+		<a href="/masters" class="sm-nav-link">Masters</a>
+		<a href="/pos" class="sm-nav-link">POS</a>
+		<a href="/reports" class="sm-nav-link active">Reports</a>
+	</div>
+
+	<section class="sm-page-shell sm-reports-shell">
+		<section class="sm-report-panel" id="reports-panel">
+			<div class="sm-report-toolbar">
+				<div>
+					<p class="sm-pos-kicker">Reports</p>
+					<h2>Sales Register</h2>
+				</div>
+				<div class="sm-toolbar-actions">
+					<button class="sm-chip sm-chip-muted" type="button" onclick="openDeskSalesRegister()">Open in Desk</button>
+					<button class="sm-main-button" type="button" onclick="runSalesRegisterReport()">Refresh</button>
+				</div>
+			</div>
+
+			<form class="sm-report-filters" id="sales-register-filters" onsubmit="event.preventDefault(); runSalesRegisterReport();"></form>
+
+			<div class="sm-report-status" id="sales-register-status">Choose filters and refresh the report.</div>
+
+			<div class="sm-report-table-wrap">
+				<table class="sm-report-table">
+					<thead id="sales-register-head"></thead>
+					<tbody id="sales-register-body"></tbody>
+				</table>
+			</div>
+		</section>
+	</section>
+</div>
+
+<script>
+// State management
+const smReportsState = {
+	report: {
+		loaded: false,
+		loading: false,
+		filters: []
+	}
+};
+
+// Utility functions
+function escapeHtml(text) {
+	const div = document.createElement('div');
+	div.textContent = text;
+	return div.innerHTML;
+}
+
+function escapeSelectorValue(value) {
+	return value.replace(/"/g, '\\"');
+}
+
+function getToday() {
+	return new Date().toISOString().slice(0, 10);
+}
+
+function addMonths(dateStr, months) {
+	const date = new Date(dateStr);
+	date.setMonth(date.getMonth() + months);
+	return date.toISOString().slice(0, 10);
+}
+
+function setReportStatus(message) {
+	const statusEl = document.getElementById("sales-register-status");
+	if (statusEl) statusEl.textContent = message;
+}
+
+// Report functions
+function openDeskSalesRegister() {
+	window.open("/app/query-report/Sales%20Register", "_blank");
+}
+
+function loadSalesRegisterReport() {
+	if (smReportsState.report.loaded || smReportsState.report.loading) return;
+
+	smReportsState.report.loading = true;
+	setReportStatus("Loading Sales Register filters...");
+	installReportScriptSupport();
+
+	frappe.call({
+		method: "frappe.desk.query_report.get_script",
+		args: { report_name: "Sales Register" },
+		callback: function(response) {
+			const settings = response.message || {};
+			try {
+				if (settings.script) {
+					frappe.dom?.eval ? frappe.dom.eval(settings.script) : eval(settings.script);
+				}
+
+				const reportSettings = frappe.query_reports?.["Sales Register"] || {};
+				smReportsState.report.filters = normalizeReportFilters(reportSettings.filters || settings.filters || []);
+				smReportsState.report.loaded = true;
+				renderSalesRegisterFilters();
+				runSalesRegisterReport();
+			} catch (error) {
+				console.error("Unable to load Sales Register script", error);
+				useFallbackSalesRegisterFilters();
+			} finally {
+				smReportsState.report.loading = false;
+			}
+		},
+		error: function(error) {
+			console.error("Unable to fetch Sales Register script", error);
+			smReportsState.report.loading = false;
+			useFallbackSalesRegisterFilters();
+		}
+	});
+}
+
+function installReportScriptSupport() {
+	window.__ = window.__ || (value => value);
+	window.frappe = window.frappe || {};
+	frappe.query_reports = frappe.query_reports || {};
+	frappe.datetime = frappe.datetime || {
+		get_today: () => new Date().toISOString().slice(0, 10),
+		add_months: (dateValue, months) => {
+			const date = new Date(dateValue);
+			date.setMonth(date.getMonth() + Number(months || 0));
+			return date.toISOString().slice(0, 10);
+		}
+	};
+	frappe.defaults = frappe.defaults || {
+		get_user_default: () => ""
+	};
+
+	window.erpnext = window.erpnext || {};
+	erpnext.utils = erpnext.utils || {};
+	if (!erpnext.utils.add_dimensions) {
+		erpnext.utils.add_dimensions = function(reportName, index) {
+			frappe.call({
+				method: "erpnext.accounts.doctype.accounting_dimension.accounting_dimension.get_dimensions",
+				callback: function(response) {
+					const filters = frappe.query_reports?.[reportName]?.filters || [];
+					const dimensions = response.message?.[0] || [];
+					dimensions.forEach(dimension => {
+						if (filters.some(row => row.fieldname === dimension.fieldname)) return;
+
+						filters.splice(index, 0, {
+							fieldname: dimension.fieldname,
+							label: __(dimension.label),
+							fieldtype: "MultiSelectList",
+							options: dimension.document_type
+						});
+					});
+
+					if (reportName === "Sales Register") {
+						smReportsState.report.filters = normalizeReportFilters(filters);
+						renderSalesRegisterFilters();
+					}
+				}
+			});
+		};
+	}
+}
+
+function useFallbackSalesRegisterFilters() {
+	smReportsState.report.filters = normalizeReportFilters([
+		{ fieldname: "from_date", label: "From Date", fieldtype: "Date", default: addMonths(getToday(), -1) },
+		{ fieldname: "to_date", label: "To Date", fieldtype: "Date", default: getToday() },
+		{ fieldname: "customer", label: "Customer", fieldtype: "Link", options: "Customer" },
+		{ fieldname: "customer_group", label: "Customer Group", fieldtype: "Link", options: "Customer Group" },
+		{ fieldname: "company", label: "Company", fieldtype: "Link", options: "Company", default: frappe.defaults?.get_user_default?.("Company") || "" },
+		{ fieldname: "mode_of_payment", label: "Mode of Payment", fieldtype: "Link", options: "Mode of Payment" },
+		{ fieldname: "owner", label: "Owner", fieldtype: "Link", options: "User" },
+		{ fieldname: "cost_center", label: "Cost Center", fieldtype: "Link", options: "Cost Center" },
+		{ fieldname: "warehouse", label: "Warehouse", fieldtype: "Link", options: "Warehouse" },
+		{ fieldname: "brand", label: "Brand", fieldtype: "Link", options: "Brand" },
+		{ fieldname: "item_group", label: "Item Group", fieldtype: "Link", options: "Item Group" },
+		{ fieldname: "include_payments", label: "Show Ledger View", fieldtype: "Check", default: 0 }
+	]);
+	smReportsState.report.loaded = true;
+	renderSalesRegisterFilters();
+	runSalesRegisterReport();
+}
+
+function normalizeReportFilters(filters) {
+	return (filters || [])
+		.filter(filter => filter && filter.fieldname && !["Section Break", "Column Break"].includes(filter.fieldtype))
+		.map(filter => ({
+			...filter,
+			label: filter.label || filter.fieldname,
+			default: resolveReportDefault(filter.default)
+		}));
+}
+
+function resolveReportDefault(defaultValue) {
+	if (typeof defaultValue === "function") {
+		try {
+			return defaultValue();
+		} catch (error) {
+			return "";
+		}
+	}
+	return defaultValue ?? "";
+}
+
+function renderSalesRegisterFilters() {
+	const filtersWrap = document.getElementById("sales-register-filters");
+	if (!filtersWrap) return;
+
+	filtersWrap.innerHTML = smReportsState.report.filters.map(filter => {
+		const value = filter.default ?? "";
+		const label = escapeHtml(filter.label);
+		const fieldname = escapeHtml(filter.fieldname);
+
+		if (filter.fieldtype === "Check") {
+			const isLedger = fieldname === "include_payments";
+			return `
+				<label class="sm-report-field sm-report-field-check ${isLedger ? 'sm-ledger-toggle' : ''}">
+					<span>${label}</span>
+					<div class="sm-report-check ${isLedger ? 'sm-toggle-switch' : ''}">
+						<input data-report-filter="${fieldname}" type="checkbox" ${Number(value) ? "checked" : ""}>
+						<span class="sm-toggle-slider"></span>
+					</div>
+				</label>
+			`;
+		}
+
+		if (filter.fieldtype === "Select") {
+			const options = String(filter.options || "").split("\n").filter(Boolean);
+			return `
+				<label class="sm-report-field">
+					<span>${label}</span>
+					<select data-report-filter="${fieldname}">
+						<option value=""></option>
+						${options.map(option => `<option value="${escapeHtml(option)}" ${option === value ? "selected" : ""}>${escapeHtml(option)}</option>`).join("")}
+					</select>
+				</label>
+			`;
+		}
+
+		const inputType = filter.fieldtype === "Date" ? "date" : filter.fieldtype === "Int" || filter.fieldtype === "Float" || filter.fieldtype === "Currency" ? "number" : "text";
+		const placeholder = filter.fieldtype === "MultiSelectList"
+			? `Select ${filter.options || filter.label} values separated by comma`
+			: filter.options || filter.label || "";
+
+		return `
+			<label class="sm-report-field">
+				<span>${label}</span>
+				<input data-report-filter="${fieldname}" type="${inputType}" value="${escapeHtml(value)}" placeholder="${escapeHtml(placeholder)}">
+			</label>
+		`;
+	}).join("");
+
+	// Add auto-refresh on filter change
+	document.querySelectorAll('[data-report-filter]').forEach(input => {
+		input.addEventListener('change', () => runSalesRegisterReport());
+	});
+}
+
+function collectSalesRegisterFilters() {
+	const filters = {};
+	smReportsState.report.filters.forEach(filter => {
+		const element = document.querySelector(`[data-report-filter="${escapeSelectorValue(filter.fieldname)}"]`);
+		if (!element) return;
+
+		if (filter.fieldtype === "Check") {
+			filters[filter.fieldname] = element.checked ? 1 : 0;
+			return;
+		}
+
+		if (filter.fieldtype === "MultiSelectList") {
+			filters[filter.fieldname] = element.value.split(",").map(v => v.trim()).filter(Boolean);
+			return;
+		}
+
+		filters[filter.fieldname] = element.value;
+	});
+	return filters;
+}
+
+function runSalesRegisterReport() {
+	setReportStatus("Running Sales Register report...");
+	const filters = collectSalesRegisterFilters();
+
+	frappe.call({
+		method: "frappe.desk.query_report.run",
+		args: {
+			report_name: "Sales Register",
+			filters: filters,
+			user: frappe.session.user
+		},
+		callback: function(response) {
+			const data = response.message || {};
+			renderSalesRegisterTable(data);
+			setReportStatus(`Report loaded with ${data.result?.length || 0} rows.`);
+		},
+		error: function(error) {
+			console.error("Unable to run Sales Register report", error);
+			setReportStatus("Error loading report. Please try again.");
+		}
+	});
+}
+
+function renderSalesRegisterTable(data) {
+	const headEl = document.getElementById("sales-register-head");
+	const bodyEl = document.getElementById("sales-register-body");
+	if (!headEl || !bodyEl) return;
+
+	const columns = data.columns || [];
+	const result = data.result || [];
+
+	headEl.innerHTML = `<tr>${columns.map(col => `<th>${escapeHtml(col.label)}</th>`).join("")}</tr>`;
+	bodyEl.innerHTML = result.map(row => {
+		if (Array.isArray(row)) {
+			return `<tr>${row.map(cell => `<td>${escapeHtml(String(cell || ""))}</td>`).join("")}</tr>`;
+		} else if (typeof row === "object") {
+			return `<tr>${columns.map(col => `<td>${escapeHtml(String(row[col.fieldname] || ""))}</td>`).join("")}</tr>`;
+		}
+		return "";
+	}).join("");
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+	loadSalesRegisterReport();
+});
+</script>
+
+<style>
+/* Base styles */
+:root {
+	--sm-primary: #3b82f6;
+	--sm-primary-dark: #2563eb;
+	--sm-text: #1f2937;
+	--sm-muted: #6b7280;
+	--sm-bg: #f9fafb;
+	--sm-border: #e5e7eb;
+}
+
+/* Page layout */
+.sm-reports-app {
+	min-height: 100vh;
+	background: var(--sm-bg);
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.sm-top-nav {
+	display: flex;
+	align-items: center;
+	padding: 1rem 2rem;
+	background: #fff;
+	border-bottom: 1px solid var(--sm-border);
+	gap: 2rem;
+}
+
+.sm-nav-link {
+	color: var(--sm-muted);
+	text-decoration: none;
+	font-weight: 600;
+	padding: 0.5rem 1rem;
+	border-radius: 8px;
+	transition: all 0.2s;
+}
+
+.sm-nav-link:hover {
+	background: var(--sm-bg);
+	color: var(--sm-text);
+}
+
+.sm-nav-link.active {
+	background: var(--sm-primary);
+	color: #fff;
+}
+
+.sm-reports-shell {
+	padding: 2rem;
+}
+
+/* Report panel */
+.sm-report-panel {
+	background: #fff;
+	border-radius: 16px;
+	padding: 2rem;
+	box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.sm-report-toolbar {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	margin-bottom: 2rem;
+}
+
+.sm-pos-kicker {
+	color: var(--sm-primary);
+	font-size: 0.875rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	margin-bottom: 0.5rem;
+}
+
+.sm-report-toolbar h2 {
+	margin: 0;
+	font-size: 1.875rem;
+	font-weight: 800;
+	color: var(--sm-text);
+}
+
+.sm-toolbar-actions {
+	display: flex;
+	gap: 1rem;
+}
+
+.sm-chip {
+	padding: 0.5rem 1rem;
+	border-radius: 20px;
+	font-size: 0.875rem;
+	font-weight: 600;
+	border: 1px solid var(--sm-border);
+	background: #fff;
+	color: var(--sm-text);
+	cursor: pointer;
+	transition: all 0.2s;
+}
+
+.sm-chip:hover {
+	background: var(--sm-bg);
+}
+
+.sm-chip-muted {
+	background: var(--sm-bg);
+	color: var(--sm-muted);
+}
+
+.sm-main-button {
+	padding: 0.75rem 1.5rem;
+	border-radius: 10px;
+	font-size: 0.875rem;
+	font-weight: 700;
+	border: none;
+	background: var(--sm-primary);
+	color: #fff;
+	cursor: pointer;
+	transition: all 0.2s;
+}
+
+.sm-main-button:hover {
+	background: var(--sm-primary-dark);
+}
+
+/* Filters */
+.sm-report-filters {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+	gap: 1.5rem;
+	margin-bottom: 2rem;
+}
+
+.sm-report-field {
+	display: grid;
+	gap: 0.35rem;
+}
+
+.sm-report-field span {
+	color: var(--sm-muted);
+	font-size: 0.82rem;
+	font-weight: 700;
+}
+
+.sm-report-field input,
+.sm-report-field select {
+	min-height: 42px;
+	width: 100%;
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+	background: #fff;
+	color: var(--sm-text);
+	font: inherit;
+	font-size: 0.9rem;
+	padding: 0 0.75rem;
+	outline: 0;
+}
+
+.sm-report-check {
+	min-height: 42px;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.55rem;
+	padding: 0 0.75rem;
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+	background: #fff;
+	color: var(--sm-text);
+	font-size: 0.9rem;
+	font-weight: 700;
+}
+
+.sm-report-check input {
+	width: 18px;
+	height: 18px;
+}
+
+.sm-toggle-switch {
+	position: relative;
+	display: inline-block;
+	width: 50px;
+	height: 24px;
+}
+
+.sm-toggle-switch input {
+	opacity: 0;
+	width: 0;
+	height: 0;
+}
+
+.sm-toggle-slider {
+	position: absolute;
+	cursor: pointer;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: #ccc;
+	transition: .4s;
+	border-radius: 24px;
+}
+
+.sm-toggle-slider:before {
+	position: absolute;
+	content: "";
+	height: 18px;
+	width: 18px;
+	left: 3px;
+	bottom: 3px;
+	background-color: white;
+	transition: .4s;
+	border-radius: 50%;
+}
+
+input:checked + .sm-toggle-slider {
+	background-color: #2196F3;
+}
+
+input:checked + .sm-toggle-slider:before {
+	transform: translateX(26px);
+}
+
+/* Status */
+.sm-report-status {
+	min-height: 42px;
+	display: flex;
+	align-items: center;
+	padding: 0.75rem 0.9rem;
+	border-radius: 12px;
+	background: #f8fafc;
+	border: 1px solid rgba(17, 24, 39, 0.08);
+	color: #64748b;
+	font-size: 0.88rem;
+	font-weight: 700;
+	margin-bottom: 2rem;
+}
+
+/* Table */
+.sm-report-table-wrap {
+	overflow: auto;
+	border: 1px solid rgba(17, 24, 39, 0.12);
+	border-radius: 14px;
+	background: #fff;
+	max-height: 68vh;
+}
+
+.sm-report-table {
+	width: 100%;
+	border-collapse: collapse;
+	min-width: 980px;
+	font-size: 0.88rem;
+}
+
+.sm-report-table th,
+.sm-report-table td {
+	padding: 0.75rem 1rem;
+	text-align: left;
+	border-bottom: 1px solid var(--sm-border);
+}
+
+.sm-report-table th {
+	background: var(--sm-bg);
+	font-weight: 700;
+	color: var(--sm-text);
+	position: sticky;
+	top: 0;
+}
+
+.sm-report-table tbody tr:hover {
+	background: var(--sm-bg);
+}
+</style>
+</content>
+{% endif %}
+{% endblock %}
+<parameter name="filePath">/home/caratred/frappe16/apps/store_management/store_management/www/reports/index.html

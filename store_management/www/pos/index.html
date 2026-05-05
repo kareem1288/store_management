@@ -11,6 +11,7 @@
 	<div class="sm-top-nav">
 		<a href="/masters" class="sm-nav-link">Masters</a>
 		<a href="/pos" class="sm-nav-link active">POS</a>
+		<a href="/reports" class="sm-nav-link">Reports</a>
 	</div>
 
 	<section class="sm-page-shell sm-pos-shell">
@@ -61,12 +62,6 @@
 								<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h2l2.2 9.2a1 1 0 0 0 1 .8h8.8a1 1 0 0 0 1-.8L21 9H8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="19" r="1.3" fill="currentColor"/><circle cx="18" cy="19" r="1.3" fill="currentColor"/></svg>
 							</span>
 							<span>Start Billing</span>
-						</button>
-						<button class="sm-cta sm-cta-secondary" type="button" onclick="viewReports()">
-							<span class="sm-cta-icon">
-								<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V9m7 10V5m7 14v-8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-							</span>
-							<span>View Reports</span>
 						</button>
 					</div>
 				</div>
@@ -256,6 +251,10 @@ body.store-pos-page {
 	font-weight: 600;
 	font-size: 0.95rem;
 	transition: all 0.2s ease;
+	background: transparent;
+	border: 0;
+	cursor: pointer;
+	font-family: inherit;
 }
 
 .sm-nav-link:hover {
@@ -1363,6 +1362,10 @@ function bindEvents() {
 		selectPayment(button.dataset.payment);
 	});
 
+	window.addEventListener("hashchange", () => {
+		showPosHome();
+	});
+
 	updateScreenResolution();
 }
 
@@ -1433,8 +1436,11 @@ function showDashboard() {
 	document.getElementById("dashboard-panel").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function viewReports() {
-	window.location.href = "/app/query-report/Sales%20Register";
+function showPosHome() {
+	document.getElementById("dashboard-panel").hidden = false;
+	document.getElementById("billing-panel").hidden = false;
+	setActiveNavTab("pos");
+	showDashboard();
 }
 
 function focusSearch() {

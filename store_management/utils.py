@@ -1,4 +1,6 @@
 import frappe
+from werkzeug.exceptions import HTTPException
+from werkzeug.utils import redirect
 
 
 def prevent_desk_routes():
@@ -6,10 +8,9 @@ def prevent_desk_routes():
     path = frappe.local.request.path or ""
 
     if path.startswith("/desk") or path.startswith("/app"):
-        if frappe.session.user and frappe.session.user != "Guest":
-            redirect_location = "/masters"
+        if  frappe.session.user == "Guest":
+            redirect_location = "/store-login"
         else:
-            redirect_location = "/"
+            redirect_location = "/masters"
 
-        frappe.flags.redirect_location = redirect_location
-        raise frappe.Redirect(302)
+        # raise HTTPException(response=redirect(redirect_location))

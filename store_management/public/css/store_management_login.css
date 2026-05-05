@@ -1,0 +1,429 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap");
+
+body.store-login-page {
+	background:
+		radial-gradient(circle at top left, rgba(34, 197, 94, 0.1), transparent 22%),
+		radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.12), transparent 24%),
+		linear-gradient(180deg, #f7fafc 0%, #eef4ff 100%);
+	font-family: "Manrope", sans-serif;
+	color: #0f172a;
+}
+
+body.store-login-page .navbar,
+body.store-login-page footer,
+body.store-login-page .web-footer,
+body.store-login-page .page-breadcrumbs,
+body.store-login-page .page-header-actions,
+body.store-login-page .page-title,
+body.store-login-page .page-head {
+	display: none !important;
+}
+
+body.store-login-page .page-content-wrapper,
+body.store-login-page .page_content,
+body.store-login-page .page-content {
+	padding: 0 !important;
+	background: transparent !important;
+}
+
+body.store-login-page .page_content > .container,
+body.store-login-page .page-content > .container,
+body.store-login-page .page-content-wrapper > .container {
+	max-width: none !important;
+	width: 100% !important;
+	padding: 0 !important;
+}
+
+body.store-login-page .store-login-shell {
+	width: min(1180px, calc(100vw - 32px));
+	min-height: calc(100vh - 32px);
+	margin: 16px auto;
+	display: grid;
+	grid-template-columns: minmax(0, 1.05fr) minmax(420px, 0.95fr);
+	border: 1px solid rgba(148, 163, 184, 0.2);
+	border-radius: 28px;
+	background: rgba(255, 255, 255, 0.94);
+	box-shadow: 0 24px 80px rgba(15, 23, 42, 0.08);
+	overflow: hidden;
+}
+
+body.store-login-page .store-login-promo {
+	padding: 56px 48px;
+	background:
+		radial-gradient(circle at 18% 14%, rgba(34, 197, 94, 0.12), transparent 18%),
+		radial-gradient(circle at 82% 82%, rgba(59, 130, 246, 0.12), transparent 20%),
+		linear-gradient(180deg, #f8fffb 0%, #eff6ff 100%);
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+body.store-login-page .store-login-brand {
+	max-width: 420px;
+}
+
+body.store-login-page .store-login-badge {
+	width: 58px;
+	height: 58px;
+	border-radius: 18px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: linear-gradient(135deg, #16a34a, #2563eb);
+	color: #ffffff;
+	font-size: 18px;
+	font-weight: 800;
+	letter-spacing: 0.04em;
+	box-shadow: 0 14px 30px rgba(37, 99, 235, 0.18);
+}
+
+body.store-login-page .store-login-brand h1 {
+	margin: 20px 0 10px;
+	font-size: clamp(2.2rem, 3vw, 3.3rem);
+	font-weight: 800;
+	line-height: 1.02;
+	letter-spacing: -0.04em;
+}
+
+body.store-login-page .store-login-brand p {
+	margin: 0;
+	font-size: 18px;
+	line-height: 1.7;
+	color: #475569;
+}
+
+body.store-login-page .store-login-promo-copy {
+	max-width: 460px;
+	padding: 26px 0 34px;
+}
+
+body.store-login-page .store-login-kicker {
+	display: inline-flex;
+	padding: 8px 14px;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.8);
+	font-size: 13px;
+	font-weight: 700;
+	color: #2563eb;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+body.store-login-page .store-login-promo-copy h2 {
+	margin: 18px 0 12px;
+	font-size: clamp(2rem, 3vw, 3rem);
+	font-weight: 800;
+	line-height: 1.08;
+	letter-spacing: -0.04em;
+}
+
+body.store-login-page .store-login-promo-copy p {
+	margin: 0;
+	font-size: 17px;
+	line-height: 1.8;
+	color: #475569;
+}
+
+body.store-login-page .store-login-features {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 16px;
+}
+
+body.store-login-page .store-login-feature {
+	padding: 18px 16px;
+	border-radius: 20px;
+	background: rgba(255, 255, 255, 0.72);
+	border: 1px solid rgba(226, 232, 240, 0.9);
+	backdrop-filter: blur(6px);
+}
+
+body.store-login-page .store-login-feature-icon {
+	width: 46px;
+	height: 46px;
+	margin-bottom: 14px;
+	border-radius: 14px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: #ffffff;
+	color: #2563eb;
+	box-shadow: 0 12px 24px rgba(37, 99, 235, 0.08);
+}
+
+body.store-login-page .store-login-feature-icon svg {
+	width: 22px;
+	height: 22px;
+}
+
+body.store-login-page .store-login-feature strong {
+	display: block;
+	font-size: 16px;
+	font-weight: 700;
+}
+
+body.store-login-page .store-login-feature p {
+	margin: 8px 0 0;
+	font-size: 14px;
+	line-height: 1.6;
+	color: #64748b;
+}
+
+body.store-login-page .store-login-auth {
+	padding: 56px 44px 30px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+
+body.store-login-page .store-login-auth-panel {
+	width: 100%;
+	max-width: 460px;
+}
+
+body.store-login-page .store-login-auth .for-login,
+body.store-login-page .store-login-auth .for-email-login,
+body.store-login-page .store-login-auth .for-signup,
+body.store-login-page .store-login-auth .for-forgot,
+body.store-login-page .store-login-auth .for-login-with-email-link {
+	width: 100%;
+}
+
+body.store-login-page .store-login-auth .page-card-head {
+	padding: 0;
+	margin-bottom: 22px;
+	border: 0;
+	text-align: left;
+}
+
+body.store-login-page .store-login-auth .page-card-head img.app-logo {
+	display: none;
+}
+
+body.store-login-page .store-login-auth .page-card-head h4 {
+	margin: 0;
+	font-size: 2.5rem;
+	font-weight: 800;
+	line-height: 1.05;
+	letter-spacing: -0.04em;
+	color: #0f172a;
+}
+
+body.store-login-page .store-login-subtitle {
+	margin: 10px 0 0;
+	font-size: 16px;
+	line-height: 1.6;
+	color: #64748b;
+}
+
+body.store-login-page .store-login-auth .login-content.page-card {
+	border: 1px solid rgba(226, 232, 240, 0.95);
+	border-radius: 24px;
+	padding: 34px 32px 26px;
+	background: #ffffff;
+	box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+}
+
+body.store-login-page .store-login-auth .page-card-body {
+	padding: 0;
+}
+
+body.store-login-page .store-login-auth .form-group {
+	margin-bottom: 22px;
+}
+
+body.store-login-page .store-login-auth .form-label {
+	display: block !important;
+	position: static !important;
+	width: auto !important;
+	height: auto !important;
+	margin: 0 0 10px;
+	overflow: visible !important;
+	clip: auto !important;
+	white-space: normal !important;
+	font-size: 14px;
+	font-weight: 700;
+	color: #0f172a;
+}
+
+body.store-login-page .store-login-auth .email-field,
+body.store-login-page .store-login-auth .password-field {
+	position: relative;
+}
+
+body.store-login-page .store-login-auth .form-control {
+	height: 54px;
+	border-radius: 14px;
+	border: 1px solid #dbe4ef;
+	background: #f8fafc;
+	padding: 0 52px 0 52px;
+	font-size: 16px;
+	font-weight: 500;
+	color: #0f172a;
+	box-shadow: none;
+}
+
+body.store-login-page .store-login-auth .form-control::placeholder {
+	color: #94a3b8;
+	opacity: 1;
+}
+
+body.store-login-page .store-login-auth .form-control:focus {
+	border-color: #2563eb;
+	background: #ffffff;
+	box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+body.store-login-page .store-login-auth .field-icon {
+	position: absolute;
+	left: 16px;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 18px;
+	height: 18px;
+	color: #64748b;
+}
+
+body.store-login-page .store-login-auth .toggle-password {
+	position: absolute;
+	right: 16px;
+	top: 50%;
+	transform: translateY(-50%);
+	font-size: 13px;
+	font-weight: 700;
+	color: #64748b !important;
+	cursor: pointer;
+}
+
+body.store-login-page .store-login-auth .forgot-password-message {
+	margin: 8px 0 0;
+	text-align: right;
+}
+
+body.store-login-page .store-login-auth .forgot-password-message a,
+body.store-login-page .store-login-auth .sign-up-message a {
+	color: #2563eb;
+	font-weight: 700;
+}
+
+body.store-login-page .store-login-auth .page-card-actions {
+	padding: 0;
+}
+
+body.store-login-page .store-login-auth .btn.btn-login,
+body.store-login-page .store-login-auth .btn.btn-forgot,
+body.store-login-page .store-login-auth .btn.btn-login-with-email-link {
+	height: 54px;
+	border: 0;
+	border-radius: 14px;
+	background: linear-gradient(135deg, #16a34a, #2563eb);
+	font-size: 17px;
+	font-weight: 700;
+	color: #ffffff;
+	box-shadow: 0 16px 30px rgba(37, 99, 235, 0.18);
+}
+
+body.store-login-page .store-login-auth .btn.btn-login:hover,
+body.store-login-page .store-login-auth .btn.btn-forgot:hover,
+body.store-login-page .store-login-auth .btn.btn-login-with-email-link:hover {
+	filter: brightness(1.03);
+}
+
+body.store-login-page .store-login-auth .login-divider {
+	margin: 24px 0;
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	font-size: 14px;
+	font-weight: 600;
+	color: #94a3b8 !important;
+}
+
+body.store-login-page .store-login-auth .login-divider::before,
+body.store-login-page .store-login-auth .login-divider::after {
+	content: "";
+	flex: 1;
+	height: 1px;
+	background: #e2e8f0;
+}
+
+body.store-login-page .store-login-auth .social-login-buttons .btn {
+	height: 54px;
+	border-radius: 14px;
+	border: 1px solid #dbe4ef;
+	background: #ffffff;
+	font-size: 16px;
+	font-weight: 700;
+	color: #0f172a;
+}
+
+body.store-login-page .store-login-auth .store-google-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+}
+
+body.store-login-page .store-login-auth .store-google-icon {
+	width: 22px;
+	height: 22px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+}
+
+body.store-login-page .store-login-auth .store-google-icon svg {
+	width: 22px;
+	height: 22px;
+	display: block;
+}
+
+body.store-login-page .store-login-auth .sign-up-message {
+	margin-top: 16px;
+}
+
+body.store-login-page .store-login-footer {
+	margin-top: 18px;
+	font-size: 14px;
+	font-weight: 600;
+	color: #94a3b8;
+}
+
+@media (max-width: 1040px) {
+	body.store-login-page .store-login-shell {
+		grid-template-columns: 1fr;
+	}
+
+	body.store-login-page .store-login-promo {
+		padding: 34px 26px;
+	}
+
+	body.store-login-page .store-login-auth {
+		padding: 32px 20px 24px;
+	}
+}
+
+@media (max-width: 768px) {
+	body.store-login-page .store-login-shell {
+		width: calc(100vw - 16px);
+		min-height: calc(100vh - 16px);
+		margin: 8px auto;
+		border-radius: 20px;
+	}
+
+	body.store-login-page .store-login-promo {
+		display: none;
+	}
+
+	body.store-login-page .store-login-auth .page-card-head h4 {
+		font-size: 2rem;
+	}
+
+	body.store-login-page .store-login-auth .login-content.page-card {
+		padding: 24px 18px 20px;
+		border-radius: 20px;
+	}
+}
