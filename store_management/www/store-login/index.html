@@ -668,6 +668,50 @@ body .page-footer {
     .footer-copy {
         margin-top: 7%;
     }
+
+    .page-shell {
+        padding: 0;
+        background: #f3f6f4;
+    }
+
+    .login-shell {
+        max-width: none;
+        min-height: 100dvh;
+        border: 0;
+        border-radius: 0;
+        background: #f3f6f4;
+        box-shadow: none;
+    }
+
+    .left-panel {
+        padding: max(2rem, env(safe-area-inset-top)) 1.25rem 1rem;
+        border: 0;
+        background: #f3f6f4;
+    }
+
+    .brand-mark { width: 3.25rem; height: 3.25rem; background: #146c43; box-shadow: 0 .75rem 1.5rem rgba(20,108,67,.2); }
+    .brand-title { margin-top: .8rem; font-size: 1.55rem; }
+    .brand-subtitle { margin-top: .35rem; font-size: .9rem; }
+    .retail-scene, .feature-row { display: none; }
+
+    .right-panel {
+        justify-content: flex-start;
+        padding: .5rem 1rem calc(2rem + env(safe-area-inset-bottom));
+        background: #f3f6f4;
+    }
+
+    .login-card {
+        padding: 1.25rem;
+        border-color: #dfe7e2;
+        border-radius: 1.25rem;
+        box-shadow: 0 .75rem 2rem rgba(25,49,37,.08);
+    }
+
+    .login-card-heading { margin-bottom: 1.25rem; }
+    .login-card-heading h1 { font-size: 1.35rem; }
+    .input-shell input { min-height: 52px; font-size: 16px; border-radius: .85rem; }
+    .btn-submit { min-height: 52px; border-radius: .85rem; background: #146c43; }
+    .footer-copy { margin-top: 1rem; }
 }
 
 @media (max-height: 48em) and (min-width: 56.26em) {

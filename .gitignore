@@ -36,6 +36,12 @@ venv.bak/
 node_modules/
 jspm_packages/
 
+# Local Android build tools and outputs
+android/.android-sdk/
+android/.gradle/
+android/local.properties
+android/**/build/
+
 # IDEs and editors
 .vscode/
 .vs/
