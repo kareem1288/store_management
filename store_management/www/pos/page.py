@@ -20,9 +20,9 @@ def get_context(context):
 	# context.no_cache = 1
 	context.show_sidebar = 0
 	context.login_required = 1
-	context.title = "Retail POS"
+	context.title = "My Sales"
 	context.body_class = "store-pos-page"
-	context.meta_description = "Fast bilingual retail POS for ERPNext and Frappe."
+	context.meta_description = "My Sales mobile billing, master data, and reporting."
 	try:
 		from store_management.api import get_pos_bootstrap
 

@@ -4,6 +4,12 @@
 
 {% block head_include %}
 <link rel="stylesheet" href="/assets/store_management/css/store_management_ui.css">
+<link rel="stylesheet" href="/assets/store_management/css/my_sales_mobile.css">
+<link rel="manifest" href="/assets/store_management/my-sales.webmanifest">
+<meta name="theme-color" content="#146c43">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="My Sales">
+<script defer src="/assets/store_management/js/my_sales_mobile.js"></script>
 {% endblock %}
 
 {% block page_content %}
@@ -13,8 +19,8 @@
 <div class="sm-page-app sm-reports-app" id="sm-reports-app">
 	<!-- Top Navigation -->
 	<div class="sm-top-nav">
-		<a class="sm-brand-lockup" href="/pos" aria-label="Store Management home">
-			<span class="sm-brand-mark">S</span><span><strong>Store</strong><small>Management</small></span>
+		<a class="sm-brand-lockup" href="/pos" aria-label="My Sales home">
+			<span class="sm-brand-mark">M</span><span><strong>My Sales</strong><small>Mobile Store</small></span>
 		</a>
 		<nav class="sm-nav-primary" aria-label="Main navigation">
 			<a href="/masters" class="sm-nav-link">Masters</a>

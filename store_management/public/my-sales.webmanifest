@@ -1,0 +1,21 @@
+{
+  "name": "My Sales",
+  "short_name": "My Sales",
+  "description": "Mobile sales, billing, master data, and reporting",
+  "start_url": "/pos?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f4f8f5",
+  "theme_color": "#146c43",
+  "icons": [{
+    "src": "/assets/store_management/images/my-sales-icon.svg",
+    "sizes": "any",
+    "type": "image/svg+xml",
+    "purpose": "any maskable"
+  }],
+  "shortcuts": [
+    { "name": "New Sale", "short_name": "Sale", "url": "/pos" },
+    { "name": "Masters", "short_name": "Masters", "url": "/masters" },
+    { "name": "Reports", "short_name": "Reports", "url": "/reports" }
+  ]
+}
