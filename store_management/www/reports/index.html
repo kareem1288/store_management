@@ -2,6 +2,10 @@
 
 {% block header %}{% endblock %}
 
+{% block head_include %}
+<link rel="stylesheet" href="/assets/store_management/css/store_management_ui.css">
+{% endblock %}
+
 {% block page_content %}
 {% if frappe.session.user == 'Guest' %}
 	<script>window.location.href = '/login?redirect-to=/reports';</script>
@@ -9,9 +13,15 @@
 <div class="sm-page-app sm-reports-app" id="sm-reports-app">
 	<!-- Top Navigation -->
 	<div class="sm-top-nav">
-		<a href="/masters" class="sm-nav-link">Masters</a>
-		<a href="/pos" class="sm-nav-link">POS</a>
-		<a href="/reports" class="sm-nav-link active">Reports</a>
+		<a class="sm-brand-lockup" href="/pos" aria-label="Store Management home">
+			<span class="sm-brand-mark">S</span><span><strong>Store</strong><small>Management</small></span>
+		</a>
+		<nav class="sm-nav-primary" aria-label="Main navigation">
+			<a href="/masters" class="sm-nav-link">Masters</a>
+			<a href="/pos" class="sm-nav-link">POS</a>
+			<a href="/reports" class="sm-nav-link active" aria-current="page">Reports</a>
+		</nav>
+		<div class="sm-user-chip" title="Signed in user"><span class="sm-user-dot"></span>{{ frappe.session.user }}</div>
 	</div>
 
 	<section class="sm-page-shell sm-reports-shell">
@@ -29,7 +39,7 @@
 
 			<form class="sm-report-filters" id="sales-register-filters" onsubmit="event.preventDefault(); runSalesRegisterReport();"></form>
 
-			<div class="sm-report-status" id="sales-register-status">Choose filters and refresh the report.</div>
+			<div class="sm-report-status" id="sales-register-status" role="status" aria-live="polite">Choose filters and refresh the report.</div>
 
 			<div class="sm-report-table-wrap">
 				<table class="sm-report-table">
@@ -599,7 +609,5 @@ input:checked + .sm-toggle-slider:before {
 	background: var(--sm-bg);
 }
 </style>
-</content>
 {% endif %}
 {% endblock %}
-<parameter name="filePath">/home/caratred/frappe16/apps/store_management/store_management/www/reports/index.html

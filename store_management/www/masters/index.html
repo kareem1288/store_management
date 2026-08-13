@@ -2,16 +2,26 @@
 
 {% block header %}{% endblock %}
 
+{% block head_include %}
+<link rel="stylesheet" href="/assets/store_management/css/store_management_ui.css">
+{% endblock %}
+
 {% block page_content %}
 {% if frappe.session.user == 'Guest' %}
-	<script>window.location.href = '/login?redirect-to=/pos';</script>
+	<script>window.location.href = '/login?redirect-to=/masters';</script>
 {% else %}
 <div class="sm-page-app sm-masters-app" id="sm-masters-app">
 	<!-- Top Navigation -->
 	<div class="sm-top-nav">
-		<a href="/masters" class="sm-nav-link active">Masters</a>
-		<a href="/pos" class="sm-nav-link">POS</a>
-		<a href="/reports" class="sm-nav-link">Reports</a>
+		<a class="sm-brand-lockup" href="/pos" aria-label="Store Management home">
+			<span class="sm-brand-mark">S</span><span><strong>Store</strong><small>Management</small></span>
+		</a>
+		<nav class="sm-nav-primary" aria-label="Main navigation">
+			<a href="/masters" class="sm-nav-link active" aria-current="page">Masters</a>
+			<a href="/pos" class="sm-nav-link">POS</a>
+			<a href="/reports" class="sm-nav-link">Reports</a>
+		</nav>
+		<div class="sm-user-chip" title="Signed in user"><span class="sm-user-dot"></span>{{ frappe.session.user }}</div>
 	</div>
 
 	<section class="sm-masters-shell">
@@ -79,10 +89,10 @@
 	<div class="sm-masters-modal-backdrop" id="modal-backdrop" onclick="closeModal()"></div>
 
 	<!-- Create/Edit Modal -->
-	<div class="sm-masters-modal" id="masters-modal" aria-hidden="true">
+	<div class="sm-masters-modal" id="masters-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-hidden="true">
 		<div class="sm-modal-header">
 			<h2 id="modal-title">New Record</h2>
-			<button class="sm-modal-close" onclick="closeModal()">✕</button>
+			<button class="sm-modal-close" type="button" onclick="closeModal()" aria-label="Close dialog">✕</button>
 		</div>
 		<div class="sm-modal-body" id="modal-form-container"></div>
 		<div class="sm-modal-footer">

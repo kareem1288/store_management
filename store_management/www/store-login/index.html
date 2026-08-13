@@ -719,6 +719,7 @@ body .page-footer {
     }
 }
 </style>
+<link rel="stylesheet" href="/assets/store_management/css/store_management_auth.css">
 {% endblock %}
 
 {% block page_content %}
@@ -865,6 +866,8 @@ body .page-footer {
         <div class="right-panel">
             <div class="login-card">
                 <div class="login-card-heading">
+					<span class="auth-eyebrow">Welcome back</span>
+					<h1>Sign in to your store</h1>
                     <p>Sign in to continue to Retail Billing</p>
                 </div>
 
@@ -914,7 +917,7 @@ body .page-footer {
                         </label>
                         <a href="/store-login/forgot-password">Forgot Password?</a>
                     </div>
-                    <div class="message-container" id="login-message" style="display: none;">
+                    <div class="message-container" id="login-message" role="status" aria-live="polite" style="display: none;">
                       <span class="icon" id="message-icon"></span>
                     </div>
 

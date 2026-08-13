@@ -1,0 +1,121 @@
+/* Final theme layer for the dedicated Store Management authentication pages. */
+.page-shell {
+	background:
+		radial-gradient(circle at 8% 10%, rgba(22, 121, 75, .12), transparent 28rem),
+		radial-gradient(circle at 92% 88%, rgba(244, 163, 64, .10), transparent 26rem),
+		#f4f7f5 !important;
+}
+
+.login-shell,
+.forgot-shell {
+	border-color: #dce7e0 !important;
+	background: rgba(255, 255, 255, .96) !important;
+	box-shadow: 0 26px 80px rgba(22, 54, 37, .12) !important;
+}
+
+.left-panel {
+	background:
+		radial-gradient(circle at 75% 45%, rgba(22, 121, 75, .09), transparent 30%),
+		linear-gradient(160deg, #f8fcf9 0%, #edf7f1 100%) !important;
+	border-color: #e0eae4 !important;
+}
+
+.brand-mark {
+	background: linear-gradient(145deg, #218b59, #0e5c38) !important;
+	box-shadow: 0 16px 32px rgba(14, 92, 56, .22) !important;
+}
+
+.brand-title,
+.left-title,
+.login-card-heading h1,
+.forgot-card-heading h1 { color: #17221d !important; }
+
+.brand-subtitle,
+.left-subtitle,
+.login-card-heading p,
+.forgot-card-heading p { color: #68756e !important; }
+
+.feature-icon,
+.form-icon {
+	color: #16794b !important;
+	background: #e9f7ef !important;
+	box-shadow: 0 10px 24px rgba(22, 121, 75, .10) !important;
+}
+
+.login-card,
+.right-panel {
+	border-color: #dfe7e2 !important;
+	box-shadow: 0 22px 60px rgba(25, 49, 37, .09) !important;
+}
+
+.auth-eyebrow {
+	display: inline-flex;
+	align-items: center;
+	gap: .45rem;
+	margin-bottom: .8rem;
+	color: #16794b;
+	font-size: .72rem;
+	font-weight: 800;
+	letter-spacing: .12em;
+	text-transform: uppercase;
+}
+
+.auth-eyebrow::before {
+	content: "";
+	width: .45rem;
+	height: .45rem;
+	border-radius: 50%;
+	background: #22a566;
+	box-shadow: 0 0 0 4px #e1f4e9;
+}
+
+.login-card-heading h1 {
+	margin: 0;
+	font-size: clamp(1.75rem, 2.5vw, 2.35rem) !important;
+	line-height: 1.12;
+	letter-spacing: -.035em;
+}
+
+.login-card-heading p { margin-top: .6rem !important; }
+.toggle-password:hover { color: #16794b !important; }
+.remember-row a { color: #16794b !important; font-weight: 700; text-underline-offset: 3px; }
+.btn-back { border-color: #d9e4dd !important; background: #f8fbf9 !important; color: #31453a !important; }
+.btn-back:hover { border-color: #b7cec0 !important; background: #f0f7f3 !important; }
+
+.form-field input:focus-visible,
+.toggle-password:focus-visible,
+.btn-submit:focus-visible,
+.btn-back:focus-visible,
+.remember-row a:focus-visible {
+	outline: 3px solid rgba(22, 121, 75, .18) !important;
+	outline-offset: 2px;
+}
+
+.form-field input {
+	border-color: #d9e4dd !important;
+	background: #f8fbf9 !important;
+}
+
+.form-field input:focus {
+	border-color: rgba(22, 121, 75, .55) !important;
+	box-shadow: 0 0 0 4px rgba(22, 121, 75, .10) !important;
+}
+
+.btn-submit {
+	background: linear-gradient(135deg, #1b8654, #0e6640) !important;
+	box-shadow: 0 12px 26px rgba(14, 102, 64, .22);
+}
+
+.btn-submit:hover { box-shadow: 0 16px 32px rgba(14, 102, 64, .28); }
+.forgot-link, .left-brand span { color: #16794b !important; }
+.illustration-card { border-color: rgba(22, 121, 75, .16) !important; background: linear-gradient(180deg, #fff, #eef8f2) !important; }
+
+@media (max-width: 860px) {
+	html, body { overflow: auto !important; }
+	.page-shell { min-height: 100dvh; height: auto !important; padding: 1rem !important; }
+	.login-shell, .forgot-shell { width: 100% !important; height: auto !important; min-height: calc(100dvh - 2rem); border-radius: 1.25rem !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.page-shell *, .page-shell *::before, .page-shell *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}

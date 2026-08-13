@@ -2,6 +2,10 @@
 
 {% block header %}{% endblock %}
 
+{% block head_include %}
+<link rel="stylesheet" href="/assets/store_management/css/store_management_ui.css">
+{% endblock %}
+
 {% block page_content %}
 {% if frappe.session.user == 'Guest' %}
 	<script>window.location.href = '/login?redirect-to=/pos';</script>
@@ -9,9 +13,15 @@
 <div class="sm-page-app sm-pos-app" id="sm-pos-app">
 <!-- Top Navigation -->
 	<div class="sm-top-nav">
-		<a href="/masters" class="sm-nav-link">Masters</a>
-		<a href="/pos" class="sm-nav-link active">POS</a>
-		<a href="/reports" class="sm-nav-link">Reports</a>
+		<a class="sm-brand-lockup" href="/pos" aria-label="Store Management home">
+			<span class="sm-brand-mark">S</span><span><strong>Store</strong><small>Management</small></span>
+		</a>
+		<nav class="sm-nav-primary" aria-label="Main navigation">
+			<a href="/masters" class="sm-nav-link">Masters</a>
+			<a href="/pos" class="sm-nav-link active" aria-current="page">POS</a>
+			<a href="/reports" class="sm-nav-link">Reports</a>
+		</nav>
+		<div class="sm-user-chip" title="Signed in user"><span class="sm-user-dot"></span>{{ frappe.session.user }}</div>
 	</div>
 
 	<section class="sm-page-shell sm-pos-shell">
@@ -124,7 +134,7 @@
 							placeholder="Search Items or Scan Barcode"
 							autocomplete="off"
 						>
-						<button type="button" class="sm-scan-button" id="scan-barcode-btn" onclick="startBarcodeScan()">
+		<button type="button" class="sm-scan-button" id="scan-barcode-btn" onclick="startBarcodeScan()">
 							<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5v4m0 10v4M21 5v4m0 10v4M5 3h4m10 0h4M5 17h4m10 0h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
 						</button>
 					</label>
@@ -1557,31 +1567,20 @@ function startCamera() {
 	
 	if (!video) return;
 	
-	// Get navigator from window to ensure we have the real one
-	var nav = window.navigator;
-	var mediaDevices = nav && nav.mediaDevices;
-	
+	var mediaDevices = window.navigator && window.navigator.mediaDevices;
 	if (!mediaDevices) {
 		frappe.msgprint("Camera not available. Use manual entry.");
 		return;
 	}
 	
-	// Try to access camera
-	var constraints = { 
-		video: {
-			facingMode: "environment"
-		}
-	};
-	
+	var constraints = { video: { facingMode: "environment" } };
 	mediaDevices.getUserMedia(constraints)
 	.then(function(stream) {
 		videoStream = stream;
 		video.srcObject = stream;
 		video.play();
-		
 		startBtn.style.display = "none";
 		stopBtn.style.display = "flex";
-		
 		scanFrame();
 	})
 	.catch(function(err) {
@@ -1592,23 +1591,19 @@ function startCamera() {
 
 async function scanFrame() {
 	const video = document.getElementById("camera-video");
-	
 	if (!videoStream || video.paused || video.ended) return;
 	
 	try {
 		if (hasBarcodeDetector && barcodeDetector) {
 			const barcodes = await barcodeDetector.detect(video);
 			if (barcodes.length > 0) {
-				const barcode = barcodes[0].rawValue;
-				processBarcodeValue(barcode);
+				processBarcodeValue(barcodes[0].rawValue);
 				return;
 			}
 		}
 	} catch (err) {
 		console.warn("Barcode detection error:", err);
 	}
-	
-	// Continue scanning
 	requestAnimationFrame(scanFrame);
 }
 
