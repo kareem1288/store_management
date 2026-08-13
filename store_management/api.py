@@ -15,6 +15,18 @@ CATEGORY_COLORS = [
 	"#0891B2",
 ]
 
+MOBILE_MASTER_DOCTYPES = {
+	"Company",
+	"Customer",
+	"Customer Group",
+	"Item",
+	"Item Group",
+	"Item Tax Template",
+	"Role Profile",
+	"UOM",
+	"User",
+}
+
 # ... [all existing functions remain the same] ...
 
 @frappe.whitelist(allow_guest=True)
@@ -211,7 +223,7 @@ def _get_dashboard_summary():
 		filters={"docstatus": 1, "posting_date": today},
 		fields=["name", "customer", "grand_total", "posting_time"],
 		order_by="modified desc",
-		limit=5,
+		limit_page_length=0,
 	)
 
 	return {
@@ -221,7 +233,7 @@ def _get_dashboard_summary():
 	}
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 def get_pos_bootstrap():
 	items = frappe.get_all(
 		"Item",
@@ -264,17 +276,17 @@ def get_pos_bootstrap():
 	}
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 def get_pos_categories():
 	return get_pos_bootstrap().get("categories", [])
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 def get_pos_items():
 	return get_pos_bootstrap().get("items", [])
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 def get_pos_items_by_barcode(query):
 	if not query:
 		return []
@@ -391,18 +403,25 @@ def create_pos_bill(
 
 # Masters Management APIs
 
-@frappe.whitelist(allow_guest=True)
+def _validate_mobile_master_doctype(doctype):
+	if doctype not in MOBILE_MASTER_DOCTYPES:
+		frappe.throw(_("{0} is not available in My Sales").format(doctype), frappe.PermissionError)
+
+
+@frappe.whitelist()
 def get_master_records(doctype):
 	"""Get all records for a master doctype"""
+	_validate_mobile_master_doctype(doctype)
 	if not frappe.db.exists("DocType", doctype):
 		frappe.throw(f"DocType {doctype} not found")
 	
 	return frappe.get_all(doctype, fields=["*"], order_by="name asc", limit_page_length=0)
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 def get_master_record(doctype, name):
 	"""Get a single master record"""
+	_validate_mobile_master_doctype(doctype)
 	if not frappe.db.exists("DocType", doctype):
 		frappe.throw(f"DocType {doctype} not found")
 	
@@ -438,6 +457,7 @@ def get_master_record(doctype, name):
 @frappe.whitelist()
 def create_master_record(doctype, **kwargs):
 	"""Create a new master record"""
+	_validate_mobile_master_doctype(doctype)
 	if not frappe.db.exists("DocType", doctype):
 		frappe.throw(f"DocType {doctype} not found")
 	
@@ -497,6 +517,7 @@ import frappe
 @frappe.whitelist()
 def update_master_record(doctype, name, **kwargs):
 	"""Update an existing master record"""
+	_validate_mobile_master_doctype(doctype)
 
 	if not frappe.db.exists("DocType", doctype):
 		frappe.throw(f"DocType {doctype} not found")
@@ -550,6 +571,7 @@ def update_master_record(doctype, name, **kwargs):
 @frappe.whitelist()
 def delete_master_record(doctype, name):
 	"""Delete a master record"""
+	_validate_mobile_master_doctype(doctype)
 	if not frappe.db.exists("DocType", doctype):
 		frappe.throw(f"DocType {doctype} not found")
 	
