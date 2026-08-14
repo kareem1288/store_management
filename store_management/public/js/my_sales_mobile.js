@@ -101,13 +101,24 @@
     drawer.innerHTML = `
       <a class="my-sales-mobile-brand" href="/pos"><b>M</b><span><strong>My Sales</strong><small>Mobile Store</small></span></a>
       <nav>
-        <a href="/pos">${icons.home}<span>Dashboard</span></a>
-        <details open><summary>${icons.pos}<span>POS</span></summary><a href="/pos#billing-panel">New Sale</a><a href="/reports?type=open-bills">Open Bills</a></details>
-        <details open><summary>${icons.reports}<span>Reports</span></summary><a href="/reports?type=sales">Sales Report</a><a href="/reports?type=items">Item Wise Sales</a></details>
-        <details open><summary>${icons.masters}<span>Masters</span></summary><a href="/masters?doctype=Item">Items</a><a href="/masters?doctype=Item%20Group">Item Groups</a><a href="/masters?doctype=Customer">Customers</a><a href="/masters?doctype=Item%20Tax%20Template">Tax Templates</a><a href="/masters?doctype=Company">Companies</a></details>
+        <a href="/pos" data-section="dashboard">${icons.home}<span>Dashboard</span></a>
+        <details open><summary>${icons.pos}<span>POS</span></summary><div class="my-sales-mobile-submenu"><a href="/pos#billing-panel">New Sale</a><a href="/reports?type=open-bills">Open Bills</a><a href="/masters?doctype=Customer">Customers</a></div></details>
+        <details open><summary>${icons.reports}<span>Reports</span></summary><div class="my-sales-mobile-submenu"><a href="/reports?type=sales">Sales Report</a><a href="/reports?type=items">Item Report</a><a href="/reports?type=customers">Customer Report</a><a href="/reports?type=sales#day-closing">Day Closing</a></div></details>
+        <details open><summary>${icons.masters}<span>Masters</span></summary><div class="my-sales-mobile-submenu"><a href="/masters?doctype=Item">Items</a><a href="/masters?doctype=Item%20Group">Item Groups</a><a href="/masters?doctype=Customer">Customers</a><a href="/masters?doctype=Item%20Tax%20Template">Tax Templates</a><a href="/masters?doctype=Company">Companies</a><a href="/masters?doctype=User">Users</a></div></details>
+        <a href="/masters?doctype=Company" data-section="settings">${icons.more}<span>Settings</span></a>
       </nav>
       <a class="my-sales-mobile-drawer-logout" href="/logout">↪ <span>Logout</span></a>`;
     document.body.append(overlay, drawer);
+    const currentPath = `${location.pathname}${location.search}${location.hash}`;
+    drawer.querySelectorAll("a[href]").forEach(link => {
+      const target = new URL(link.href, location.origin);
+      const exactMatch = `${target.pathname}${target.search}${target.hash}` === currentPath;
+      const dashboardMatch = link.dataset.section === "dashboard" && location.pathname === "/pos" && !location.hash;
+      if (exactMatch || dashboardMatch) {
+        link.classList.add("active");
+        link.closest("details")?.setAttribute("open", "");
+      }
+    });
     const toggle = top.querySelector(".my-sales-mobile-menu");
     const setOpen = open => {
       document.documentElement.classList.toggle("my-sales-mobile-nav-open", open);

@@ -512,3 +512,47 @@
   .sm-report-table { min-width: 560px !important; }
   .sm-report-table th,.sm-report-table td { padding: .58rem !important; font-size: .64rem !important; }
 }
+
+/* Mobile uses the same navigation hierarchy as the desktop sidebar. */
+@media (max-width: 768px) {
+  body { padding-bottom: max(1rem, var(--ms-safe-bottom)) !important; }
+  .sm-nav-primary { display: none !important; }
+  .sm-page-app .sm-top-nav { display: flex !important; justify-content: flex-start !important; }
+  .my-sales-mobile-menu {
+    display: grid !important; place-items: center; width: 36px; height: 36px; margin: 0 .2rem 0 0;
+    border: 1px solid #e2e8e4; border-radius: 9px; background: #fff; color: #15251c;
+  }
+  .my-sales-mobile-title { margin-left: .45rem; }
+  .my-sales-mobile-overlay { background: rgba(9,24,16,.38); backdrop-filter: blur(2px); }
+  .my-sales-mobile-drawer {
+    width: min(84vw, 304px); padding: .85rem .7rem calc(.8rem + var(--ms-safe-bottom));
+    border-right: 1px solid #dfe7e2; box-shadow: 20px 0 48px rgba(16,24,40,.18);
+  }
+  .my-sales-mobile-brand { gap: .65rem; margin-bottom: .25rem; padding: .35rem .45rem .9rem; border-bottom: 1px solid #edf1ee; }
+  .my-sales-mobile-brand > b { width: 36px; height: 36px; border-radius: 9px; font-size: 1rem; }
+  .my-sales-mobile-brand strong { color: #101828; font-size: .84rem; }
+  .my-sales-mobile-brand small { color: #667085; font-size: .55rem; text-transform: none; }
+  .my-sales-mobile-drawer nav { padding: .35rem 0; }
+  .my-sales-mobile-drawer nav > a,
+  .my-sales-mobile-drawer summary {
+    min-height: 40px; margin: .12rem 0; padding: .5rem .65rem; border-radius: 8px;
+    color: #1f3027; font-size: .72rem; font-weight: 700;
+  }
+  .my-sales-mobile-drawer nav > a.active,
+  .my-sales-mobile-drawer .my-sales-mobile-submenu a.active {
+    background: #e9f6ee; color: #06773d; font-weight: 800;
+  }
+  .my-sales-mobile-drawer summary::after { content: "⌄"; color: #667085; font-size: .9rem; }
+  .my-sales-mobile-drawer details:not([open]) summary::after { transform: rotate(-90deg); }
+  .my-sales-mobile-submenu { position: relative; margin: .05rem 0 .3rem 1.35rem; padding-left: .8rem; }
+  .my-sales-mobile-submenu::before { content: ""; position: absolute; inset: .15rem auto .15rem 0; width: 1px; background: #e0e8e3; }
+  .my-sales-mobile-drawer details > .my-sales-mobile-submenu > a {
+    display: flex; align-items: center; min-height: 32px; margin: .05rem 0; padding: .35rem .6rem;
+    border-radius: 7px; color: #475c50; font-size: .66rem; font-weight: 600; text-decoration: none;
+  }
+  .my-sales-mobile-drawer svg { width: 17px; height: 17px; }
+  .my-sales-mobile-drawer-logout {
+    justify-content: flex-start; min-height: 40px; padding: .55rem .7rem; border: 1px solid #dfe9e3;
+    border-radius: 8px; background: #f5faf7; font-size: .72rem;
+  }
+}
