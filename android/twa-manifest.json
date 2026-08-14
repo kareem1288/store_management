@@ -1,0 +1,52 @@
+{
+  "packageId": "cloud.frappe.m.mysales.twa",
+  "host": "mysales.m.frappe.cloud",
+  "name": "My Sales",
+  "launcherName": "My Sales",
+  "display": "standalone",
+  "themeColor": "#146C43",
+  "themeColorDark": "#0D5031",
+  "navigationColor": "#FFFFFF",
+  "navigationColorDark": "#0D5031",
+  "navigationDividerColor": "#DFE7E2",
+  "navigationDividerColorDark": "#0D5031",
+  "backgroundColor": "#F4F8F5",
+  "enableNotifications": true,
+  "startUrl": "/pos?source=pwa",
+  "iconUrl": "https://mysales.m.frappe.cloud/assets/store_management/images/my-sales-icon-512.png",
+  "maskableIconUrl": "https://mysales.m.frappe.cloud/assets/store_management/images/my-sales-icon-512.png",
+  "monochromeIconUrl": "https://mysales.m.frappe.cloud/assets/store_management/images/my-sales-icon.svg",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "/home/caratred/frappe16/apps/store_management/android/android.keystore",
+    "alias": "android"
+  },
+  "appVersionName": "2",
+  "appVersionCode": 2,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://mysales.m.frappe.cloud/assets/store_management/my-sales.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://mysales.m.frappe.cloud/",
+  "minSdkVersion": 21,
+  "orientation": "any",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "protocolHandlers": [],
+  "fileHandlers": [],
+  "launchHandlerClientMode": "",
+  "displayOverride": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
+  "appVersion": "2"
+}
