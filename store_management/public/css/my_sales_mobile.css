@@ -426,3 +426,89 @@
   .sm-report-summary { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
   .sm-report-summary article:nth-child(3) { grid-column: 1 / -1; }
 }
+
+/* Final phone composition: mirrors the compact reference application screens. */
+@media (max-width: 768px) {
+  :root { --ms-green: #078344; --ms-ink: #111827; --ms-muted: #667085; }
+  body { background: #fff !important; padding-bottom: calc(64px + var(--ms-safe-bottom)) !important; }
+  .sm-page-app { background: #fff !important; }
+  .sm-page-app .sm-top-nav {
+    position: sticky !important; top: 0; z-index: 1000; display: flex !important;
+    height: 54px !important; min-height: 54px !important; padding: .45rem .8rem !important;
+    border-bottom: 1px solid #edf1ee !important; background: rgba(255,255,255,.98) !important;
+  }
+  .my-sales-mobile-menu { width: 34px; min-height: 34px !important; font-size: 0 !important; }
+  .my-sales-mobile-menu::before { content: "☰"; font-size: 1.05rem; }
+  .my-sales-mobile-title { margin-left: .2rem; font-size: .86rem; }
+  .sm-nav-primary {
+    height: calc(62px + var(--ms-safe-bottom)) !important; padding: .25rem .35rem calc(.25rem + var(--ms-safe-bottom)) !important;
+    border-top: 1px solid #e7ece9 !important; box-shadow: 0 -3px 14px rgba(16,24,40,.04) !important;
+  }
+  .sm-nav-link { min-height: 52px !important; gap: .18rem !important; border-radius: 0 !important; font-size: .59rem !important; font-weight: 650 !important; }
+  .sm-nav-link svg { width: 19px !important; height: 19px !important; }
+  .sm-nav-pos { width: auto !important; height: auto !important; margin: 0 !important; border: 0 !important; border-radius: 0 !important; background: transparent !important; color: #667085 !important; box-shadow: none !important; }
+
+  .sm-pos-app .sm-page-shell { padding: .75rem !important; }
+  .sm-pos-app .sm-pos-hero { display: none !important; }
+  .sm-pos-app .sm-pos-workspace { display: none !important; }
+  .my-sales-dashboard { display: grid; gap: .75rem; }
+  .my-sales-dashboard > header { display: none; }
+  .my-sales-kpis { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .55rem; }
+  .my-sales-kpis article {
+    display: flex; align-items: center; gap: .6rem; min-width: 0; min-height: 82px; padding: .7rem;
+    border: 1px solid #e1e7e3; border-radius: 11px; background: #fff;
+  }
+  .my-sales-kpis i { display: grid; place-items: center; width: 35px; height: 35px; flex: 0 0 35px; border-radius: 9px; background: #eaf7ef; color: var(--ms-green); font-style: normal; }
+  .my-sales-kpis i svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+  .my-sales-kpis article > span { min-width: 0; color: var(--ms-muted); font-size: .63rem; font-weight: 650; }
+  .my-sales-kpis strong,.my-sales-kpis small { display: block; white-space: nowrap; }
+  .my-sales-kpis strong { margin-top: .22rem; color: var(--ms-ink); font-size: .9rem; }
+  .my-sales-kpis small { margin-top: .15rem; color: var(--ms-green); font-size: .57rem; }
+  .my-sales-dashboard-grid { display: grid; gap: .65rem; }
+  .my-sales-dash-card { padding: .75rem; border: 1px solid #e1e7e3; border-radius: 11px; background: #fff; overflow: hidden; }
+  .my-sales-dash-card h2 { display: flex; justify-content: space-between; margin: 0 0 .55rem; font-size: .76rem; }
+  .my-sales-dash-card h2 a { color: var(--ms-green); font-size: .62rem; text-decoration: none; }
+  .my-sales-trend svg { width: 100%; height: 132px; }
+  .my-sales-trend > div { display: grid; grid-template-columns: repeat(7,1fr); color: var(--ms-muted); font-size: .52rem; text-align: center; }
+  .my-sales-categories { display: none; }
+  .my-sales-table { display: none; }
+
+  .my-sales-mobile-billing .sm-pos-app .my-sales-dashboard { display: none !important; }
+  .my-sales-mobile-billing .sm-pos-app .sm-pos-workspace { display: grid !important; gap: .65rem; margin: 0 !important; }
+  .my-sales-mobile-billing .sm-pos-browser { padding: 0 !important; }
+  .my-sales-mobile-billing .sm-toolbar { display: none !important; }
+  .my-sales-mobile-billing .sm-search-row { margin: 0 0 .55rem !important; }
+  .my-sales-mobile-billing .sm-search-box { min-height: 42px !important; border-radius: 9px !important; }
+  .my-sales-mobile-billing .sm-category-strip { margin: 0 0 .55rem !important; padding: 0 !important; gap: .4rem !important; }
+  .my-sales-mobile-billing .sm-category-pill { min-height: 34px !important; padding: .4rem .8rem !important; font-size: .65rem !important; }
+  .my-sales-mobile-billing .sm-category-block { padding: .4rem 0 !important; }
+  .my-sales-mobile-billing .sm-item-card { grid-template-columns: 58px minmax(0,1fr) !important; border-radius: 9px !important; }
+  .my-sales-mobile-billing .sm-item-visual { width: 58px !important; }
+  .my-sales-mobile-billing .sm-item-body { padding: .5rem !important; }
+  .my-sales-mobile-billing .sm-add-button { width: 30px !important; min-height: 30px !important; border-radius: 7px !important; }
+  .my-sales-mobile-billing .sm-current-bill { margin: .2rem 0 0 !important; padding: .75rem !important; border: 1px solid #e1e7e3 !important; border-radius: 11px !important; box-shadow: none !important; }
+  .my-sales-mobile-billing .sm-current-bill-head h3 { font-size: .85rem !important; }
+  .my-sales-mobile-billing .sm-empty-cart { min-height: 92px !important; padding: 1rem !important; }
+  .my-sales-mobile-billing .sm-bill-footer { margin-top: .55rem !important; }
+  .my-sales-mobile-billing .sm-bill-actions .sm-main-button { min-height: 44px !important; }
+
+  .sm-reports-app .sm-page-shell { padding: .65rem .75rem 1rem !important; }
+  .sm-reports-app .sm-report-panel { padding: 0 !important; }
+  .sm-report-toolbar { display: none !important; }
+  .sm-report-filters { display: grid !important; grid-template-columns: repeat(2,minmax(0,1fr)) !important; gap: .5rem !important; margin-bottom: .65rem !important; }
+  .sm-report-field { min-width: 0; }
+  .sm-report-field span { font-size: .6rem !important; }
+  .sm-report-field input,.sm-report-field select { min-height: 40px !important; padding: .45rem .55rem !important; border-radius: 8px !important; font-size: .68rem !important; }
+  .sm-report-summary { gap: .5rem !important; margin-bottom: .65rem !important; }
+  .sm-report-summary article,.sm-report-summary article:nth-child(3) { grid-column: auto !important; min-height: 78px; padding: .65rem !important; border-radius: 10px !important; }
+  .sm-report-summary article:nth-child(n+5) { display: none; }
+  .sm-report-summary span { font-size: .6rem !important; }
+  .sm-report-summary strong { font-size: .83rem !important; }
+  .sm-report-status { display: none !important; }
+  .sm-report-table-wrap { max-height: none !important; border-radius: 10px !important; }
+  .sm-report-table-title { padding: .65rem !important; }
+  .sm-report-table-title h3 { font-size: .78rem !important; }
+  .sm-report-table-title p { display: none; }
+  .sm-report-table { min-width: 560px !important; }
+  .sm-report-table th,.sm-report-table td { padding: .58rem !important; font-size: .64rem !important; }
+}

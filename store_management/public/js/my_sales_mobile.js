@@ -221,7 +221,7 @@
   }
 
   function enhanceDesktopDashboard(providedBootstrap) {
-    if (window.matchMedia("(max-width: 900px)").matches || !document.querySelector(".sm-pos-app")) return;
+    if (!document.querySelector(".sm-pos-app")) return;
     const shell = document.querySelector(".sm-pos-shell");
     let bootstrap = providedBootstrap || {};
     const rawBootstrap = document.getElementById("sm-pos-bootstrap")?.textContent || "{}";
@@ -285,12 +285,13 @@
   }
 
   function syncDesktopPosView() {
-    if (window.matchMedia("(max-width: 900px)").matches || !document.querySelector(".sm-pos-app")) return;
-    document.documentElement.classList.toggle("my-sales-desktop-billing", location.hash === "#billing-panel");
+    if (!document.querySelector(".sm-pos-app")) return;
+    const billing = location.hash === "#billing-panel";
+    document.documentElement.classList.toggle("my-sales-desktop-billing", billing);
+    document.documentElement.classList.toggle("my-sales-mobile-billing", billing);
   }
 
   function arrangeDesktopBilling() {
-    if (window.matchMedia("(max-width: 900px)").matches) return;
     const workspace = document.querySelector(".sm-pos-workspace");
     const bill = document.querySelector(".sm-current-bill");
     if (workspace && bill && !workspace.contains(bill)) workspace.appendChild(bill);
