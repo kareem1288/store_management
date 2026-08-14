@@ -1,4 +1,4 @@
-const CACHE_NAME = "my-sales-shell-v1";
+const CACHE_NAME = "my-sales-shell-v7";
 const APP_SHELL = [
   "/offline",
   "/assets/store_management/css/store_management_ui.css",
@@ -37,11 +37,11 @@ self.addEventListener("fetch", event => {
 
   if (url.pathname.startsWith("/assets/store_management/")) {
     event.respondWith(
-      caches.match(request).then(cached => cached || fetch(request).then(response => {
+      fetch(request).then(response => {
         const copy = response.clone();
         caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
         return response;
-      }))
+      }).catch(() => caches.match(request))
     );
   }
 });

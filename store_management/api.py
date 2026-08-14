@@ -2,7 +2,7 @@ import json
 
 import frappe
 from frappe import _
-from frappe.utils import flt, nowdate
+from frappe.utils import add_days, flt, get_first_day, nowdate
 
 CATEGORY_COLORS = [
 	"#1F9D55",
@@ -26,6 +26,37 @@ MOBILE_MASTER_DOCTYPES = {
 	"UOM",
 	"User",
 }
+
+MY_SALES_REPORTS = {
+	"sales": "Sales Register",
+	"items": "Item-wise Sales Register",
+	"customers": "Customer Ledger Summary",
+	"open-bills": "Accounts Receivable",
+}
+
+
+@frappe.whitelist()
+def run_my_sales_report(report_type, filters=None):
+	"""Run an approved My Sales report with a reliable company default."""
+	from frappe.desk.query_report import run
+
+	report_name = MY_SALES_REPORTS.get(report_type)
+	if not report_name:
+		frappe.throw(_("Unsupported report type"))
+
+	if isinstance(filters, str):
+		filters = json.loads(filters or "{}")
+	filters = frappe._dict(filters or {})
+	filters.company = filters.get("company") or _get_default_company()
+	if not filters.company:
+		frappe.throw(_("Please configure a default Company before running reports."))
+
+	return run(
+		report_name=report_name,
+		filters=filters,
+		user=frappe.session.user,
+		ignore_prepared_report=True,
+	)
 
 # ... [all existing functions remain the same] ...
 
@@ -221,15 +252,170 @@ def _get_dashboard_summary():
 	sales = frappe.get_all(
 		"Sales Invoice",
 		filters={"docstatus": 1, "posting_date": today},
-		fields=["name", "customer", "grand_total", "posting_time"],
+		fields=["name", "customer", "grand_total", "posting_time", "total_qty"],
 		order_by="modified desc",
 		limit_page_length=0,
+	)
+
+	month_start = get_first_day(today)
+	month_sales = frappe.get_all(
+		"Sales Invoice",
+		filters={"docstatus": 1, "posting_date": ["between", [month_start, today]]},
+		fields=[{"SUM": "grand_total", "as": "total"}],
+	)
+	today_customers = frappe.db.count(
+		"Customer", {"creation": ["between", [f"{today} 00:00:00", f"{today} 23:59:59"]]}
+	)
+	today_items = frappe.get_all(
+		"Sales Invoice Item",
+		filters={"docstatus": 1, "parent": ["in", [row.name for row in sales] or [""]]},
+		fields=[{"SUM": "qty", "as": "qty"}],
+	)
+
+	trend = []
+	for offset in range(-6, 1):
+		day = add_days(today, offset)
+		day_total = frappe.get_all(
+			"Sales Invoice",
+			filters={"docstatus": 1, "posting_date": day},
+			fields=[{"SUM": "grand_total", "as": "total"}],
+		)
+		trend.append({"date": str(day), "total": flt(day_total[0].total if day_total else 0)})
+
+	categories = frappe.get_all(
+		"Sales Invoice Item",
+		filters={"docstatus": 1, "creation": ["between", [f"{month_start} 00:00:00", f"{today} 23:59:59"]]},
+		fields=["item_group as label", {"SUM": "base_net_amount", "as": "value"}],
+		group_by="item_group",
+		order_by="value desc",
+		limit=5,
+	)
+	top_items = frappe.get_all(
+		"Sales Invoice Item",
+		filters={"docstatus": 1, "creation": ["between", [f"{month_start} 00:00:00", f"{today} 23:59:59"]]},
+		fields=[
+			"item_name",
+			{"SUM": "qty", "as": "sold"},
+			{"SUM": "base_net_amount", "as": "revenue"},
+		],
+		group_by="item_code, item_name",
+		order_by="sold desc",
+		limit=5,
+	)
+	recent_bills = frappe.get_all(
+		"Sales Invoice",
+		filters={"docstatus": 1},
+		fields=["name", "customer", "grand_total", "posting_date", "posting_time", "total_qty"],
+		order_by="posting_date desc, posting_time desc",
+		limit=5,
 	)
 
 	return {
 		"today_sales": round(sum(flt(row.grand_total) for row in sales), 2),
 		"today_bills": len(sales),
-		"recent_bills": sales,
+		"today_customers": today_customers,
+		"today_items_sold": flt(today_items[0].qty if today_items else 0),
+		"month_sales": flt(month_sales[0].total if month_sales else 0),
+		"recent_bills": recent_bills,
+		"trend": trend,
+		"categories": categories,
+		"top_items": top_items,
+	}
+
+
+@frappe.whitelist()
+def create_sample_dashboard_data():
+	"""Create a small, clearly marked demo dataset for My Sales dashboards."""
+	frappe.only_for("System Manager")
+
+	existing = frappe.get_all(
+		"Sales Invoice",
+		filters={"remarks": ["like", "%My Sales Dashboard Demo%"], "docstatus": 1},
+		pluck="name",
+		limit_page_length=0,
+	)
+	if existing:
+		return {"created": False, "invoices": existing, "message": _("Sample dashboard data already exists.")}
+
+	company = _get_default_company()
+	customer_group = _get_leaf_customer_group()
+	territory = _get_leaf_territory()
+	if not company or not customer_group or not territory:
+		frappe.throw(_("Set up a Company, leaf Customer Group, and leaf Territory before creating sample data."))
+
+	item_group = _get_first_available(
+		"Item Group", preferred_names=["Products", "Groceries"], extra_filters={"is_group": 0}
+	)
+	if not item_group:
+		frappe.throw(_("Create at least one leaf Item Group before creating sample data."))
+
+	customers = []
+	for customer_name in ["Walk-in Customer", "Ramesh Kumar (Demo)", "Priya Store (Demo)"]:
+		customer = frappe.db.exists("Customer", customer_name)
+		if not customer:
+			customer_doc = frappe.get_doc(
+				{
+					"doctype": "Customer",
+					"customer_name": customer_name,
+					"customer_group": customer_group,
+					"territory": territory,
+				}
+			)
+			customer_doc.insert(ignore_permissions=True)
+			customer = customer_doc.name
+		customers.append(customer)
+
+	items = []
+	for code, item_name, rate in [
+		("MYSALES-DEMO-OIL", "Oil", 100),
+		("MYSALES-DEMO-RICE", "Rice", 50),
+		("MYSALES-DEMO-SUGAR", "Sugar", 45),
+		("MYSALES-DEMO-FLOUR", "Wheat Flour", 35),
+	]:
+		if not frappe.db.exists("Item", code):
+			frappe.get_doc(
+				{
+					"doctype": "Item",
+					"item_code": code,
+					"item_name": item_name,
+					"item_group": item_group,
+					"stock_uom": "Nos",
+					"is_stock_item": 0,
+					"is_sales_item": 1,
+					"standard_rate": rate,
+				}
+			).insert(ignore_permissions=True)
+		items.append((code, rate))
+
+	created_invoices = []
+	for index, offset in enumerate([-6, -5, -4, -3, -2, -1, 0]):
+		first_item = items[index % len(items)]
+		second_item = items[(index + 1) % len(items)]
+		invoice = frappe.get_doc(
+			{
+				"doctype": "Sales Invoice",
+				"company": company,
+				"customer": customers[index % len(customers)],
+				"posting_date": add_days(nowdate(), offset),
+				"due_date": add_days(nowdate(), offset),
+				"set_posting_time": 1,
+				"posting_time": f"{9 + (index % 3):02d}:{10 + index * 5:02d}:00",
+				"remarks": "My Sales Dashboard Demo",
+				"items": [
+					{"item_code": first_item[0], "qty": index + 2, "rate": first_item[1]},
+					{"item_code": second_item[0], "qty": (index % 3) + 1, "rate": second_item[1]},
+				],
+			}
+		)
+		invoice.insert(ignore_permissions=True)
+		invoice.submit()
+		created_invoices.append(invoice.name)
+
+	frappe.db.commit()
+	return {
+		"created": True,
+		"invoices": created_invoices,
+		"message": _("Created sample customers, items, and seven submitted invoices."),
 	}
 
 
