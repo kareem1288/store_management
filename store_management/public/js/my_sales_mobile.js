@@ -3,7 +3,22 @@
   document.documentElement.classList.add("my-sales-app");
 
   const APP_NAME = "My Sales";
+  const MOBILE_UI_VERSION = "20260818-3";
   let installPrompt = null;
+
+  async function refreshInstalledAppCache() {
+	if (localStorage.getItem("my-sales-ui-version") === MOBILE_UI_VERSION) return false;
+	if ("caches" in window) {
+		const keys = await caches.keys();
+		await Promise.all(keys.filter(key => key.startsWith("my-sales-shell-")).map(key => caches.delete(key)));
+	}
+	if ("serviceWorker" in navigator) {
+		const registrations = await navigator.serviceWorker.getRegistrations();
+		await Promise.all(registrations.map(registration => registration.update()));
+	}
+	localStorage.setItem("my-sales-ui-version", MOBILE_UI_VERSION);
+	return true;
+  }
 
   const section = location.pathname.includes("masters")
     ? "Masters"
@@ -326,7 +341,11 @@
   window.addEventListener("online", updateConnection);
   window.addEventListener("offline", updateConnection);
 
-  window.addEventListener("DOMContentLoaded", () => {
+  window.addEventListener("DOMContentLoaded", async () => {
+	if (await refreshInstalledAppCache()) {
+		location.replace(`${location.pathname}${location.search}${location.search ? "&" : "?"}ui=${MOBILE_UI_VERSION}${location.hash}`);
+		return;
+	}
     buildMobileNavigation();
     buildMobileDrawer();
     addAppActions();
@@ -345,7 +364,7 @@
 
   if ("serviceWorker" in navigator && window.isSecureContext) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/my-sales-sw.js?v=11", { scope: "/" }).catch(error => {
+      navigator.serviceWorker.register("/my-sales-sw.js?v=13", { scope: "/" }).catch(error => {
         console.warn("My Sales offline support could not be enabled", error);
       });
     });

@@ -2,9 +2,9 @@
   "name": "My Sales",
   "short_name": "My Sales",
   "description": "Mobile sales, billing, master data, and reporting",
-  "start_url": "/pos?source=pwa",
-  "id": "/pos",
-  "scope": "/",
+  "start_url": "https://mysales.m.frappe.cloud/pos?source=pwa",
+  "id": "https://mysales.m.frappe.cloud/pos",
+  "scope": "https://mysales.m.frappe.cloud/",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "orientation": "any",
@@ -33,8 +33,8 @@
     }
   ],
   "shortcuts": [
-    { "name": "New Sale", "short_name": "Sale", "url": "/pos#billing-panel" },
-    { "name": "Masters", "short_name": "Masters", "url": "/masters" },
-    { "name": "Reports", "short_name": "Reports", "url": "/reports?type=sales" }
+    { "name": "New Sale", "short_name": "Sale", "url": "https://mysales.m.frappe.cloud/pos#billing-panel" },
+    { "name": "Masters", "short_name": "Masters", "url": "https://mysales.m.frappe.cloud/masters" },
+    { "name": "Reports", "short_name": "Reports", "url": "https://mysales.m.frappe.cloud/reports?type=sales" }
   ]
 }

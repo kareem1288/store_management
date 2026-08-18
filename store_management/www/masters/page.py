@@ -1,4 +1,5 @@
 def get_context(context):
+	context.no_cache = 1
 	context.show_sidebar = 0
 	context.login_required = 1
 	context.title = "Masters · My Sales"
