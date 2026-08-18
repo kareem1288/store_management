@@ -1,0 +1,102 @@
+{
+ "actions": [],
+ "creation": "2026-08-18 06:28:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "enabled",
+  "company",
+  "status",
+  "upi_id",
+  "gateway_section",
+  "payment_api_url",
+  "api_key",
+  "api_secret",
+  "redirect_to",
+  "instructions"
+ ],
+ "fields": [
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "default": "Testing",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Testing\nLive",
+   "reqd": 1
+  },
+  {
+   "description": "Merchant UPI ID displayed at checkout.",
+   "fieldname": "upi_id",
+   "fieldtype": "Data",
+   "label": "UPI ID"
+  },
+  {
+   "fieldname": "gateway_section",
+   "fieldtype": "Section Break",
+   "label": "Payment Gateway"
+  },
+  {
+   "description": "HTTPS endpoint that creates a payment request in Live mode.",
+   "fieldname": "payment_api_url",
+   "fieldtype": "Data",
+   "label": "Payment API URL",
+   "mandatory_depends_on": "eval:doc.status=='Live'"
+  },
+  {
+   "fieldname": "api_key",
+   "fieldtype": "Password",
+   "label": "API Key",
+   "mandatory_depends_on": "eval:doc.status=='Live'"
+  },
+  {
+   "fieldname": "api_secret",
+   "fieldtype": "Password",
+   "label": "API Secret",
+   "mandatory_depends_on": "eval:doc.status=='Live'"
+  },
+  {
+   "description": "Transaction completion page URL.",
+   "fieldname": "redirect_to",
+   "fieldtype": "Data",
+   "label": "Redirect To"
+  },
+  {
+   "fieldname": "instructions",
+   "fieldtype": "HTML",
+   "options": "<div class='alert alert-info'>Testing generates a non-payment QR and never requests the original amount. Live sends the amount to the configured gateway endpoint.</div>"
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-08-18 06:28:00.000000",
+ "modified_by": "Administrator",
+ "module": "Store Management",
+ "name": "UPI Configuration",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

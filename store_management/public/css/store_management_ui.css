@@ -346,11 +346,19 @@
 	.my-sales-desktop-billing .sm-mini-total { min-width: 0 !important; padding: .65rem !important; border-radius: 10px !important; }
 	.my-sales-desktop-billing .sm-mini-total span { font-size: .66rem !important; }
 	.my-sales-desktop-billing .sm-mini-total strong { margin-top: .25rem; font-size: .83rem !important; white-space: nowrap; }
-	.my-sales-desktop-billing .sm-grand-total-box { min-width: 0 !important; padding: .85rem 1rem !important; display: flex; align-items: center; justify-content: space-between; }
+	.my-sales-desktop-billing .sm-grand-total-box {
+		min-width: 0 !important; padding: .68rem .85rem !important; display: flex; align-items: center; justify-content: space-between;
+		border: 1px solid #cfe3d6 !important; background: #f3faf6 !important; box-shadow: none !important;
+	}
 	.my-sales-desktop-billing .sm-grand-total-box span,
-	.my-sales-desktop-billing .sm-grand-total-box strong { margin: 0 !important; color: #fff !important; }
+	.my-sales-desktop-billing .sm-grand-total-box strong { margin: 0 !important; color: #234334 !important; font-weight: 600 !important; }
 	.my-sales-desktop-billing .sm-bill-actions { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: .55rem !important; }
-	.my-sales-desktop-billing .sm-bill-actions .sm-main-button { grid-column: 1 / -1; grid-row: 1; min-height: 46px; width: 100%; }
+	.my-sales-desktop-billing .sm-bill-actions .sm-main-button {
+		grid-column: 1 / -1; grid-row: 1; min-height: 42px; width: 100%;
+		border: 1px solid #a9d2ba !important; background: #eaf6ef !important; color: #126b40 !important;
+		box-shadow: none !important; font-weight: 600;
+	}
+	.my-sales-desktop-billing .sm-bill-actions .sm-main-button:hover { background: #dcefe4 !important; }
 	.my-sales-desktop-billing .sm-bill-actions .sm-chip { width: 100%; }
 
 	/* Keep POS actions crisp without making every control compete for attention. */

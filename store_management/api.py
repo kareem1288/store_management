@@ -1,4 +1,7 @@
+import base64
+import io
 import json
+import secrets
 
 import frappe
 from frappe import _
@@ -33,6 +36,102 @@ MY_SALES_REPORTS = {
 	"customers": "Customer Ledger Summary",
 	"open-bills": "Accounts Receivable",
 }
+
+
+def _make_qr_data_uri(value):
+	try:
+		import segno
+	except ImportError:
+		frappe.throw(_("QR support is not installed. Run bench setup requirements and restart the bench."))
+
+	output = io.BytesIO()
+	segno.make(value, error="m").save(output, kind="svg", scale=6, border=2, dark="#101512")
+	return "data:image/svg+xml;base64," + base64.b64encode(output.getvalue()).decode("ascii")
+
+
+@frappe.whitelist()
+def create_upi_payment(amount):
+	"""Create a safe test QR or request a live UPI payment from the configured gateway."""
+	if frappe.session.user == "Guest":
+		frappe.throw(_("Please sign in to create a payment request."), frappe.PermissionError)
+
+	amount = flt(amount, 2)
+	if amount <= 0:
+		frappe.throw(_("Payment amount must be greater than zero."))
+	if not frappe.db.exists("DocType", "UPI Configuration"):
+		frappe.throw(_("UPI Configuration is not installed. Run bench migrate."))
+
+	configuration = frappe.get_single("UPI Configuration")
+	if not configuration.enabled:
+		frappe.throw(_("UPI payments are disabled in UPI Configuration."))
+	if not configuration.company:
+		frappe.throw(_("Select a Company in UPI Configuration."))
+
+	reference = f"UPI-{secrets.token_hex(8).upper()}"
+	mode = configuration.status or "Testing"
+	upi_id = configuration.upi_id or ""
+
+	if mode == "Testing":
+		# Deliberately not a upi://pay URI: scanning this QR can never initiate a debit.
+		payment_uri = f"mysales-test://payment/{reference}?amount=0&display_amount={amount:.2f}"
+		return {
+			"mode": "Testing",
+			"chargeable": False,
+			"amount": amount,
+			"transaction_id": reference,
+			"payment_uri": payment_uri,
+			"qr_code": _make_qr_data_uri(payment_uri),
+			"upi_id": upi_id or _("Test payment"),
+			"company": configuration.company,
+			"message": _("Test QR generated. No amount will be deducted."),
+		}
+
+	if not configuration.payment_api_url or not configuration.payment_api_url.startswith("https://"):
+		frappe.throw(_("Configure a valid HTTPS Payment API URL for Live mode."))
+
+	api_key = configuration.get_password("api_key", raise_exception=False)
+	api_secret = configuration.get_password("api_secret", raise_exception=False)
+	if not api_key or not api_secret:
+		frappe.throw(_("Configure the API Key and API Secret for Live mode."))
+
+	import requests
+
+	payload = {
+		"amount": amount,
+		"currency": "INR",
+		"reference": reference,
+		"upi_id": upi_id,
+		"company": configuration.company,
+		"redirect_url": configuration.redirect_to,
+	}
+	try:
+		response = requests.post(
+			configuration.payment_api_url,
+			json=payload,
+			headers={"X-API-Key": api_key, "X-API-Secret": api_secret, "Accept": "application/json"},
+			timeout=20,
+		)
+		response.raise_for_status()
+		gateway_data = response.json()
+	except (requests.RequestException, ValueError):
+		frappe.log_error(frappe.get_traceback(), "UPI payment request failed")
+		frappe.throw(_("The UPI gateway could not create a payment request. Please try again."))
+
+	payment_uri = gateway_data.get("payment_uri") or gateway_data.get("upi_uri") or gateway_data.get("payment_url")
+	if not payment_uri:
+		frappe.throw(_("The UPI gateway response did not contain a payment URI."))
+
+	return {
+		"mode": "Live",
+		"chargeable": True,
+		"amount": amount,
+		"transaction_id": gateway_data.get("transaction_id") or gateway_data.get("id") or reference,
+		"payment_uri": payment_uri,
+		"qr_code": gateway_data.get("qr_code") or _make_qr_data_uri(payment_uri),
+		"upi_id": upi_id,
+		"expires_in": gateway_data.get("expires_in") or 300,
+		"message": _("Live payment request created."),
+	}
 
 
 @frappe.whitelist()
@@ -519,6 +618,7 @@ def create_pos_bill(
 	customer=None,
 	customer_phone=None,
 	payment_method="Cash",
+	payment_reference=None,
 	items=None,
 	additional_discount_amount=0,
 	notes=None,
@@ -578,13 +678,78 @@ def create_pos_bill(
 	invoice.insert()
 	invoice.submit()
 
+	payment_entry = _create_and_submit_payment_entry(
+		invoice,
+		payment_method=payment_method,
+		payment_reference=payment_reference,
+	)
+	frappe.enqueue(
+		"store_management.api._attach_thermal_bill_job",
+		queue="short",
+		enqueue_after_commit=True,
+		invoice_name=invoice.name,
+	)
+
 	return {
 		"name": invoice.name,
 		"customer": invoice.customer,
 		"grand_total": invoice.grand_total,
 		"rounded_total": invoice.rounded_total or invoice.grand_total,
 		"posting_date": invoice.posting_date,
+		"payment_entry": payment_entry.name,
+		"bill_attachment_queued": True,
 	}
+
+
+def _create_and_submit_payment_entry(invoice, payment_method="Cash", payment_reference=None):
+	from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry
+
+	payment_entry = get_payment_entry("Sales Invoice", invoice.name)
+	if frappe.db.exists("Mode of Payment", payment_method):
+		payment_entry.mode_of_payment = payment_method
+
+	payment_entry.reference_date = invoice.posting_date
+	payment_entry.reference_no = payment_reference or invoice.name
+	payment_entry.remarks = _("POS payment for Sales Invoice {0} via {1}").format(
+		invoice.name,
+		payment_method,
+	)
+	payment_entry.insert()
+	payment_entry.submit()
+	return payment_entry
+
+
+def _attach_thermal_bill(invoice):
+	from frappe.utils.file_manager import save_file
+	from weasyprint import HTML
+
+	file_name = f"{invoice.name}-thermal-receipt.pdf"
+	receipt_html = frappe.get_print(
+		"Sales Invoice",
+		invoice.name,
+		print_format="My Sales Thermal Receipt",
+		as_pdf=False,
+		no_letterhead=True,
+	)
+	pdf_content = HTML(string=receipt_html, base_url=frappe.utils.get_url()).write_pdf()
+	return save_file(
+		file_name,
+		pdf_content,
+		"Sales Invoice",
+		invoice.name,
+		is_private=1,
+	)
+
+
+def _attach_existing_thermal_bill(invoice_name):
+	"""Attach the app receipt to an existing invoice; useful for repair and migration checks."""
+	attachment = _attach_thermal_bill(frappe.get_doc("Sales Invoice", invoice_name))
+	frappe.db.commit()
+	return {"file_name": attachment.file_name, "file_url": attachment.file_url}
+
+
+def _attach_thermal_bill_job(invoice_name):
+	return _attach_thermal_bill(frappe.get_doc("Sales Invoice", invoice_name))
 
 
 # Masters Management APIs

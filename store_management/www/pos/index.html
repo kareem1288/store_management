@@ -4,13 +4,13 @@
 {% block navbar %}{% endblock %}
 
 {% block head_include %}
-<link rel="stylesheet" href="/assets/store_management/css/store_management_ui.css?v=20260814-8">
-<link rel="stylesheet" href="/assets/store_management/css/my_sales_mobile.css?v=20260814-9">
-<link rel="manifest" href="/assets/store_management/my-sales.webmanifest?v=20260814-2">
+<link rel="stylesheet" href="/assets/store_management/css/store_management_ui.css?v=20260818-2">
+<link rel="stylesheet" href="/assets/store_management/css/my_sales_mobile.css?v=20260818-2">
+<link rel="manifest" href="/assets/store_management/my-sales.webmanifest?v=20260818-2">
 <meta name="theme-color" content="#146c43">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="My Sales">
-<script defer src="/assets/store_management/js/my_sales_mobile.js?v=20260814-16"></script>
+<script defer src="/assets/store_management/js/my_sales_mobile.js?v=20260818-2"></script>
 {% endblock %}
 
 {% block page_content %}
@@ -190,6 +190,46 @@
 			</div>
 
 			<div class="sm-checkout-summary" id="checkout-cart-items"></div>
+
+			<div class="sm-payment-detail active" data-payment-panel="Cash">
+				<label class="sm-field"><span>Cash Received</span><input id="cash-received" type="number" min="0" step="0.01" placeholder="0.00"></label>
+				<div class="sm-cash-shortcuts" id="cash-shortcuts"></div>
+				<div class="sm-change-row"><span>Change</span><strong id="cash-change">Rs 0.00</strong></div>
+			</div>
+
+			<div class="sm-payment-detail" data-payment-panel="UPI">
+				<div class="sm-upi-layout">
+					<div>
+						<span class="sm-section-label">UPI Payment</span>
+						<p class="sm-payment-help">Choose an app to pay</p>
+						<div class="sm-upi-apps">
+							<button type="button" data-upi-app="phonepe"><b class="phonepe">पे</b><span>PhonePe</span></button>
+							<button type="button" data-upi-app="gpay"><b class="gpay">G</b><span>Google Pay</span></button>
+							<button type="button" data-upi-app="paytm"><b class="paytm">paytm</b><span>Paytm</span></button>
+							<button type="button" data-upi-app="bhim"><b class="bhim">◆</b><span>BHIM</span></button>
+							<button type="button" data-upi-app="amazon"><b class="amazon">a</b><span>Amazon Pay</span></button>
+							<button type="button" data-upi-app="other"><b>•••</b><span>More Apps</span></button>
+						</div>
+					</div>
+					<div class="sm-upi-qr-card">
+						<strong>Scan & pay with any UPI app</strong>
+						<a class="sm-upi-qr" id="upi-payment-link" href="#" aria-label="Open UPI payment app"><span id="upi-qr-placeholder">Choose a UPI app</span><img id="upi-qr-image" alt="UPI payment QR code" hidden></a>
+						<p>UPI ID: <b id="upi-id">mysales@upi</b> <button type="button" class="sm-copy-upi" onclick="copyUpiId()" aria-label="Copy UPI ID">▣</button></p>
+						<small id="upi-payment-status">Amount is filled automatically</small>
+					</div>
+				</div>
+			</div>
+
+			<div class="sm-payment-detail" data-payment-panel="Card">
+				<span class="sm-section-label">Card Details</span>
+				<div class="sm-card-fields">
+					<label class="sm-field sm-card-number"><span>Card Number</span><input id="card-number" inputmode="numeric" autocomplete="cc-number" maxlength="19" placeholder="1234 5678 9012 3456"></label>
+					<label class="sm-field sm-card-name"><span>Name on Card</span><input id="card-name" autocomplete="cc-name" placeholder="John Doe"></label>
+					<label class="sm-field"><span>Expiry Date</span><input id="card-expiry" inputmode="numeric" autocomplete="cc-exp" maxlength="5" placeholder="MM/YY"></label>
+					<label class="sm-field"><span>CVV</span><input id="card-cvv" type="password" inputmode="numeric" autocomplete="cc-csc" maxlength="4" placeholder="123"></label>
+				</div>
+				<p class="sm-payment-security">🔒 Card details are used only for this payment and are not stored.</p>
+			</div>
 		</div>
 
 		<div class="sm-drawer-footer">
@@ -197,9 +237,19 @@
 				<span>Grand Total</span>
 				<strong id="checkout-total">Rs 0.00</strong>
 			</div>
-			<button class="sm-main-button" type="button" onclick="generateBill()">
+			<button class="sm-main-button" id="checkout-submit" type="button" onclick="generateBill()">
 				Generate Bill
 			</button>
+		</div>
+
+		<div class="sm-payment-result" id="payment-result" aria-hidden="true">
+			<div class="sm-payment-result-icon">✓</div>
+			<h3>Payment Successful</h3>
+			<strong id="payment-result-total">Rs 0.00</strong>
+			<div><span>Paid to</span><b id="payment-result-payee">My Sales</b></div>
+			<div><span>Transaction ID</span><b id="payment-result-id">—</b></div>
+			<button class="sm-main-button" type="button" onclick="printGeneratedBill()">Print Bill</button>
+			<button class="sm-main-button" type="button" onclick="finishCheckout()">New Sale</button>
 		</div>
 </section>
 </div>
@@ -1233,6 +1283,78 @@ body.store-pos-page {
 	color: #16a34a;
 }
 
+.sm-payment-detail {
+	display: none;
+	padding: 0.85rem;
+	border: 1px solid #e1e8e4;
+	border-radius: 12px;
+	background: #fbfdfc;
+}
+
+.sm-checkout-drawer { width: min(620px, 100vw); }
+.sm-payment-detail.active { display: block; }
+.sm-payment-help { margin: .25rem 0 .65rem; color: #718078; font-size: .72rem; }
+.sm-cash-shortcuts { display: grid; grid-template-columns: repeat(4,1fr); gap: .45rem; margin-top: .55rem; }
+.sm-cash-shortcuts button {
+	min-height: 36px; border: 1px solid #dce5e0; border-radius: 8px; background: #fff; color: #33473c; font-weight: 700;
+}
+.sm-change-row { display: flex; justify-content: space-between; margin-top: .7rem; padding-top: .65rem; border-top: 1px solid #e7ede9; font-size: .82rem; }
+.sm-change-row strong { color: #078344; font-size: 1rem; }
+
+.sm-upi-layout { display: grid; grid-template-columns: minmax(0,1.2fr) minmax(160px,.8fr); gap: .8rem; }
+.sm-upi-apps { display: grid; grid-template-columns: repeat(3,1fr); gap: .5rem; }
+.sm-upi-apps button {
+	display: grid; place-items: center; gap: .25rem; min-height: 68px; padding: .4rem;
+	border: 1px solid #e1e7e3; border-radius: 9px; background: #fff; color: #26382e; font-size: .62rem;
+}
+.sm-upi-apps button.selected { border-color: #74c397; background: #edf8f2; }
+.sm-upi-apps b { display: grid; place-items: center; min-width: 28px; height: 28px; color: #202a24; font-size: .8rem; }
+.sm-upi-apps .phonepe { border-radius: 50%; background: #6332a8; color: #fff; }
+.sm-upi-apps .gpay { color: #2b73dc; font-size: 1rem; }
+.sm-upi-apps .paytm { color: #0879b9; font-size: .65rem; }
+.sm-upi-apps .bhim { color: #f47a20; }
+.sm-upi-apps .amazon { color: #131a22; font-size: 1.1rem; }
+.sm-upi-qr-card { display: grid; place-items: center; align-content: center; padding: .7rem; text-align: center; }
+.sm-upi-qr-card > strong { font-size: .7rem; }
+.sm-upi-qr-card p { margin: .4rem 0 .2rem; font-size: .65rem; }
+.sm-upi-qr-card small { color: #718078; font-size: .58rem; }
+.sm-upi-qr-card small.sm-test-payment { padding: .28rem .45rem; border-radius: 999px; background: #fff4d8; color: #8a5b00; font-weight: 700; }
+.sm-upi-qr {
+	position: relative; display: grid; place-items: center; width: 142px; height: 142px; margin: .55rem auto .25rem;
+	border: 9px solid #fff; outline: 1px solid #d9e1dc; background: #f5f8f6; overflow: hidden; text-decoration: none;
+}
+.sm-upi-qr span { padding: .75rem; color: #718078; font-size: .64rem; text-align: center; }
+.sm-upi-qr img { display: block; width: 100%; height: 100%; object-fit: contain; background: #fff; }
+.sm-upi-qr img[hidden] { display: none; }
+.sm-copy-upi { min-height: 24px; border: 0; background: transparent; color: #52635a; cursor: pointer; }
+
+.sm-card-fields { display: grid; grid-template-columns: 1fr 1fr; gap: .55rem; margin-top: .65rem; }
+.sm-card-number,.sm-card-name { grid-column: 1 / -1; }
+.sm-payment-security { margin: .65rem 0 0; color: #718078; font-size: .62rem; }
+.sm-payment-result {
+	position: absolute; inset: 0; z-index: 5; display: none; align-content: center; gap: .85rem;
+	padding: 2rem; background: #fff; text-align: center;
+}
+.sm-payment-result.open { display: grid; }
+.sm-payment-result-icon { display: grid; place-items: center; width: 72px; height: 72px; margin: 0 auto; border-radius: 50%; background: #10a052; color: #fff; font-size: 2.4rem; box-shadow: 0 12px 28px rgba(16,160,82,.2); }
+.sm-payment-result h3 { margin: .2rem 0 0; font-size: 1rem; }
+.sm-payment-result > strong { color: #078344; font-size: 1.45rem; }
+.sm-payment-result > div:not(.sm-payment-result-icon) { display: grid; gap: .2rem; padding: .7rem 0; border-top: 1px solid #e8edea; text-align: left; }
+.sm-payment-result span { color: #718078; font-size: .68rem; }
+.sm-payment-result b { color: #17251d; font-size: .82rem; }
+
+@media (max-width: 768px) {
+	.sm-checkout-drawer { position: fixed; inset: 0 0 0 var(--ms-mobile-rail); width: auto !important; height: 100dvh !important; max-height: none !important; border-radius: 0 !important; }
+	.sm-checkout-content { padding-top: .3rem; }
+	.sm-upi-layout { grid-template-columns: 1fr; }
+	.sm-upi-apps { grid-template-columns: repeat(3,1fr); }
+	.sm-upi-apps button { min-height: 58px !important; }
+	.sm-upi-qr { width: 128px; height: 128px; }
+	.sm-card-fields { gap: .45rem; }
+	.sm-cash-shortcuts button { min-height: 34px !important; font-size: .65rem !important; }
+	.sm-payment-result { padding: 1.25rem; }
+}
+
 @media (max-width: 1080px) {
 	.sm-pos-hero,
 	.sm-pos-workspace {
@@ -1311,6 +1433,8 @@ const smPosState = {
 	cart: [],
 	searchQuery: "",
 	selectedPayment: "Cash",
+	upiPayment: null,
+	lastInvoice: null,
 	summary: {
 		subtotal: 0,
 		tax: 0,
@@ -1378,6 +1502,18 @@ function bindEvents() {
 		if (!button) return;
 		selectPayment(button.dataset.payment);
 	});
+	document.getElementById("cash-received").addEventListener("input", updateCashChange);
+	document.getElementById("card-number").addEventListener("input", event => {
+		event.target.value = event.target.value.replace(/\D/g, "").slice(0, 16).replace(/(.{4})/g, "$1 ").trim();
+	});
+	document.getElementById("card-expiry").addEventListener("input", event => {
+		const digits = event.target.value.replace(/\D/g, "").slice(0, 4);
+		event.target.value = digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
+	});
+	document.querySelectorAll("[data-upi-app]").forEach(button => button.addEventListener("click", () => {
+		document.querySelectorAll("[data-upi-app]").forEach(option => option.classList.toggle("selected", option === button));
+		generateUpiQr(button);
+	}));
 
 	window.addEventListener("hashchange", () => {
 		showPosHome();
@@ -1876,6 +2012,7 @@ const tax = 0;
 document.getElementById("discount").textContent = `${discountPercent}%`;
 	document.getElementById("total").textContent = formatCurrency(total);
 	document.getElementById("checkout-total").textContent = formatCurrency(total);
+	updatePaymentDetails();
 
 	if (!smPosState.cart.length) {
 		const emptyMarkup = `
@@ -1935,6 +2072,9 @@ function openCheckout() {
 		return;
 	}
 
+	document.getElementById("payment-result").classList.remove("open");
+	document.getElementById("payment-result").setAttribute("aria-hidden", "true");
+	updatePaymentDetails();
 	document.getElementById("checkout-drawer").classList.add("open");
 	document.getElementById("checkout-drawer").setAttribute("aria-hidden", "false");
 	document.getElementById("checkout-backdrop").classList.add("open");
@@ -1951,6 +2091,105 @@ function selectPayment(paymentMode) {
 	document.querySelectorAll(".sm-payment-option").forEach(button => {
 		button.classList.toggle("active", button.dataset.payment === paymentMode);
 	});
+	document.querySelectorAll("[data-payment-panel]").forEach(panel => {
+		panel.classList.toggle("active", panel.dataset.paymentPanel === paymentMode);
+	});
+	const submit = document.getElementById("checkout-submit");
+	submit.textContent = paymentMode === "Card" ? "Pay Now" : paymentMode === "UPI" ? "Confirm UPI Payment" : "Generate Bill";
+	updatePaymentDetails();
+}
+
+function updatePaymentDetails() {
+	const total = Number(smPosState.summary.total || 0);
+	const received = Number(document.getElementById("cash-received")?.value || 0);
+	const change = Math.max(0, received - total);
+	const changeEl = document.getElementById("cash-change");
+	if (changeEl) changeEl.textContent = formatCurrency(change);
+
+	const shortcuts = document.getElementById("cash-shortcuts");
+	if (shortcuts) {
+		const rounded = Math.ceil(total / 10) * 10;
+		const values = [...new Set([rounded || 100, 200, 500, 1000])].slice(0, 4);
+		shortcuts.innerHTML = values.map(value => `<button type="button" onclick="setCashReceived(${value})">${value}</button>`).join("");
+	}
+
+	if (smPosState.upiPayment && Number(smPosState.upiPayment.amount) !== total) resetUpiQr();
+}
+
+function resetUpiQr() {
+	smPosState.upiPayment = null;
+	const image = document.getElementById("upi-qr-image");
+	const placeholder = document.getElementById("upi-qr-placeholder");
+	if (image) { image.hidden = true; image.removeAttribute("src"); }
+	if (placeholder) { placeholder.hidden = false; placeholder.textContent = "Choose a UPI app"; }
+	const link = document.getElementById("upi-payment-link");
+	if (link) link.href = "#";
+	const status = document.getElementById("upi-payment-status");
+	if (status) status.textContent = "Amount is filled automatically";
+}
+
+function generateUpiQr(button) {
+	const placeholder = document.getElementById("upi-qr-placeholder");
+	const status = document.getElementById("upi-payment-status");
+	placeholder.hidden = false;
+	placeholder.textContent = "Generating secure QR…";
+	status.textContent = "Contacting UPI configuration";
+	button.disabled = true;
+
+	frappe.call({
+		method: "store_management.api.create_upi_payment",
+		args: { amount: smPosState.summary.total },
+		callback(response) {
+			const payment = response.message;
+			button.disabled = false;
+			if (!payment?.qr_code) return resetUpiQr();
+			smPosState.upiPayment = payment;
+			const image = document.getElementById("upi-qr-image");
+			image.src = payment.qr_code;
+			image.hidden = false;
+			placeholder.hidden = true;
+			document.getElementById("upi-payment-link").href = payment.chargeable ? payment.payment_uri : "#";
+			document.getElementById("upi-id").textContent = payment.upi_id;
+			status.textContent = payment.message;
+			status.classList.toggle("sm-test-payment", !payment.chargeable);
+		},
+		error() { button.disabled = false; resetUpiQr(); },
+	});
+}
+
+function setCashReceived(amount) {
+	document.getElementById("cash-received").value = Number(amount).toFixed(2);
+	updateCashChange();
+}
+
+function updateCashChange() { updatePaymentDetails(); }
+
+function copyUpiId() {
+	const upiId = document.getElementById("upi-id").textContent;
+	navigator.clipboard?.writeText(upiId);
+	frappe.show_alert({ message: "UPI ID copied", indicator: "green" });
+}
+
+function validateSelectedPayment() {
+	if (smPosState.selectedPayment === "Cash" && Number(document.getElementById("cash-received").value || 0) < smPosState.summary.total) {
+		frappe.msgprint("Cash received must be at least the grand total.");
+		return false;
+	}
+	if (smPosState.selectedPayment === "Card") {
+		const number = document.getElementById("card-number").value.replace(/\s/g, "");
+		const name = document.getElementById("card-name").value.trim();
+		const expiry = document.getElementById("card-expiry").value;
+		const cvv = document.getElementById("card-cvv").value;
+		if (!/^\d{16}$/.test(number) || !name || !/^\d{2}\/\d{2}$/.test(expiry) || !/^\d{3,4}$/.test(cvv)) {
+			frappe.msgprint("Please enter complete and valid card details.");
+			return false;
+		}
+	}
+	if (smPosState.selectedPayment === "UPI" && (!smPosState.upiPayment || Number(smPosState.upiPayment.amount) !== Number(smPosState.summary.total))) {
+		frappe.msgprint("Choose a UPI app and generate the QR code for this amount first.");
+		return false;
+	}
+	return true;
 }
 
 function generateBill() {
@@ -1958,6 +2197,7 @@ function generateBill() {
 		frappe.msgprint("Cart is empty.");
 		return;
 	}
+	if (!validateSelectedPayment()) return;
 
 	const customerName = document.getElementById("customer-name").value.trim();
 	const customerPhone = document.getElementById("customer-phone").value.trim();
@@ -1970,6 +2210,7 @@ function generateBill() {
 			customer: customerName,
 			customer_phone: customerPhone,
 			payment_method: smPosState.selectedPayment,
+			payment_reference: smPosState.selectedPayment === "UPI" ? smPosState.upiPayment?.transaction_id : null,
 			additional_discount_amount: smPosState.summary.discount,
 			items: smPosState.cart.map(item => ({
 				item_code: item.name,
@@ -1980,24 +2221,42 @@ function generateBill() {
 		callback: function(response) {
 			const invoice = response.message;
 			if (!invoice || !invoice.name) return;
+			smPosState.lastInvoice = invoice.name;
 
 			frappe.show_alert({
 				message: `Bill ${invoice.name} created successfully`,
 				indicator: "green"
 			});
 
-			window.open(`/printview?doctype=Sales%20Invoice&name=${encodeURIComponent(invoice.name)}&format=Standard&no_letterhead=0&_lang=en`, "_blank");
+			window.open(`/printview?doctype=Sales%20Invoice&name=${encodeURIComponent(invoice.name)}&format=${encodeURIComponent("My Sales Thermal Receipt")}&no_letterhead=1&_lang=en`, "_blank");
 
-			smPosState.cart = [];
-			document.getElementById("customer-name").value = "";
-			document.getElementById("customer-phone").value = "";
-			document.getElementById("discount-input").value = "0";
-			closeCheckout();
-			renderCart();
-			loadBootstrap();
-			showDashboard();
+			document.getElementById("payment-result-total").textContent = formatCurrency(smPosState.summary.total);
+			document.getElementById("payment-result-payee").textContent = smPosState.shopName || "My Sales";
+			document.getElementById("payment-result-id").textContent = invoice.payment_entry || invoice.name;
+			document.getElementById("payment-result").classList.add("open");
+			document.getElementById("payment-result").setAttribute("aria-hidden", "false");
 		}
 	});
+}
+
+function finishCheckout() {
+	smPosState.cart = [];
+	document.getElementById("customer-name").value = "";
+	document.getElementById("customer-phone").value = "";
+	document.getElementById("discount-input").value = "0";
+	document.getElementById("cash-received").value = "";
+	resetUpiQr();
+	["card-number", "card-name", "card-expiry", "card-cvv"].forEach(id => document.getElementById(id).value = "");
+	selectPayment("Cash");
+	closeCheckout();
+	renderCart();
+	loadBootstrap();
+	showDashboard();
+}
+
+function printGeneratedBill() {
+	if (!smPosState.lastInvoice) return;
+	window.open(`/printview?doctype=Sales%20Invoice&name=${encodeURIComponent(smPosState.lastInvoice)}&format=${encodeURIComponent("My Sales Thermal Receipt")}&no_letterhead=1&_lang=en`, "_blank");
 }
 
 function formatCurrency(value) {

@@ -12,6 +12,16 @@ def prevent_desk_routes():
     """Block direct access to /desk and /app routes and redirect users to allowed pages."""
     path = frappe.local.request.path or ""
 
+    # Older PWA caches explicitly requested Standard. Keep every POS invoice
+    # print route on the customer-facing thermal receipt during cache rollout.
+    if (
+        path == "/printview"
+        and frappe.form_dict.get("doctype") == "Sales Invoice"
+        and frappe.form_dict.get("format") in (None, "", "Standard")
+    ):
+        frappe.form_dict.format = "My Sales Thermal Receipt"
+        frappe.form_dict.no_letterhead = 1
+
     if path == "/.well-known/assetlinks.json":
         payload = frappe.as_json([
             {

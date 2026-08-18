@@ -1,0 +1,102 @@
+{% set item_count = namespace(qty=0) %}
+{% for item in doc.items %}{% set item_count.qty = item_count.qty + item.qty %}{% endfor %}
+<div class="ms-receipt">
+	<header class="ms-receipt-header">
+		<h1>{{ doc.company }}</h1>
+		{% if doc.company_address_display %}<div>{{ doc.company_address_display }}</div>{% endif %}
+		{% if doc.company_tax_id %}<p><b>GSTIN:</b> {{ doc.company_tax_id }}</p>{% endif %}
+		<p class="ms-title">TAX INVOICE</p>
+	</header>
+
+	<section class="ms-meta">
+		<div><span>Bill No.</span><b>{{ doc.name }}</b></div>
+		<div><span>Date</span><b>{{ frappe.utils.formatdate(doc.posting_date, "dd-MM-yyyy") }} {{ doc.posting_time or "" }}</b></div>
+		<div><span>Customer</span><b>{{ doc.customer_name or doc.customer }}</b></div>
+		{% if doc.contact_mobile %}<div><span>Mobile</span><b>{{ doc.contact_mobile }}</b></div>{% endif %}
+		<div><span>Payment</span><b>{{ (doc.remarks or "Cash").replace("Payment Mode:", "").split("|")[0].strip() }}</b></div>
+		{% if doc.po_no %}<div><span>Reference</span><b>{{ doc.po_no }}</b></div>{% endif %}
+	</section>
+
+	<table class="ms-items">
+		<thead><tr><th class="ms-description">Item</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
+		<tbody>
+		{% for item in doc.items %}
+			<tr>
+				<td class="ms-description"><b>{{ item.item_name or item.item_code }}</b>{% if item.item_code != item.item_name %}<small>{{ item.item_code }}</small>{% endif %}</td>
+				<td>{{ item.qty | abs | round(2) }}</td>
+				<td>{{ frappe.utils.fmt_money(item.rate, precision=2) }}</td>
+				<td>{{ frappe.utils.fmt_money(item.amount, precision=2) }}</td>
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+
+	<div class="ms-item-count"><b>Items: {{ doc.items | length }}</b><b>Qty: {{ item_count.qty | abs | round(2) }}</b></div>
+
+	<section class="ms-totals">
+		<div><span>Subtotal</span><b>{{ frappe.utils.fmt_money(doc.net_total, precision=2) }}</b></div>
+		{% if doc.discount_amount %}<div><span>Discount</span><b>-{{ frappe.utils.fmt_money(doc.discount_amount, precision=2) }}</b></div>{% endif %}
+		{% for tax in doc.taxes %}
+			{% if tax.tax_amount %}<div><span>{{ tax.description or tax.account_head }}</span><b>{{ frappe.utils.fmt_money(tax.tax_amount, precision=2) }}</b></div>{% endif %}
+		{% endfor %}
+		{% if doc.rounding_adjustment %}<div><span>Round Off</span><b>{{ frappe.utils.fmt_money(doc.rounding_adjustment, precision=2) }}</b></div>{% endif %}
+		<div class="ms-grand-total"><span>GRAND TOTAL</span><b>{{ doc.currency }} {{ frappe.utils.fmt_money(doc.rounded_total or doc.grand_total, precision=2) }}</b></div>
+	</section>
+
+	{% if doc.in_words %}<p class="ms-words"><b>Amount in words:</b> {{ doc.in_words }}</p>{% endif %}
+	<section class="ms-tax-summary">
+		<div><span>Taxable Value</span><b>{{ frappe.utils.fmt_money(doc.net_total, precision=2) }}</b></div>
+		<div><span>Total Tax</span><b>{{ frappe.utils.fmt_money(doc.total_taxes_and_charges, precision=2) }}</b></div>
+	</section>
+
+	<footer>
+		<p>Thank you for shopping with us!</p>
+		<small>This is a computer-generated invoice.</small>
+		<div class="ms-cut">✂</div>
+	</footer>
+</div>
+
+<style>
+	@page { size: 80mm auto; margin: 3mm; }
+	* { box-sizing: border-box; }
+	.ms-receipt {
+		width: 74mm; max-width: 100%; margin: 0 auto; padding: 2mm;
+		background: #fff; color: #111; font-family: "Courier New", Courier, monospace;
+		font-size: 9px; line-height: 1.25;
+	}
+	.ms-receipt p { margin: 1.5mm 0; }
+	.ms-receipt-header { padding-bottom: 2mm; border-bottom: 1px dashed #111; text-align: center; }
+	.ms-receipt-header h1 { margin: 0 0 1mm; font-size: 17px; line-height: 1.05; text-transform: uppercase; }
+	.ms-receipt-header div { font-size: 8px; }
+	.ms-title { margin-top: 2mm !important; font-size: 10px; font-weight: 700; letter-spacing: .12em; }
+	.ms-meta { padding: 2mm 0; border-bottom: 1px dashed #111; }
+	.ms-meta div,.ms-totals div,.ms-tax-summary div { display: flex; justify-content: space-between; gap: 3mm; }
+	.ms-meta span { flex: 0 0 16mm; }
+	.ms-meta b { text-align: right; overflow-wrap: anywhere; }
+	.ms-items { width: 100%; border-collapse: collapse; table-layout: fixed; }
+	.ms-items th { padding: 1.5mm .5mm; border-bottom: 1px solid #111; font-size: 8px; text-align: right; }
+	.ms-items td { padding: 1.25mm .5mm; border-bottom: 1px dotted #aaa; font-size: 8px; text-align: right; vertical-align: top; }
+	.ms-items .ms-description { width: 45%; text-align: left; overflow-wrap: anywhere; }
+	.ms-items th:nth-child(2) { width: 11%; }
+	.ms-items th:nth-child(3) { width: 20%; }
+	.ms-items th:nth-child(4) { width: 24%; }
+	.ms-items small { display: block; color: #444; font-size: 7px; font-weight: 400; }
+	.ms-item-count { display: flex; justify-content: space-between; padding: 2mm .5mm; border-bottom: 1px dashed #111; font-size: 9px; }
+	.ms-totals { padding: 2mm 0; border-bottom: 1px dashed #111; }
+	.ms-totals div { padding: .5mm 0; }
+	.ms-grand-total { margin-top: 1mm; padding-top: 1.5mm !important; border-top: 1px solid #111; font-size: 12px; }
+	.ms-words { padding: 1mm 0; font-size: 8px; }
+	.ms-tax-summary { padding: 1.5mm 0; border-block: 1px dashed #111; }
+	.ms-receipt footer { position: relative; padding: 2.5mm 0 3mm; text-align: center; }
+	.ms-receipt footer p { font-weight: 700; }
+	.ms-cut { position: absolute; right: 0; bottom: -1.5mm; font-size: 11px; }
+	@media screen {
+		body { background: #eef1ef !important; }
+		.ms-receipt { min-height: 80vh; box-shadow: 0 4px 24px rgba(0,0,0,.14); }
+	}
+	@media print {
+		html,body { width: 80mm !important; margin: 0 !important; padding: 0 !important; background: #fff !important; }
+		.print-format { width: 80mm !important; margin: 0 !important; padding: 0 !important; }
+		.ms-receipt { width: 74mm; box-shadow: none; }
+	}
+</style>

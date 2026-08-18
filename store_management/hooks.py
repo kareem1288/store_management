@@ -75,6 +75,7 @@ website_route_rules = [
 ]
 
 before_request = ["store_management.utils.prevent_desk_routes"]
+after_migrate = ["store_management.setup.after_migrate"]
 
 # Generators
 # ----------

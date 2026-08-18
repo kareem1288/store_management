@@ -89,7 +89,9 @@
     const app = document.querySelector(".sm-page-app");
     const top = app?.querySelector(".sm-top-nav");
     if (!top) return;
-    const title = location.pathname.includes("reports") ? "Reports" : location.pathname.includes("masters") ? "Masters" : location.hash === "#billing-panel" ? "POS" : "Dashboard";
+    const reportTitles = { sales: "Sales Report", items: "Item Report", customers: "Customer Report", "open-bills": "Open Bills" };
+    const reportType = new URLSearchParams(location.search).get("type") || "sales";
+    const title = location.pathname.includes("reports") ? (reportTitles[reportType] || "Reports") : location.pathname.includes("masters") ? "Masters" : location.hash === "#billing-panel" ? "POS" : "Dashboard";
     top.insertAdjacentHTML("afterbegin", `<button class="my-sales-mobile-menu" type="button" aria-label="Open navigation" aria-expanded="false">☰</button><strong class="my-sales-mobile-title">${title}</strong>`);
 
     const overlay = document.createElement("button");
@@ -343,7 +345,7 @@
 
   if ("serviceWorker" in navigator && window.isSecureContext) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/my-sales-sw.js", { scope: "/" }).catch(error => {
+      navigator.serviceWorker.register("/my-sales-sw.js?v=10", { scope: "/" }).catch(error => {
         console.warn("My Sales offline support could not be enabled", error);
       });
     });
