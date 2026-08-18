@@ -422,3 +422,43 @@
 	.my-sales-kpis { grid-template-columns: repeat(2,1fr); }
 	.my-sales-dashboard-grid { grid-template-columns: 1fr; }
 }
+
+/* 2026 POS flow: workspace checkout and generated-bill presentation. */
+@media (min-width: 769px) {
+	.sm-pos-app .sm-checkout-backdrop.open { background: transparent !important; backdrop-filter: none !important; }
+	.sm-pos-app .sm-checkout-drawer {
+		inset: 64px 0 0 258px !important; width: auto !important; height: calc(100vh - 64px) !important;
+		padding: 1.25rem 1.5rem !important; border-left: 0 !important; background: #f7f9f8 !important;
+		box-shadow: none !important; grid-template-rows: auto minmax(0,1fr) auto !important;
+	}
+	.sm-pos-app .sm-checkout-drawer.open { transform: none !important; }
+	.sm-pos-app .sm-drawer-head {
+		padding: 0 0 .85rem !important; border-bottom: 1px solid #e1e7e3; background: transparent !important;
+	}
+	.sm-pos-app .sm-drawer-head h3 { color: #101828 !important; font-size: 1.15rem !important; }
+	.sm-pos-app .sm-checkout-content {
+		grid-template-columns: minmax(320px,.9fr) minmax(380px,1.1fr); align-content: start;
+		gap: .8rem 1rem !important; padding: 1rem 0 !important;
+	}
+	.sm-pos-app .sm-field-grid,
+	.sm-pos-app .sm-checkout-content > .sm-field,
+	.sm-pos-app .sm-payment-block,
+	.sm-pos-app .sm-payment-detail { grid-column: 1; }
+	.sm-pos-app .sm-checkout-summary { grid-column: 2; grid-row: 1 / span 3; align-self: stretch; }
+	.sm-pos-app .sm-payment-detail { padding: 1rem !important; background: #fff !important; }
+	.sm-pos-app .sm-drawer-footer {
+		display: grid !important; grid-template-columns: minmax(240px,1fr) 320px; gap: 1rem;
+		padding: .85rem 0 0 !important; border-top: 1px solid #e1e7e3; background: transparent !important;
+	}
+	.sm-pos-app .sm-drawer-total { background: #fff !important; border: 1px solid #dfe6e2; }
+	.sm-pos-app .sm-payment-result {
+		left: 0 !important; padding: 2.5rem clamp(2rem,8vw,8rem) !important; align-content: start !important;
+		grid-template-columns: minmax(0,1fr) 260px; text-align: left !important; background: #f7f9f8 !important;
+	}
+	.sm-pos-app .sm-payment-result-icon { grid-column: 1; margin: 1rem 0 0 !important; }
+	.sm-pos-app .sm-payment-result h3,
+	.sm-pos-app .sm-payment-result > strong,
+	.sm-pos-app .sm-payment-result > p,
+	.sm-pos-app .sm-payment-result > div { grid-column: 1; }
+	.sm-pos-app .sm-payment-result > button { grid-column: 2; min-height: 46px; }
+}

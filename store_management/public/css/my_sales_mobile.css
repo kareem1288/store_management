@@ -5,6 +5,62 @@
   --ms-safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* Updated mobile application composition: compact top bar and bottom navigation. */
+@media (max-width: 768px) {
+  body { padding-bottom: calc(62px + var(--ms-safe-bottom)) !important; background: #f7f9f8 !important; }
+  .sm-page-app { padding: 0 0 calc(62px + var(--ms-safe-bottom)) !important; background: #f7f9f8 !important; }
+  .my-sales-mobile-drawer,.my-sales-mobile-overlay,.my-sales-mobile-menu { display: none !important; }
+  .sm-page-app .sm-top-nav,.sm-masters-app .sm-top-nav {
+    display: flex !important; position: sticky !important; top: 0; height: 54px !important; min-height: 54px !important;
+    padding: .45rem .8rem !important; background: #fff !important; border-bottom: 1px solid #e8ece9 !important;
+  }
+  .my-sales-mobile-title { margin: 0 auto !important; font-size: .78rem !important; }
+  .sm-nav-primary {
+    display: grid !important; position: fixed !important; z-index: 1800; inset: auto 0 0 0;
+    grid-template-columns: repeat(4,1fr) !important; height: calc(62px + var(--ms-safe-bottom)) !important;
+    padding: .25rem .35rem calc(.25rem + var(--ms-safe-bottom)) !important;
+    border-top: 1px solid #e4e9e6 !important; background: rgba(255,255,255,.98) !important;
+    box-shadow: 0 -4px 16px rgba(16,24,40,.05) !important;
+  }
+  .sm-nav-link {
+    display: flex !important; flex-direction: column; justify-content: center; gap: .15rem !important;
+    min-height: 50px !important; padding: .2rem !important; border-radius: 8px !important;
+    color: #667085 !important; font-size: .58rem !important;
+  }
+  .sm-nav-link svg { width: 18px !important; height: 18px !important; }
+  .sm-nav-link.active { background: #eaf7ef !important; color: #087c42 !important; }
+  .sm-pos-app .sm-page-shell,.sm-reports-app .sm-page-shell,.sm-masters-app .sm-masters-shell {
+    width: 100% !important; margin: 0 !important; padding: .6rem !important;
+  }
+  .sm-checkout-backdrop { display: none !important; }
+  .sm-pos-app .sm-checkout-drawer {
+    inset: 0 !important; z-index: 2600 !important; width: 100% !important; height: 100dvh !important; max-height: none !important;
+    padding: 0 !important; border-radius: 0 !important; background: #f8faf9 !important; box-shadow: none !important;
+  }
+  .sm-pos-app .sm-drawer-head { min-height: 54px; padding: .6rem .8rem !important; background: #fff !important; border-bottom: 1px solid #e7ece9; }
+  .sm-pos-app .sm-drawer-head .sm-pos-kicker { display: none !important; }
+  .sm-pos-app .sm-drawer-head h3 { color: #101828 !important; font-size: .82rem !important; }
+  .sm-pos-app .sm-checkout-content { padding: .65rem !important; gap: .55rem !important; }
+  .sm-pos-app .sm-field-grid { grid-template-columns: 1fr !important; }
+  .sm-pos-app .sm-field input { min-height: 38px !important; font-size: .68rem !important; }
+  .sm-pos-app .sm-payment-detail { padding: .7rem !important; background: #fff !important; }
+  .sm-pos-app .sm-upi-layout { grid-template-columns: 1fr !important; }
+  .sm-pos-app .sm-upi-apps button { min-height: 54px !important; }
+  .sm-pos-app .sm-drawer-footer {
+    padding: .55rem .65rem calc(.55rem + var(--ms-safe-bottom)) !important; background: #fff !important;
+    border-top: 1px solid #e5ebe7; box-shadow: none !important;
+  }
+  .sm-pos-app .sm-drawer-total { padding: .55rem !important; background: transparent !important; }
+  .sm-pos-app .sm-payment-result {
+    inset: 0 !important; padding: 5rem 1rem 1.25rem !important; align-content: start !important;
+    background: #fff !important; text-align: center !important;
+  }
+  .sm-pos-app .sm-payment-result-icon { width: 68px; height: 68px; margin-top: 1rem; }
+  .sm-pos-app .sm-payment-result h3 { color: #087c42; }
+  .sm-pos-app .sm-payment-result > strong { font-size: 1.7rem; }
+  .sm-pos-app .sm-payment-result > button { margin-top: auto; }
+}
+
 /* Persistent phone navigation used by the compact reference layout. */
 @media (max-width: 768px) {
   :root { --ms-mobile-rail: 88px; }
@@ -731,4 +787,36 @@
   .sm-report-field select { min-height: 34px !important; font-size: .58rem !important; }
   .sm-report-summary article,
   .sm-report-summary article:nth-child(3) { min-height: 64px !important; padding: .52rem !important; }
+}
+
+/* Authoritative mobile shell for the latest approved screens. */
+@media (max-width: 768px) {
+  body { padding-bottom: calc(62px + var(--ms-safe-bottom)) !important; background: #f7f9f8 !important; }
+  .sm-page-app { padding: 0 0 calc(62px + var(--ms-safe-bottom)) !important; background: #f7f9f8 !important; }
+  .my-sales-mobile-drawer,.my-sales-mobile-overlay,.my-sales-mobile-menu { display: none !important; }
+  .sm-page-app .sm-top-nav,.sm-masters-app .sm-top-nav {
+    display: flex !important; height: 54px !important; min-height: 54px !important; padding: .45rem .8rem !important;
+  }
+  .my-sales-mobile-title { margin: 0 auto !important; font-size: .78rem !important; }
+  .sm-nav-primary {
+    display: grid !important; position: fixed !important; z-index: 1800; inset: auto 0 0 0;
+    grid-template-columns: repeat(4,1fr) !important; height: calc(62px + var(--ms-safe-bottom)) !important;
+    padding: .25rem .35rem calc(.25rem + var(--ms-safe-bottom)) !important; background: #fff !important;
+  }
+  .sm-nav-link { display: flex !important; flex-direction: column; min-height: 50px !important; font-size: .58rem !important; }
+  .sm-nav-link.active { background: #eaf7ef !important; color: #087c42 !important; }
+  .sm-pos-app .sm-page-shell,.sm-reports-app .sm-page-shell,.sm-masters-app .sm-masters-shell {
+    width: 100% !important; margin: 0 !important; padding: .6rem !important;
+  }
+  .sm-checkout-backdrop { display: none !important; }
+  .sm-pos-app .sm-checkout-drawer {
+    inset: 0 !important; width: 100% !important; height: 100dvh !important; max-height: none !important;
+    padding: 0 !important; border-radius: 0 !important; background: #f8faf9 !important; box-shadow: none !important;
+  }
+  .sm-pos-app .sm-drawer-head { min-height: 54px; padding: .6rem .8rem !important; background: #fff !important; }
+  .sm-pos-app .sm-drawer-head h3 { color: #101828 !important; font-size: .82rem !important; }
+  .sm-pos-app .sm-checkout-content { padding: .65rem !important; gap: .55rem !important; }
+  .sm-pos-app .sm-field-grid,.sm-pos-app .sm-upi-layout { grid-template-columns: 1fr !important; }
+  .sm-pos-app .sm-drawer-footer { padding: .55rem .65rem calc(.55rem + var(--ms-safe-bottom)) !important; background: #fff !important; }
+  .sm-pos-app .sm-payment-result { inset: 0 !important; padding: 5rem 1rem 1.25rem !important; background: #fff !important; }
 }

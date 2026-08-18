@@ -4,13 +4,13 @@
 {% block navbar %}{% endblock %}
 
 {% block head_include %}
-<link rel="stylesheet" href="/assets/store_management/css/store_management_ui.css?v=20260818-2">
-<link rel="stylesheet" href="/assets/store_management/css/my_sales_mobile.css?v=20260818-2">
+<link rel="stylesheet" href="/assets/store_management/css/store_management_ui.css?v=20260818-3">
+<link rel="stylesheet" href="/assets/store_management/css/my_sales_mobile.css?v=20260818-3">
 <link rel="manifest" href="/assets/store_management/my-sales.webmanifest?v=20260818-2">
 <meta name="theme-color" content="#146c43">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="My Sales">
-<script defer src="/assets/store_management/js/my_sales_mobile.js?v=20260818-2"></script>
+<script defer src="/assets/store_management/js/my_sales_mobile.js?v=20260818-3"></script>
 {% endblock %}
 
 {% block page_content %}
@@ -244,8 +244,10 @@
 
 		<div class="sm-payment-result" id="payment-result" aria-hidden="true">
 			<div class="sm-payment-result-icon">✓</div>
-			<h3>Payment Successful</h3>
+			<h3>Bill Generated Successfully!</h3>
+			<p>Thank you for your purchase.</p>
 			<strong id="payment-result-total">Rs 0.00</strong>
+			<div><span>Bill No.</span><b id="payment-result-bill">—</b></div>
 			<div><span>Paid to</span><b id="payment-result-payee">My Sales</b></div>
 			<div><span>Transaction ID</span><b id="payment-result-id">—</b></div>
 			<button class="sm-main-button" type="button" onclick="printGeneratedBill()">Print Bill</button>
@@ -2231,6 +2233,7 @@ function generateBill() {
 			window.open(`/printview?doctype=Sales%20Invoice&name=${encodeURIComponent(invoice.name)}&format=${encodeURIComponent("My Sales Thermal Receipt")}&no_letterhead=1&_lang=en`, "_blank");
 
 			document.getElementById("payment-result-total").textContent = formatCurrency(smPosState.summary.total);
+			document.getElementById("payment-result-bill").textContent = invoice.name;
 			document.getElementById("payment-result-payee").textContent = smPosState.shopName || "My Sales";
 			document.getElementById("payment-result-id").textContent = invoice.payment_entry || invoice.name;
 			document.getElementById("payment-result").classList.add("open");

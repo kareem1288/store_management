@@ -41,6 +41,7 @@
 		{% endfor %}
 		{% if doc.rounding_adjustment %}<div><span>Round Off</span><b>{{ frappe.utils.fmt_money(doc.rounding_adjustment, precision=2) }}</b></div>{% endif %}
 		<div class="ms-grand-total"><span>GRAND TOTAL</span><b>{{ doc.currency }} {{ frappe.utils.fmt_money(doc.rounded_total or doc.grand_total, precision=2) }}</b></div>
+		<div class="ms-payment-mode"><span>MODE OF PAYMENT</span><b>{{ (doc.remarks or "Cash").replace("Payment Mode:", "").split("|")[0].strip() }}</b></div>
 	</section>
 
 	{% if doc.in_words %}<p class="ms-words"><b>Amount in words:</b> {{ doc.in_words }}</p>{% endif %}
@@ -85,6 +86,7 @@
 	.ms-totals { padding: 2mm 0; border-bottom: 1px dashed #111; }
 	.ms-totals div { padding: .5mm 0; }
 	.ms-grand-total { margin-top: 1mm; padding-top: 1.5mm !important; border-top: 1px solid #111; font-size: 12px; }
+	.ms-payment-mode { margin-top: 1.25mm; padding-top: 1.25mm !important; border-top: 1px dotted #777; font-size: 9px; text-transform: uppercase; }
 	.ms-words { padding: 1mm 0; font-size: 8px; }
 	.ms-tax-summary { padding: 1.5mm 0; border-block: 1px dashed #111; }
 	.ms-receipt footer { position: relative; padding: 2.5mm 0 3mm; text-align: center; }
