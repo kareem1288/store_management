@@ -465,11 +465,11 @@ def create_sample_dashboard_data():
 		customers.append(customer)
 
 	items = []
-	for code, item_name, rate in [
-		("MYSALES-DEMO-OIL", "Oil", 100),
-		("MYSALES-DEMO-RICE", "Rice", 50),
-		("MYSALES-DEMO-SUGAR", "Sugar", 45),
-		("MYSALES-DEMO-FLOUR", "Wheat Flour", 35),
+	for code, item_name, rate, hsn_code in [
+		("MYSALES-DEMO-OIL", "Oil", 100, "151219"),
+		("MYSALES-DEMO-RICE", "Rice", 50, "100630"),
+		("MYSALES-DEMO-SUGAR", "Sugar", 45, "170199"),
+		("MYSALES-DEMO-FLOUR", "Wheat Flour", 35, "11010000"),
 	]:
 		if not frappe.db.exists("Item", code):
 			frappe.get_doc(
@@ -482,6 +482,7 @@ def create_sample_dashboard_data():
 					"is_stock_item": 0,
 					"is_sales_item": 1,
 					"standard_rate": rate,
+					"gst_hsn_code": hsn_code,
 				}
 			).insert(ignore_permissions=True)
 		items.append((code, rate))
