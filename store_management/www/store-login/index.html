@@ -65,13 +65,6 @@ body .page-footer {
         #fbfdff;
 }
 
-.login-back-button {
-	position: fixed; z-index: 20; top: 1rem; left: 1rem; display: inline-flex; align-items: center; gap: .4rem;
-	min-height: 38px; padding: .55rem .8rem; border: 1px solid #d7e1ef; border-radius: .65rem;
-	background: rgba(255,255,255,.94); color: #20304f; font: 700 .8rem/1 Inter,sans-serif; cursor: pointer;
-	box-shadow: 0 .3rem 1rem rgba(27,43,76,.08);
-}
-
 .login-shell {
     width: 97.4%;
     max-width: none;
@@ -779,7 +772,6 @@ body .page-footer {
 {% endblock %}
 
 {% block page_content %}
-<button class="login-back-button" type="button" onclick="if (history.length > 1) history.back(); else location.href='/pos';" aria-label="Go back">← <span>Back</span></button>
 <section class="page-shell">
     <div class="login-shell">
         <div class="left-panel">
