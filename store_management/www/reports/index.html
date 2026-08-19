@@ -102,7 +102,7 @@ Object.entries(DEFAULT_REPORT_TYPES).forEach(([key, value]) => {
 	if (REPORT_TYPES[key]) REPORT_TYPES[key] = { ...value, ...REPORT_TYPES[key], title: value.title };
 });
 const requestedReportType = new URLSearchParams(window.location.search).get("type") || "sales";
-const activeReport = REPORT_TYPES[requestedReportType] || REPORT_TYPES.sales;
+const activeReport = REPORT_TYPES[requestedReportType] || REPORT_TYPES.sales || DEFAULT_REPORT_TYPES.sales;
 const VISIBLE_REPORT_FILTERS = {
 	sales: ["from_date", "to_date", "customer", "company", "mode_of_payment"],
 	items: ["from_date", "to_date", "item_code", "item_group", "company"],
@@ -112,7 +112,7 @@ let defaultReportCompany = document.getElementById("sm-reports-app")?.dataset.de
 
 function clearStaleReportOverlay() {
 	document.getElementById("freeze")?.remove();
-	if (frappe.dom) frappe.dom.freeze_count = 0;
+	if (window.frappe?.dom) window.frappe.dom.freeze_count = 0;
 }
 
 clearStaleReportOverlay();
@@ -582,8 +582,15 @@ function renderSalesRegisterTable(data) {
 	}).join("");
 }
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', async function() {
+// Initialize reliably whether Frappe rendered the page before or after DOMContentLoaded.
+let reportPageInitialized = false;
+async function initializeReportsPage() {
+	if (reportPageInitialized) return;
+	if (!window.frappe?.call) {
+		window.setTimeout(initializeReportsPage, 100);
+		return;
+	}
+	reportPageInitialized = true;
 	clearStaleReportOverlay();
 	document.getElementById("report-title").textContent = activeReport.title;
 	document.getElementById("report-subtitle").textContent = activeReport.subtitle;
@@ -592,7 +599,13 @@ document.addEventListener('DOMContentLoaded', async function() {
 	setReportStatus("Preparing your report...");
 	await resolveDefaultReportCompany();
 	loadSalesRegisterReport();
-});
+}
+
+if (document.readyState === "loading") {
+	document.addEventListener("DOMContentLoaded", initializeReportsPage, { once: true });
+} else {
+	initializeReportsPage();
+}
 </script>
 
 <style>
