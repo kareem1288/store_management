@@ -25,6 +25,8 @@ def _unique_company_abbreviation(store_name):
 
 def _provision_store(doc, password):
 	"""Create ERPNext records through Company/User hooks so standard defaults are installed."""
+	from store_management.setup import ensure_mobile_otp_authentication
+	ensure_mobile_otp_authentication()
 	company = frappe.get_doc({
 		"doctype": "Company",
 		"company_name": doc.store_name,
@@ -36,13 +38,14 @@ def _provision_store(doc, password):
 	}).insert(ignore_permissions=True)
 
 	available_roles = [
-		role for role in ("Sales User", "Sales Manager", "Stock User", "Stock Manager", "Accounts User")
+		role for role in ("Sales User", "Sales Manager", "Stock User", "Stock Manager", "Accounts User", "My Sales OTP User")
 		if frappe.db.exists("Role", role)
 	]
 	user = frappe.get_doc({
 		"doctype": "User",
 		"email": doc.email_address,
 		"first_name": doc.full_name,
+		"mobile_no": doc.phone_number,
 		"enabled": 1,
 		"user_type": "System User",
 		"send_welcome_email": 0,
@@ -75,6 +78,10 @@ def create_signup_details(data):
 	data = frappe._dict(data or {})
 
 	email = (data.email_address or "").strip().lower()
+	phone_number = re.sub(r"[\s()-]", "", data.phone_number or "")
+	if data.get("country") == "India" and re.fullmatch(r"[6-9]\d{9}", phone_number):
+		phone_number = "+91" + phone_number
+	data.phone_number = phone_number
 	if not validate_email_address(email):
 		frappe.throw(_("Enter a valid email address."))
 	if frappe.db.exists("Sign Up Details", {"email_address": email}):

@@ -152,13 +152,16 @@ on_session_creation = "store_management.trial.validate_trial_session"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
+doc_events = {
+	"SMS Settings": {
+		"on_update": "store_management.setup.activate_mobile_otp_after_sms_setup"
+	}
 # 	"*": {
 # 		"on_update": "method",
 # 		"on_cancel": "method",
 # 		"on_trash": "method"
 # 	}
-# }
+}
 
 # Scheduled Tasks
 # ---------------
