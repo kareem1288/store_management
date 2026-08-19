@@ -3,7 +3,7 @@
  "creation": "2026-08-20 15:03:19.000000",
  "doctype": "DocType",
  "engine": "InnoDB",
- "field_order": ["account_section", "full_name", "email_address", "phone_number", "password", "business_section", "store_name", "business_type", "store_address", "city", "pin_code", "state", "country", "setup_section", "currency", "financial_year_start", "tax_preference", "store_logo", "status"],
+ "field_order": ["account_section", "full_name", "email_address", "phone_number", "password", "business_section", "store_name", "business_type", "store_address", "city", "pin_code", "state", "country", "setup_section", "currency", "financial_year_start", "tax_preference", "store_logo", "provisioning_section", "company", "user", "trial_start_date", "trial_end_date", "status", "provisioning_error"],
  "fields": [
   {"fieldname":"account_section","fieldtype":"Section Break","label":"Account Details"},
   {"fieldname":"full_name","fieldtype":"Data","in_list_view":1,"label":"Full Name","reqd":1},
@@ -23,7 +23,13 @@
   {"default":"1 April","fieldname":"financial_year_start","fieldtype":"Select","label":"Financial Year Start","options":"1 April\n1 January\n1 July\n1 October","reqd":1},
   {"default":"GST","fieldname":"tax_preference","fieldtype":"Select","label":"Tax Preference","options":"GST\nNo Tax\nVAT\nOther","reqd":1},
   {"fieldname":"store_logo","fieldtype":"Attach Image","label":"Store Logo"},
-  {"default":"Pending","fieldname":"status","fieldtype":"Select","in_list_view":1,"label":"Status","options":"Pending\nApproved\nRejected","read_only":1}
+  {"fieldname":"provisioning_section","fieldtype":"Section Break","label":"Provisioning & Trial"},
+  {"fieldname":"company","fieldtype":"Link","in_list_view":1,"label":"Company","options":"Company","read_only":1},
+  {"fieldname":"user","fieldtype":"Link","label":"User","options":"User","read_only":1},
+  {"fieldname":"trial_start_date","fieldtype":"Date","label":"Trial Start Date","read_only":1},
+  {"fieldname":"trial_end_date","fieldtype":"Date","label":"Trial End Date","read_only":1},
+  {"default":"Pending","fieldname":"status","fieldtype":"Select","in_list_view":1,"label":"Status","options":"Pending\nActive Trial\nTrial Expired\nProvisioning Failed\nRejected","read_only":1},
+  {"fieldname":"provisioning_error","fieldtype":"Small Text","label":"Provisioning Error","read_only":1}
  ],
  "links": [],
  "modified": "2026-08-20 15:03:19.000000",

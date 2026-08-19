@@ -1060,16 +1060,29 @@ function submitLogin(event) {
             }, 1200);
 
         } else {
-            showMessage('Invalid username or password.', 'error');
-            shakeInputs();
+            showLoginFailure(email);
         }
 
     })
     .catch(() => {
         resetButton(submitBtn);
-        showMessage('Login failed. Please try again.', 'error');
-        shakeInputs();
+        showLoginFailure(email);
     });
+}
+
+async function showLoginFailure(email) {
+    try {
+        const response = await fetch(`/api/method/store_management.signup.get_trial_login_status?email=${encodeURIComponent(email)}`);
+        const data = await response.json();
+        if (data.message && data.message.expired) {
+            showMessage(`Your 20-day free trial has ended. Please call or message ${data.message.contact} to continue using My Sales.`, 'error');
+            return;
+        }
+    } catch (error) {
+        // Fall through to the standard authentication message.
+    }
+    showMessage('Invalid username or password.', 'error');
+    shakeInputs();
 }
 
 function showMessage(text, type) {

@@ -76,6 +76,7 @@ website_route_rules = [
 
 before_request = ["store_management.utils.prevent_desk_routes"]
 after_migrate = ["store_management.setup.after_migrate"]
+on_session_creation = "store_management.trial.validate_trial_session"
 
 # Generators
 # ----------
@@ -162,13 +163,13 @@ after_migrate = ["store_management.setup.after_migrate"]
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
+scheduler_events = {
 # 	"all": [
 # 		"store_management.tasks.all"
 # 	],
-# 	"daily": [
-# 		"store_management.tasks.daily"
-# 	],
+	"daily": [
+		"store_management.trial.expire_trials"
+	],
 # 	"hourly": [
 # 		"store_management.tasks.hourly"
 # 	],
@@ -178,7 +179,7 @@ after_migrate = ["store_management.setup.after_migrate"]
 # 	"monthly": [
 # 		"store_management.tasks.monthly"
 # 	],
-# }
+}
 
 # Testing
 # -------

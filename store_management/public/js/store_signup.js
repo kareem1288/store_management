@@ -67,6 +67,8 @@
       document.getElementById("summary-email").textContent = details.email;
       document.getElementById("summary-store").textContent = details.store_name;
       document.getElementById("summary-country").textContent = details.country;
+      const successCopy = document.querySelector(".signup-step.success > p");
+      successCopy.innerHTML = `Your company and user account are ready.<br>Your free trial is active until <b>${details.trial_end_date}</b>.`;
       showStep(4);
     } catch (error) {
       message.textContent = error.message || "Something went wrong. Please try again.";
