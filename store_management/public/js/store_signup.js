@@ -4,6 +4,11 @@
   let currentStep = 1;
   let logoData = "";
 
+  const language = document.getElementById("signup-language");
+  const savedLanguage = localStorage.getItem("my-sales-language");
+  if (savedLanguage && [...language.options].some(option => option.value === savedLanguage)) language.value = savedLanguage;
+  language.addEventListener("change", () => localStorage.setItem("my-sales-language", language.value));
+
   document.querySelectorAll("[data-policy]").forEach(link => link.addEventListener("click", event => {
     event.preventDefault();
     document.getElementById(link.dataset.policy)?.showModal();

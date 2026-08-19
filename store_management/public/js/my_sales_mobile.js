@@ -3,8 +3,43 @@
   document.documentElement.classList.add("my-sales-app");
 
   const APP_NAME = "My Sales";
-  const MOBILE_UI_VERSION = "20260820-4";
+  const MOBILE_UI_VERSION = "20260820-5";
   let installPrompt = null;
+
+  const appLanguage = window.frappe?.boot?.lang || window.frappe?.boot?.user?.language || "en";
+  document.documentElement.lang = appLanguage;
+
+  function translateCustomInterface(root = document.body) {
+    if (appLanguage === "en" || typeof window.__ !== "function" || !root) return;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(node => {
+      if (node.parentElement?.closest("script,style,textarea") || !node.nodeValue.trim()) return;
+      const leading = node.nodeValue.match(/^\s*/)[0];
+      const trailing = node.nodeValue.match(/\s*$/)[0];
+      const source = node.nodeValue.trim();
+      const translated = window.__(source);
+      if (translated !== source) node.nodeValue = `${leading}${translated}${trailing}`;
+    });
+    root.querySelectorAll?.("[placeholder],[title],[aria-label]").forEach(element => {
+      ["placeholder", "title", "aria-label"].forEach(attribute => {
+        const source = element.getAttribute(attribute);
+        if (source) element.setAttribute(attribute, window.__(source));
+      });
+    });
+  }
+
+  function watchInterfaceTranslations() {
+    translateCustomInterface();
+    if (appLanguage === "en") return;
+    let queued = false;
+    new MutationObserver(() => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(() => { queued = false; translateCustomInterface(); });
+    }).observe(document.body, { childList: true, subtree: true });
+  }
 
   async function refreshInstalledAppCache() {
 	if (localStorage.getItem("my-sales-ui-version") === MOBILE_UI_VERSION) return false;
@@ -376,6 +411,7 @@
     arrangeDesktopBilling();
     syncDesktopPosView();
     document.documentElement.classList.toggle("my-sales-offline", !navigator.onLine);
+    watchInterfaceTranslations();
   });
   window.addEventListener("hashchange", () => {
     syncDesktopPosView();

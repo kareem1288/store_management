@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#146c43">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="My Sales">
-<script defer src="/assets/store_management/js/my_sales_mobile.js?v=20260820-4"></script>
+<script defer src="/assets/store_management/js/my_sales_mobile.js?v=20260820-5"></script>
 {% endblock %}
 
 {% block page_content %}
@@ -872,7 +872,15 @@ const mastersDoctypes = {
 	'Company': {
 		title: 'Companies',
 		desc: 'Manage companies',
-		fields: ['name', 'default_currency', 'country','company_name']
+		defaults: { custom_application_language: 'en' },
+		fields: ['name', 'default_currency', 'country','company_name'],
+		formFields: [
+			{ name: 'company_name', label: 'Company Name', type: 'text', required: true, fullWidth: true },
+			{ name: 'abbr', label: 'Abbreviation', type: 'text', required: true },
+			{ name: 'default_currency', label: 'Default Currency', type: 'link', doctype: 'Currency', required: true },
+			{ name: 'country', label: 'Country', type: 'link', doctype: 'Country', required: true },
+			{ name: 'custom_application_language', label: 'Application Language', type: 'link', doctype: 'Language', required: true, fullWidth: true }
+		]
 	},
 'User': {
 		title: 'Users',
@@ -1267,7 +1275,9 @@ function openLinkDropdown(fieldName) {
 	// Debounce the API call
 	linkSearchTimeout = setTimeout(() => {
 		frappe.call({
-			method: 'store_management.api.get_master_records',
+			method: ['Country', 'Currency', 'Language'].includes(doctype)
+				? 'store_management.api.get_master_link_records'
+				: 'store_management.api.get_master_records',
 			args: { doctype: doctype },
 			callback: function(response) {
 				const records = response.message || [];
@@ -1510,6 +1520,10 @@ document.querySelectorAll('input[data-field], textarea[data-field], select[data-
 				});
 				closeModal();
 				loadRecords(currentDoctype);
+				if (currentDoctype === 'Company' && formData.custom_application_language) {
+					localStorage.setItem('my-sales-language', formData.custom_application_language);
+					setTimeout(() => window.location.reload(), 450);
+				}
 			}
 		}
 	});

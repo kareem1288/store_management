@@ -3,7 +3,7 @@
  "creation": "2026-08-20 15:03:19.000000",
  "doctype": "DocType",
  "engine": "InnoDB",
- "field_order": ["account_section", "full_name", "email_address", "phone_number", "password", "business_section", "store_name", "business_type", "store_address", "city", "pin_code", "state", "country", "setup_section", "currency", "financial_year_start", "tax_preference", "store_logo", "provisioning_section", "company", "user", "trial_start_date", "trial_end_date", "status", "provisioning_error"],
+ "field_order": ["account_section", "full_name", "email_address", "phone_number", "password", "business_section", "store_name", "business_type", "store_address", "city", "pin_code", "state", "country", "setup_section", "language", "currency", "financial_year_start", "tax_preference", "store_logo", "provisioning_section", "company", "user", "trial_start_date", "trial_end_date", "status", "provisioning_error"],
  "fields": [
   {"fieldname":"account_section","fieldtype":"Section Break","label":"Account Details"},
   {"fieldname":"full_name","fieldtype":"Data","in_list_view":1,"label":"Full Name","reqd":1},
@@ -19,6 +19,7 @@
   {"fieldname":"state","fieldtype":"Data","label":"State","reqd":1},
   {"default":"India","fieldname":"country","fieldtype":"Link","label":"Country","options":"Country","reqd":1},
   {"fieldname":"setup_section","fieldtype":"Section Break","label":"Business Setup"},
+  {"default":"en","description":"Default language for this company and its store users.","fieldname":"language","fieldtype":"Link","label":"Application Language","options":"Language","reqd":1},
   {"default":"INR","fieldname":"currency","fieldtype":"Link","label":"Currency","options":"Currency","reqd":1},
   {"default":"1 April","fieldname":"financial_year_start","fieldtype":"Select","label":"Financial Year Start","options":"1 April\n1 January\n1 July\n1 October","reqd":1},
   {"default":"GST","fieldname":"tax_preference","fieldtype":"Select","label":"Tax Preference","options":"GST\nNo Tax\nVAT\nOther","reqd":1},

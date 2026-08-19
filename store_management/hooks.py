@@ -153,11 +153,9 @@ on_session_creation = "store_management.trial.validate_trial_session"
 # Hook on document methods and events
 
 doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
+	"Company": {
+		"on_update": "store_management.language.sync_company_language",
+	}
 }
 
 # Scheduled Tasks

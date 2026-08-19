@@ -8,6 +8,7 @@ PRINT_FORMAT_NAME = "My Sales Thermal Receipt"
 
 def after_migrate():
 	"""Install or update the app-owned thermal Sales Invoice print format."""
+	ensure_company_language_field()
 	ensure_mobile_otp_authentication()
 	ensure_upi_mode_of_payment()
 	template_path = Path(frappe.get_app_path("store_management", "print_formats", "my_sales_thermal_receipt.html"))
@@ -43,6 +44,23 @@ def after_migrate():
 		validate_fields_for_doctype=False,
 	)
 	frappe.clear_cache(doctype="Sales Invoice")
+
+
+def ensure_company_language_field():
+	"""Add the company-owned language preference without modifying ERPNext core."""
+	from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
+
+	create_custom_fields({
+		"Company": [{
+			"fieldname": "custom_application_language",
+			"label": "Application Language",
+			"fieldtype": "Link",
+			"options": "Language",
+			"default": "en",
+			"description": "Language used by My Sales web and mobile users of this company.",
+			"insert_after": "default_currency",
+		}],
+	}, update=True)
 
 
 def ensure_mobile_otp_authentication():

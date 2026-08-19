@@ -30,6 +30,8 @@ MOBILE_MASTER_DOCTYPES = {
 	"User",
 }
 
+MOBILE_LINK_DOCTYPES = MOBILE_MASTER_DOCTYPES | {"Country", "Currency", "Language"}
+
 MY_SALES_REPORTS = {
 	"sales": "Sales Register",
 	"items": "Item-wise Sales Register",
@@ -768,6 +770,14 @@ def get_master_records(doctype):
 		frappe.throw(f"DocType {doctype} not found")
 	
 	return frappe.get_all(doctype, fields=["*"], order_by="name asc", limit_page_length=0)
+
+
+@frappe.whitelist()
+def get_master_link_records(doctype):
+	"""Return safe link choices without exposing extra doctypes to master mutations."""
+	if doctype not in MOBILE_LINK_DOCTYPES:
+		frappe.throw(_("{0} is not available in My Sales").format(doctype), frappe.PermissionError)
+	return frappe.get_all(doctype, fields=["name"], order_by="name asc", limit_page_length=0)
 
 
 @frappe.whitelist()

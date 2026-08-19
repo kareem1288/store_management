@@ -36,6 +36,8 @@ def _provision_store(doc, password):
 		"enable_perpetual_inventory": 1,
 		"create_chart_of_accounts_based_on": "Standard Template",
 	}).insert(ignore_permissions=True)
+	if frappe.get_meta("Company").has_field("custom_application_language"):
+		company.db_set("custom_application_language", doc.language or "en", update_modified=False)
 
 	available_roles = [
 		role for role in ("Sales User", "Sales Manager", "Stock User", "Stock Manager", "Accounts User", "My Sales OTP User")
@@ -50,6 +52,7 @@ def _provision_store(doc, password):
 		"user_type": "System User",
 		"send_welcome_email": 0,
 		"new_password": password,
+		"language": doc.language or "en",
 		"roles": [{"role": role} for role in available_roles],
 	}).insert(ignore_permissions=True)
 
@@ -92,11 +95,15 @@ def create_signup_details(data):
 		frappe.throw(_("A company already exists with this store name."))
 	if len(data.password or "") < 8:
 		frappe.throw(_("Password must contain at least 8 characters."))
+	language = (data.language or "en").strip()
+	if not frappe.db.exists("Language", language):
+		frappe.throw(_("Select a valid application language."))
+	data.language = language
 
 	allowed = {
 		"full_name", "phone_number", "password", "store_name", "business_type",
 		"store_address", "city", "pin_code", "state", "country", "currency",
-		"financial_year_start", "tax_preference",
+		"financial_year_start", "tax_preference", "language",
 	}
 	doc = frappe.new_doc("Sign Up Details")
 	for fieldname in allowed:
@@ -136,6 +143,7 @@ def create_signup_details(data):
 		"email": doc.email_address,
 		"store_name": doc.store_name,
 		"country": doc.country,
+		"language": doc.language,
 		"trial_end_date": trial_end,
 		"provisioned": True,
 	}

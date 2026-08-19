@@ -2,7 +2,7 @@
 {% block head_include %}
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b8f46">
-<link rel="stylesheet" href="/assets/store_management/css/store_signup.css?v=20260820-2">
+<link rel="stylesheet" href="/assets/store_management/css/store_signup.css?v=20260820-5">
 {% endblock %}
 {% block page_content %}
 <main class="signup-page">
@@ -43,6 +43,7 @@
 
       <section class="signup-step" data-step="3">
         <div class="step-title"><span>3</span><div><h2>Business Setup</h2><p>Set up your store preferences.</p></div></div>
+        <label>Application Language<select name="language" id="signup-language" required><option value="en">English</option><option value="hi">हिन्दी (Hindi)</option><option value="te">తెలుగు (Telugu)</option><option value="ta">தமிழ் (Tamil)</option><option value="kn">ಕನ್ನಡ (Kannada)</option><option value="ml">മലയാളം (Malayalam)</option><option value="mr">मराठी (Marathi)</option><option value="bn">বাংলা (Bengali)</option><option value="gu">ગુજરાતી (Gujarati)</option></select><small class="field-help">You can change this later from Company settings.</small></label>
         <label>Currency<select name="currency" required><option value="INR">INR – Indian Rupee (₹)</option><option value="USD">USD – US Dollar ($)</option><option value="GBP">GBP – Pound Sterling (£)</option><option value="AED">AED – UAE Dirham</option></select></label>
         <label>Financial Year Start<select name="financial_year_start" required><option>1 April</option><option>1 January</option><option>1 July</option><option>1 October</option></select></label>
         <label>Tax Preference<select name="tax_preference" required><option>GST</option><option>No Tax</option><option>VAT</option><option>Other</option></select></label>
@@ -86,5 +87,5 @@
   </div>
   <button class="primary policy-accept" type="button" data-close-policy>I understand</button>
 </dialog>
-<script src="/assets/store_management/js/store_signup.js?v=20260820-2"></script>
+<script src="/assets/store_management/js/store_signup.js?v=20260820-5"></script>
 {% endblock %}
