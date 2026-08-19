@@ -4,13 +4,13 @@
 {% block navbar %}{% endblock %}
 
 {% block head_include %}
-<link rel="stylesheet" href="/assets/store_management/css/store_management_ui.css?v=20260818-3">
-<link rel="stylesheet" href="/assets/store_management/css/my_sales_mobile.css?v=20260818-3">
+<link rel="stylesheet" href="/assets/store_management/css/store_management_ui.css?v=20260820-4">
+<link rel="stylesheet" href="/assets/store_management/css/my_sales_mobile.css?v=20260820-4">
 <link rel="manifest" href="/assets/store_management/my-sales.webmanifest?v=20260818-3">
 <meta name="theme-color" content="#146c43">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="My Sales">
-<script defer src="/assets/store_management/js/my_sales_mobile.js?v=20260820-2"></script>
+<script defer src="/assets/store_management/js/my_sales_mobile.js?v=20260820-4"></script>
 {% endblock %}
 
 {% block page_content %}
@@ -48,6 +48,10 @@
 			<form class="sm-report-filters" id="sales-register-filters" onsubmit="event.preventDefault(); runSalesRegisterReport();"></form>
 			<div class="sm-report-summary" id="report-summary"></div>
 			<div class="sm-report-status" id="sales-register-status" role="status" aria-live="polite">Choose filters and refresh the report.</div>
+			<div class="sm-report-visual-grid">
+				<article class="sm-report-chart-card"><header><div><h3>Performance Overview</h3><p>Value distribution across the selected results</p></div><span class="sm-chart-period">Interactive view</span></header><div class="sm-report-chart" id="report-trend-chart"></div></article>
+				<article class="sm-report-breakdown-card"><header><div><h3 id="report-breakdown-title">Breakdown</h3><p>Top contributing segments</p></div></header><div class="sm-report-donut" id="report-donut"><span>₹0</span></div><ul id="report-breakdown-list"><li>No breakdown data</li></ul></article>
+			</div>
 
 			<div class="sm-report-table-wrap">
 				<div class="sm-report-table-title"><div><h3>Report Details</h3><p>Complete results for the selected filters</p></div><span id="report-row-count">0 records</span></div>
@@ -387,6 +391,7 @@ function runSalesRegisterReport() {
 			smReportsState.report.data = data;
 			renderSalesRegisterTable(data);
 			renderReportSummary(data);
+			renderReportVisuals(data);
 			setReportStatus(`Report loaded with ${data.result?.length || 0} rows.`);
 		},
 		error: function(error) {
@@ -439,9 +444,9 @@ function renderReportVisuals(data) {
 		const label = field ? row[field] : "Other";
 		groups[label] = (groups[label] || 0) + Math.abs(getNumericValue(row));
 	});
-	const entries = Object.entries(groups).sort((a,b) => b[1]-a[1]).slice(0,4);
+	const entries = Object.entries(groups).sort((a,b) => b[1]-a[1]).slice(0,6);
 	const total = entries.reduce((sum, entry) => sum + entry[1], 0);
-	const colors = [activeReport.accent, "#2f80ed", "#f4a340", "#7559c7"];
+	const colors = [activeReport.accent, "#2f80ed", "#f4a340", "#7559c7", "#16a6a1", "#e85d75"];
 	let angle = 0;
 	const segments = entries.map((entry,index) => { const start = angle; angle += total ? entry[1]/total*360 : 0; return `${colors[index]} ${start}deg ${angle}deg`; }).join(",");
 	const money = value => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", notation: "compact", maximumFractionDigits: 1 }).format(value || 0);
@@ -449,7 +454,7 @@ function renderReportVisuals(data) {
 	donut.style.background = `conic-gradient(${segments || "#e7ece9 0 360deg"})`;
 	donut.innerHTML = `<span>${money(total)}</span>`;
 	document.getElementById("report-breakdown-title").textContent = requestedReportType === "items" ? "Sales by Item" : requestedReportType === "open-bills" ? "Bills Breakdown" : "Sales by Customer";
-	document.getElementById("report-breakdown-list").innerHTML = entries.map((entry,index) => `<li><i style="background:${colors[index]}"></i><span>${escapeHtml(String(entry[0]))}</span><b>${total ? Math.round(entry[1]/total*100) : 0}%</b></li>`).join("") || "<li>No breakdown data</li>";
+	document.getElementById("report-breakdown-list").innerHTML = entries.map((entry,index) => { const percent = total ? Math.round(entry[1]/total*100) : 0; return `<li><i style="background:${colors[index]}"></i><span title="${escapeHtml(String(entry[0]))}">${escapeHtml(String(entry[0]))}<em><u style="width:${percent}%;background:${colors[index]}"></u></em></span><b>${percent}%</b></li>`; }).join("") || "<li>No breakdown data</li>";
 	document.getElementById("report-row-count").textContent = `${rows.length} record${rows.length === 1 ? "" : "s"}`;
 }
 
@@ -465,10 +470,12 @@ function renderReportSummary(data) {
 	const primaryTotal = totalFor(["grand_total", "net_total", "invoiced", "total", "amount"]);
 	const outstanding = totalFor(["outstanding", "outstanding_amount", "balance"]);
 	const average = rows.length ? primaryTotal / rows.length : 0;
+	const highest = rows.reduce((maximum, row) => Math.max(maximum, Math.abs(getNumericValue(row))), 0);
 	summary.innerHTML = `
 		<article><i>₹</i><div><span>${requestedReportType === "open-bills" ? "Total Outstanding" : "Total Sales"}</span><strong>${money(requestedReportType === "open-bills" ? outstanding : primaryTotal)}</strong><small>Selected period</small></div></article>
 		<article><i>▤</i><div><span>Total Records</span><strong>${rows.length}</strong><small>Matching entries</small></div></article>
-		<article><i>◇</i><div><span>Average Value</span><strong>${money(average)}</strong><small>Per record</small></div></article>`;
+		<article><i>◇</i><div><span>Average Value</span><strong>${money(average)}</strong><small>Per record</small></div></article>
+		<article><i>↗</i><div><span>Highest Value</span><strong>${money(highest)}</strong><small>Top result</small></div></article>`;
 }
 
 function renderSalesRegisterTable(data) {
@@ -606,7 +613,7 @@ body[data-path="reports"] #freeze { display: none !important; pointer-events: no
 
 .sm-report-summary {
 	display: grid;
-	grid-template-columns: repeat(3, minmax(0, 1fr));
+	grid-template-columns: repeat(4, minmax(0, 1fr));
 	gap: 1rem;
 	margin-bottom: 1.25rem;
 }
@@ -617,12 +624,15 @@ body[data-path="reports"] #freeze { display: none !important; pointer-events: no
 	gap: 0.85rem;
 	padding: .85rem 1rem;
 	border: 0;
-	border-radius: 12px;
-	background: #eaf8f0;
+	border-radius: 15px;
+	background: linear-gradient(135deg,#eaf8f0,#fff);
+	box-shadow: 0 8px 22px rgba(28,52,40,.07);
+	transition: transform .18s ease, box-shadow .18s ease;
 }
+.sm-report-summary article:hover { transform: translateY(-2px); box-shadow: 0 12px 27px rgba(28,52,40,.11); }
 
-.sm-report-summary article:nth-child(2) { background: #edf5ff; }
-.sm-report-summary article:nth-child(3) { background: #fff4e6; }
+.sm-report-summary article:nth-child(2) { background: linear-gradient(135deg,#edf5ff,#fff); }
+.sm-report-summary article:nth-child(3) { background: linear-gradient(135deg,#fff4e6,#fff); }
 .sm-report-summary article:nth-child(4) { border-color: #e5ddf5; background: linear-gradient(135deg, #f8f5fe, #fff); }
 .sm-report-summary article > i { display: grid; place-items: center; width: 42px; height: 42px; flex: 0 0 42px; border-radius: 50%; background: #e8f7ee; color: #168650; font-style: normal; font-weight: 700; }
 .sm-report-summary article:nth-child(2) > i { background: #eaf3ff; color: #2878c8; }
@@ -635,7 +645,7 @@ body[data-path="reports"] #freeze { display: none !important; pointer-events: no
 
 .sm-report-visual-grid { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(270px, .8fr); gap: 1rem; margin-bottom: 1.25rem; }
 .sm-report-chart-card,
-.sm-report-breakdown-card { padding: 1.1rem; border: 1px solid #e1e8e4; border-radius: 14px; background: #fff; }
+.sm-report-breakdown-card { padding: 1.1rem; border: 0; border-radius: 16px; background: linear-gradient(180deg,#fff,#fafcff); box-shadow: 0 10px 28px rgba(28,52,40,.075); }
 .sm-report-chart-card header,
 .sm-report-breakdown-card header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: .75rem; }
 .sm-report-chart-card h3,
@@ -647,13 +657,15 @@ body[data-path="reports"] #freeze { display: none !important; pointer-events: no
 .sm-report-chart { min-height: 215px; }
 .sm-report-chart svg { display: block; width: 100%; height: 215px; }
 .sm-chart-empty { display: grid; place-items: center; min-height: 215px; color: #849189; font-size: .85rem; }
-.sm-report-donut { display: grid; place-items: center; width: 155px; height: 155px; margin: .5rem auto 1rem; border-radius: 50%; }
+.sm-report-donut { display: grid; place-items: center; width: 155px; height: 155px; margin: .5rem auto 1rem; border-radius: 50%; box-shadow:0 12px 25px rgba(33,57,45,.14); }
 .sm-report-donut::before { content: ""; grid-area: 1/1; width: 92px; height: 92px; border-radius: 50%; background: #fff; }
 .sm-report-donut span { grid-area: 1/1; z-index: 1; color: #1d2923; font-size: .86rem; font-weight: 700; }
 .sm-report-breakdown-card ul { display: grid; gap: .45rem; margin: 0; padding: 0; list-style: none; }
 .sm-report-breakdown-card li { display: grid; grid-template-columns: 9px minmax(0,1fr) auto; align-items: center; gap: .5rem; color: #536159; font-size: .74rem; }
 .sm-report-breakdown-card li i { width: 8px; height: 8px; border-radius: 50%; }
-.sm-report-breakdown-card li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sm-report-breakdown-card li span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sm-report-breakdown-card li em { display:block; height:4px; margin-top:.25rem; overflow:hidden; border-radius:5px; background:#edf1ef; }
+.sm-report-breakdown-card li u { display:block; height:100%; border-radius:inherit; text-decoration:none; }
 .sm-report-table-title { display: flex; align-items: center; justify-content: space-between; padding: .9rem 1rem; border-bottom: 1px solid #e5ebe7; }
 .sm-report-table-title > span { color: var(--sm-report-accent); font-size: .75rem; font-weight: 600; }
 .sm-report-export { border-color: #b7dac5 !important; background: #f5fbf7 !important; color: #168650 !important; }

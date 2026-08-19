@@ -3,7 +3,7 @@
   document.documentElement.classList.add("my-sales-app");
 
   const APP_NAME = "My Sales";
-  const MOBILE_UI_VERSION = "20260820-2";
+  const MOBILE_UI_VERSION = "20260820-4";
   let installPrompt = null;
 
   async function refreshInstalledAppCache() {
@@ -260,7 +260,7 @@
     const max = Math.max(...values, 1);
     const points = values.map((value, index) => `${24 + index * 86},${155 - value / max * 120}`).join(" ");
     const area = `24,155 ${points} ${24 + Math.max(values.length - 1, 0) * 86},155`;
-    return `<svg viewBox="0 0 570 180" preserveAspectRatio="none" aria-label="Seven day sales trend"><defs><linearGradient id="sales-fill" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#119653" stop-opacity=".28"/><stop offset="1" stop-color="#119653" stop-opacity="0"/></linearGradient></defs><path d="M24 155H548M24 95H548M24 35H548" stroke="#e7ece9"/><polygon points="${area}" fill="url(#sales-fill)"/><polyline points="${points}" fill="none" stroke="#078545" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>${values.map((value,index) => `<circle cx="${24 + index*86}" cy="${155-value/max*120}" r="5" fill="#078545"/>`).join("")}</svg>`;
+    return `<svg viewBox="0 0 570 180" preserveAspectRatio="none" aria-label="Seven day sales trend"><defs><linearGradient id="sales-fill" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#10b981" stop-opacity=".38"/><stop offset=".55" stop-color="#38bdf8" stop-opacity=".13"/><stop offset="1" stop-color="#6366f1" stop-opacity="0"/></linearGradient><linearGradient id="sales-line" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#059669"/><stop offset=".52" stop-color="#0ea5e9"/><stop offset="1" stop-color="#6366f1"/></linearGradient></defs><path d="M24 155H548M24 95H548M24 35H548" stroke="#e7edf4" stroke-dasharray="5 5"/><polygon points="${area}" fill="url(#sales-fill)"/><polyline points="${points}" fill="none" stroke="url(#sales-line)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>${values.map((value,index) => `<circle cx="${24 + index*86}" cy="${155-value/max*120}" r="6" fill="#fff" stroke="${index === values.length-1 ? '#6366f1' : '#0b9a68'}" stroke-width="4"><title>${rows[index]?.date || ''}: ${currency(value)}</title></circle>`).join("")}</svg>`;
   }
 
   function enhanceDesktopDashboard(providedBootstrap) {
@@ -285,6 +285,10 @@
     const trend = summary.trend || [];
     const categoryColors = ["#07914c", "#2186e8", "#ffad14", "#6846dd", "#15a6a1"];
     const categories = summary.categories || [];
+	const weekTotal = trend.reduce((sum, row) => sum + Number(row.total || 0), 0);
+	const todayTrend = Number(trend[trend.length - 1]?.total || 0);
+	const yesterdayTrend = Number(trend[trend.length - 2]?.total || 0);
+	const trendDelta = yesterdayTrend ? Math.round((todayTrend - yesterdayTrend) / yesterdayTrend * 100) : (todayTrend ? 100 : 0);
     const categoryTotal = categories.reduce((sum,row) => sum + Number(row.value || 0), 0);
     let angle = 0;
     const segments = categories.map((row,index) => {
@@ -296,16 +300,16 @@
     const dashboard = document.createElement("section");
     dashboard.className = "my-sales-dashboard";
     dashboard.innerHTML = `
-      <header><div><h1>Dashboard</h1><p>Welcome to My Sales Mobile Store</p></div><time>${new Intl.DateTimeFormat("en-IN",{dateStyle:"medium",timeStyle:"short"}).format(new Date())}</time></header>
+      <header><div><span class="my-sales-live">● Live analytics</span><h1>Business Dashboard</h1><p>Sales, customers and product performance at a glance</p></div><time>${new Intl.DateTimeFormat("en-IN",{dateStyle:"medium",timeStyle:"short"}).format(new Date())}</time></header>
       <div class="my-sales-kpis">
-        <article><i>${icons.pos}</i><span>Today Sales<strong>${currency(summary.today_sales)}</strong><small>${summary.today_bills || 0} bills</small></span></article>
-        <article><i>☷</i><span>Today Customers<strong>${summary.today_customers || 0}</strong><small>New Customers</small></span></article>
-        <article><i>◇</i><span>Today Items Sold<strong>${Number(summary.today_items_sold || 0)}</strong><small>Items</small></span></article>
-        <article><i>↗</i><span>Total Sales (Month)<strong>${currency(summary.month_sales)}</strong><small>Current month</small></span></article>
+        <article data-tone="green"><i>${icons.pos}</i><span>Today Sales<strong>${currency(summary.today_sales)}</strong><small>${summary.today_bills || 0} bills · ${trendDelta >= 0 ? '↑' : '↓'} ${Math.abs(trendDelta)}% vs yesterday</small></span></article>
+        <article data-tone="blue"><i>☷</i><span>Today Customers<strong>${summary.today_customers || 0}</strong><small>New customers today</small></span></article>
+        <article data-tone="orange"><i>◇</i><span>Today Items Sold<strong>${Number(summary.today_items_sold || 0)}</strong><small>Across completed bills</small></span></article>
+        <article data-tone="purple"><i>↗</i><span>Total Sales (Month)<strong>${currency(summary.month_sales)}</strong><small>${currency(weekTotal)} in last 7 days</small></span></article>
       </div>
       <div class="my-sales-dashboard-grid">
-        <article class="my-sales-dash-card my-sales-trend"><h2>Sales Trend</h2>${buildTrendSvg(trend)}<div>${trend.map(row => `<span>${new Date(row.date).toLocaleDateString("en-IN",{day:"numeric",month:"short"})}</span>`).join("")}</div></article>
-        <article class="my-sales-dash-card my-sales-categories"><h2>Sales by Category</h2><div class="my-sales-donut" style="background:conic-gradient(${segments || "#e8eeea 0 360deg"})"><span>${currency(categoryTotal)}</span></div><ul>${categories.map((row,index) => `<li><i style="background:${categoryColors[index%categoryColors.length]}"></i><span>${row.label || "Other"}</span><b>${categoryTotal ? Math.round(Number(row.value || 0)/categoryTotal*100) : 0}%</b></li>`).join("") || "<li>No sales this month</li>"}</ul></article>
+        <article class="my-sales-dash-card my-sales-trend"><h2><span>Sales Trend<small>Last 7 days</small></span><b>${currency(weekTotal)}</b></h2>${buildTrendSvg(trend)}<div>${trend.map(row => `<span>${new Date(row.date).toLocaleDateString("en-IN",{day:"numeric",month:"short"})}</span>`).join("")}</div></article>
+        <article class="my-sales-dash-card my-sales-categories"><h2><span>Sales by Category<small>Current month</small></span></h2><div class="my-sales-donut" style="background:conic-gradient(${segments || "#e8eeea 0 360deg"})"><span>${currency(categoryTotal)}<small>Total</small></span></div><ul>${categories.map((row,index) => { const percent = categoryTotal ? Math.round(Number(row.value || 0)/categoryTotal*100) : 0; return `<li><i style="background:${categoryColors[index%categoryColors.length]}"></i><span>${row.label || "Other"}<em><u style="width:${percent}%;background:${categoryColors[index%categoryColors.length]}"></u></em></span><b>${percent}%</b></li>`; }).join("") || "<li>No sales this month</li>"}</ul></article>
         <article class="my-sales-dash-card my-sales-table"><h2>Recent Sales <a href="/reports">View All →</a></h2><table><thead><tr><th>Bill No</th><th>Customer</th><th>Items</th><th>Amount</th><th>Time</th></tr></thead><tbody>${recentRows || '<tr><td colspan="5">No sales today</td></tr>'}</tbody></table></article>
         <article class="my-sales-dash-card my-sales-table"><h2>Top Products <a href="/reports">View All →</a></h2><table><thead><tr><th>Item</th><th>Sold</th><th>Revenue</th></tr></thead><tbody>${topRows || '<tr><td colspan="3">No sales this month</td></tr>'}</tbody></table></article>
       </div>`;
@@ -380,7 +384,7 @@
 
   if ("serviceWorker" in navigator && window.isSecureContext) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/my-sales-sw.js?v=15", { scope: "/" }).catch(error => {
+      navigator.serviceWorker.register("/my-sales-sw.js?v=16", { scope: "/" }).catch(error => {
         console.warn("My Sales offline support could not be enabled", error);
       });
     });
