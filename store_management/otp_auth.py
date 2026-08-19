@@ -39,6 +39,16 @@ def _mask_mobile(number):
 
 @frappe.whitelist(allow_guest=True)
 @rate_limit(key="email", limit=10, seconds=300, methods="POST")
+def password_login(email, password):
+	"""Create a normal session when the user has not requested OTP verification."""
+	manager = frappe.local.login_manager
+	manager.authenticate(user=(email or "").strip(), pwd=password or "")
+	manager.post_login()
+	return {"status": "Logged In", "redirect_to": "/pos"}
+
+
+@frappe.whitelist(allow_guest=True)
+@rate_limit(key="email", limit=10, seconds=300, methods="POST")
 def begin_otp_login(email, password):
 	"""Validate credentials and return delivery choices without creating a session."""
 	manager = frappe.local.login_manager
@@ -70,8 +80,13 @@ def send_login_otp(challenge_id, delivery):
 	_save_challenge(challenge_id, challenge)
 
 	if delivery == "email" and user_details.email:
-		from store_management.brevo import send_otp_email
-		send_otp_email(user_details.email, otp)
+		message = _("{0} is your My Sales login verification code. It expires in 5 minutes. Do not share it with anyone.").format(otp)
+		frappe.sendmail(
+			recipients=[user_details.email],
+			subject=_("My Sales login verification code"),
+			message=message,
+			now=True,
+		)
 		masked = _mask_email(user_details.email)
 	elif delivery == "mobile" and (user_details.mobile_no or user_details.phone):
 		from store_management.brevo import send_otp_sms

@@ -41,17 +41,6 @@ def _post(path, payload):
 	return settings, response
 
 
-def send_otp_email(recipient, otp):
-	settings = frappe.get_single("Brevo OTP Settings")
-	payload = {
-		"sender": {"name": settings.sender_name, "email": settings.sender_email},
-		"to": [{"email": recipient}],
-		"subject": _("My Sales login verification code"),
-		"htmlContent": f"<div style='font-family:Arial,sans-serif'><h2>Verify your My Sales login</h2><p>Your one-time code is:</p><p style='font-size:30px;font-weight:700;letter-spacing:6px'>{otp}</p><p>This code expires in 5 minutes. Do not share it with anyone.</p></div>",
-	}
-	_post("/smtp/email", payload)
-
-
 def send_otp_sms(recipient, otp):
 	settings = frappe.get_single("Brevo OTP Settings")
 	payload = {

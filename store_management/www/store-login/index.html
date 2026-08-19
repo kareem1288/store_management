@@ -966,6 +966,12 @@ body .page-footer {
                         </label>
                         <a href="/store-login/forgot-password">Forgot Password?</a>
                     </div>
+                    <div class="remember-row" style="margin-top:-.25rem;justify-content:flex-start;">
+                        <label for="login_with_otp" style="cursor:pointer;">
+                            <input id="login_with_otp" type="checkbox">
+                            Login with OTP
+                        </label>
+                    </div>
                     <div class="message-container" id="login-message" role="status" aria-live="polite" style="display: none;">
                       <span class="icon" id="message-icon"></span>
                     </div>
@@ -1069,6 +1075,11 @@ function submitLogin(event) {
         return;
     }
 
+    if (!document.getElementById('login_with_otp').checked) {
+        performPasswordLogin(email, password, submitBtn);
+        return;
+    }
+
     fetch('/api/method/store_management.otp_auth.begin_otp_login', {
         method: 'POST',
         headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
@@ -1095,6 +1106,22 @@ function submitLogin(event) {
         resetButton(submitBtn);
         showLoginFailure(email);
     });
+}
+
+function performPasswordLogin(email, password, submitBtn) {
+    fetch('/api/method/store_management.otp_auth.password_login', {
+        method:'POST', headers:{'Content-Type':'application/json','Accept':'application/json'}, credentials:'same-origin',
+        body:JSON.stringify({email, password})
+    })
+    .then(async response => { const data = await response.json(); if (!response.ok || data.exc) throw new Error('Login failed'); return data; })
+    .then(data => {
+        if (data.message && data.message.status === 'Logged In') {
+            window.location.href = sanitizeRedirect(redirectTo);
+            return;
+        }
+        throw new Error('Login failed');
+    })
+    .catch(() => { resetButton(submitBtn); showLoginFailure(email); });
 }
 
 async function chooseOtpDelivery(delivery) {
