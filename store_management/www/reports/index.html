@@ -10,8 +10,9 @@
 <meta name="theme-color" content="#146c43">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="My Sales">
+<script type="application/json" id="my-sales-report-config">{{ configured_reports_json | safe }}</script>
 <script defer src="/assets/store_management/js/my_sales_mobile.js?v=20260820-8"></script>
-<script defer src="/assets/store_management/js/reports.js?v=20260820-3" data-my-sales-report-engine="1"></script>
+<script defer src="/assets/store_management/js/reports.js?v=20260820-4" data-my-sales-report-engine="1"></script>
 {% endblock %}
 
 {% block page_content %}
@@ -72,8 +73,6 @@
 	<div class="sm-report-manager-list" id="configured-report-list"></div>
 	<div class="sm-report-manager-add"><select id="report-catalog"><option value="">Select an existing report…</option></select><button class="sm-main-button" id="add-report-button" type="button">Add Report</button></div>
 </dialog>
-
-<script type="application/json" id="my-sales-report-config">{{ configured_reports_json | safe }}</script>
 
 <style>
 /* Base styles */

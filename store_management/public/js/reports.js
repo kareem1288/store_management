@@ -1,4 +1,9 @@
-const CONFIGURED_REPORTS = JSON.parse(document.getElementById("my-sales-report-config")?.textContent || "[]");
+let CONFIGURED_REPORTS = [];
+try {
+	CONFIGURED_REPORTS = JSON.parse(document.getElementById("my-sales-report-config")?.textContent || "[]");
+} catch (error) {
+	console.error("Unable to parse My Sales report configuration", error);
+}
 const DEFAULT_REPORT_TYPES = {
 	sales: {
 		title: "Sales Report", reportName: "Sales Register",
@@ -17,12 +22,12 @@ const DEFAULT_REPORT_TYPES = {
 		subtitle: "Monitor unpaid invoices, due dates and outstanding amounts.", accent: "#d27a2d"
 	}
 };
-const REPORT_TYPES = Object.fromEntries(CONFIGURED_REPORTS.map(report => [report.route_key, {
+const REPORT_TYPES = { ...DEFAULT_REPORT_TYPES, ...Object.fromEntries(CONFIGURED_REPORTS.map(report => [report.route_key, {
 	title: report.report_name,
 	reportName: report.report_name,
 	subtitle: "Interactive ERPNext report with graphical analysis.",
 	accent: report.accent_color || "#168650"
-}]));
+}])) };
 Object.entries(DEFAULT_REPORT_TYPES).forEach(([key, value]) => {
 	if (REPORT_TYPES[key]) REPORT_TYPES[key] = { ...value, ...REPORT_TYPES[key], title: value.title };
 });
@@ -526,6 +531,10 @@ function bindReportActions() {
 
 async function initializeReportsPage() {
 	if (reportPageInitialized) return;
+	if (!document.getElementById("report-title") || !document.getElementById("sales-register-filters")) {
+		window.setTimeout(initializeReportsPage, 50);
+		return;
+	}
 	if (!window.frappe?.call) {
 		setReportStatus("Connecting to the report service…");
 		window.setTimeout(initializeReportsPage, 100);
