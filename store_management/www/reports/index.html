@@ -4,13 +4,13 @@
 {% block navbar %}{% endblock %}
 
 {% block head_include %}
-<link rel="stylesheet" href="/assets/store_management/css/store_management_ui.css?v=20260820-4">
+<link rel="stylesheet" href="/assets/store_management/css/store_management_ui.css?v=20260820-5">
 <link rel="stylesheet" href="/assets/store_management/css/my_sales_mobile.css?v=20260820-5">
 <link rel="manifest" href="/assets/store_management/my-sales.webmanifest?v=20260818-3">
 <meta name="theme-color" content="#146c43">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="My Sales">
-<script defer src="/assets/store_management/js/my_sales_mobile.js?v=20260820-5"></script>
+<script defer src="/assets/store_management/js/my_sales_mobile.js?v=20260820-6"></script>
 {% endblock %}
 
 {% block page_content %}
@@ -33,6 +33,7 @@
 
 	<section class="sm-page-shell sm-reports-shell">
 		<section class="sm-report-panel" id="reports-panel">
+			{% if insights_dashboards %}<div class="sm-insights-strip"><div><strong>Frappe Insights Dashboards</strong><span>Interactive graphical analysis</span></div>{% for dashboard in insights_dashboards %}<a href="{{ dashboard.url }}">↗ {{ dashboard.label }}</a>{% endfor %}</div>{% endif %}
 			<div class="sm-report-toolbar">
 				<div>
 					<p class="sm-pos-kicker" id="report-kicker">Reports</p>
@@ -40,6 +41,7 @@
 					<p class="sm-report-subtitle" id="report-subtitle"></p>
 				</div>
 				<div class="sm-toolbar-actions">
+					<button class="sm-chip" type="button" onclick="openReportManager()">⚙ Manage Reports</button>
 					<button class="sm-chip sm-report-export" type="button" onclick="exportCurrentReport()">⇩ Export</button>
 					<button class="sm-main-button" type="button" onclick="runSalesRegisterReport()">Refresh</button>
 				</div>
@@ -64,8 +66,15 @@
 	</section>
 </div>
 
+<dialog class="sm-report-manager" id="report-manager">
+	<header><div><h2>Manage Reports</h2><p>Choose which ERPNext reports appear in the Reports sidebar.</p></div><button type="button" onclick="closeReportManager()" aria-label="Close">×</button></header>
+	<div class="sm-report-manager-list" id="configured-report-list"></div>
+	<div class="sm-report-manager-add"><select id="report-catalog"><option value="">Select an existing report…</option></select><button class="sm-main-button" type="button" onclick="addSelectedReport()">Add Report</button></div>
+</dialog>
+
 <script>
-const REPORT_TYPES = {
+const CONFIGURED_REPORTS = {{ configured_reports_json | safe }};
+const DEFAULT_REPORT_TYPES = {
 	sales: {
 		title: "Sales Report", reportName: "Sales Register",
 		subtitle: "Review invoices, taxable sales and collected revenue.", accent: "#168650"
@@ -83,6 +92,15 @@ const REPORT_TYPES = {
 		subtitle: "Monitor unpaid invoices, due dates and outstanding amounts.", accent: "#d27a2d"
 	}
 };
+const REPORT_TYPES = Object.fromEntries(CONFIGURED_REPORTS.map(report => [report.route_key, {
+	title: report.report_name,
+	reportName: report.report_name,
+	subtitle: "Interactive ERPNext report with graphical analysis.",
+	accent: report.accent_color || "#168650"
+}]));
+Object.entries(DEFAULT_REPORT_TYPES).forEach(([key, value]) => {
+	if (REPORT_TYPES[key]) REPORT_TYPES[key] = { ...value, ...REPORT_TYPES[key], title: value.title };
+});
 const requestedReportType = new URLSearchParams(window.location.search).get("type") || "sales";
 const activeReport = REPORT_TYPES[requestedReportType] || REPORT_TYPES.sales;
 const VISIBLE_REPORT_FILTERS = {
@@ -222,6 +240,14 @@ function installReportScriptSupport() {
 
 	window.erpnext = window.erpnext || {};
 	erpnext.utils = erpnext.utils || {};
+	if (!erpnext.utils.get_fiscal_year) {
+		erpnext.utils.get_fiscal_year = function(dateValue, asArray) {
+			const date = new Date(dateValue || getToday());
+			const startYear = date.getMonth() < 3 ? date.getFullYear() - 1 : date.getFullYear();
+			const values = [`${startYear}-${startYear + 1}`, `${startYear}-04-01`, `${startYear + 1}-03-31`];
+			return asArray ? values : values[0];
+		};
+	}
 	if (!erpnext.utils.add_dimensions) {
 		erpnext.utils.add_dimensions = function(reportName, index) {
 			frappe.call({
@@ -251,6 +277,22 @@ function installReportScriptSupport() {
 }
 
 function useFallbackSalesRegisterFilters() {
+	if (requestedReportType === "profit-and-loss") {
+		const today = getToday();
+		const year = new Date(today).getMonth() < 3 ? new Date(today).getFullYear() - 1 : new Date(today).getFullYear();
+		smReportsState.report.filters = normalizeReportFilters([
+			{ fieldname: "company", label: "Company", fieldtype: "Link", options: "Company", default: defaultReportCompany },
+			{ fieldname: "filter_based_on", label: "Filter Based On", fieldtype: "Select", options: "Fiscal Year\nDate Range", default: "Date Range" },
+			{ fieldname: "period_start_date", label: "From Date", fieldtype: "Date", default: `${year}-04-01` },
+			{ fieldname: "period_end_date", label: "To Date", fieldtype: "Date", default: today },
+			{ fieldname: "periodicity", label: "Periodicity", fieldtype: "Select", options: "Monthly\nQuarterly\nHalf-Yearly\nYearly", default: "Monthly" },
+			{ fieldname: "accumulated_values", label: "Accumulated Values", fieldtype: "Check", default: 0 }
+		]);
+		smReportsState.report.loaded = true;
+		renderSalesRegisterFilters();
+		runSalesRegisterReport();
+		return;
+	}
 	const commonFilters = [
 		{ fieldname: "from_date", label: "From Date", fieldtype: "Date", default: addMonths(getToday(), -1) },
 		{ fieldname: "to_date", label: "To Date", fieldtype: "Date", default: getToday() },
@@ -292,8 +334,10 @@ function resolveReportDefault(defaultValue) {
 function renderSalesRegisterFilters() {
 	const filtersWrap = document.getElementById("sales-register-filters");
 	if (!filtersWrap) return;
-	const visibleFields = VISIBLE_REPORT_FILTERS[requestedReportType] || VISIBLE_REPORT_FILTERS.sales;
-	const visibleFilters = smReportsState.report.filters.filter(filter => visibleFields.includes(filter.fieldname));
+	const visibleFields = VISIBLE_REPORT_FILTERS[requestedReportType];
+	const visibleFilters = (visibleFields
+		? smReportsState.report.filters.filter(filter => visibleFields.includes(filter.fieldname))
+		: smReportsState.report.filters.filter(filter => !filter.hidden).slice(0, 10));
 
 	filtersWrap.innerHTML = visibleFilters.map(filter => {
 		const value = filter.default ?? "";
@@ -401,6 +445,39 @@ function runSalesRegisterReport() {
 	});
 }
 
+function openReportManager() {
+	frappe.call({ method: "store_management.api.get_report_sidebar", args: { include_catalog: 1 }, callback(response) {
+		renderReportManager(response.message || { reports: [], catalog: [] });
+		document.getElementById("report-manager").showModal();
+	}});
+}
+
+function closeReportManager() { document.getElementById("report-manager").close(); }
+
+function renderReportManager(data) {
+	document.getElementById("configured-report-list").innerHTML = (data.reports || []).map(report => `
+		<label><span><strong>${escapeHtml(report.report_name)}</strong>${report.is_default ? "<small>Default report</small>" : "<small>Added report</small>"}</span>
+		<input type="checkbox" ${Number(report.is_visible) ? "checked" : ""} onchange="setReportVisibility('${String(report.report_name).replace(/'/g, "\\'")}', this.checked)"></label>`).join("");
+	document.getElementById("report-catalog").innerHTML = '<option value="">Select an existing report…</option>' +
+		(data.catalog || []).map(report => `<option value="${escapeHtml(report.name)}">${escapeHtml(report.name)} · ${escapeHtml(report.ref_doctype || "")}</option>`).join("");
+}
+
+function setReportVisibility(reportName, visible) {
+	frappe.call({ method: "store_management.api.set_report_sidebar_visibility", args: { report_name: reportName, visible: visible ? 1 : 0 }, callback(response) {
+		renderReportManager(response.message || {});
+		window.refreshMySalesReportNavigation?.();
+	}});
+}
+
+function addSelectedReport() {
+	const reportName = document.getElementById("report-catalog").value;
+	if (!reportName) return frappe.show_alert({ message: "Select a report to add", indicator: "orange" });
+	frappe.call({ method: "store_management.api.add_report_to_sidebar", args: { report_name: reportName }, callback(response) {
+		renderReportManager(response.message || {});
+		window.refreshMySalesReportNavigation?.();
+	}});
+}
+
 function normalizeResultRows(data) {
 	const columns = data.columns || [];
 	return (data.result || []).map(row => {
@@ -415,8 +492,11 @@ function getNumericValue(row) {
 		: requestedReportType === "open-bills"
 			? ["outstanding", "outstanding_amount", "invoiced", "invoice_grand_total"]
 			: ["grand_total", "net_total", "invoiced", "total", "amount"];
-	const field = fields.find(name => row[name] !== undefined && row[name] !== null && row[name] !== "");
-	return field ? Number(row[field]) || 0 : 0;
+	const expandedFields = [...fields, "debit", "credit", "balance", "closing_debit", "closing_credit", "net_profit_loss"];
+	const field = expandedFields.find(name => row[name] !== undefined && row[name] !== null && row[name] !== "");
+	if (field) return Number(row[field]) || 0;
+	const numeric = Object.entries(row).filter(([key, value]) => key !== "indent" && value !== null && value !== "" && Number.isFinite(Number(value)));
+	return numeric.length ? Number(numeric[numeric.length - 1][1]) : 0;
 }
 
 function renderReportVisuals(data) {
@@ -426,7 +506,12 @@ function renderReportVisuals(data) {
 	const max = Math.max(...values, 1);
 	const width = 720;
 	const points = values.map((value, index) => `${20 + index * ((width - 40) / Math.max(values.length - 1, 1))},${175 - value / max * 135}`).join(" ");
-	chart.innerHTML = values.length ? `
+	const useBars = ["profit-and-loss", "trial-balance"].includes(requestedReportType);
+	chart.innerHTML = values.length && useBars ? `
+		<svg viewBox="0 0 720 205" preserveAspectRatio="none" aria-label="${escapeHtml(activeReport.title)} comparison">
+			<path d="M20 175H700M20 108H700M20 40H700" stroke="#e8eee9"/>
+			${values.map((value,index) => { const barWidth = Math.max(8, 620 / Math.max(values.length,1) * .62); const x = 35 + index * (650 / Math.max(values.length,1)); const height = Math.abs(value) / max * 135; return `<rect x="${x}" y="${175-height}" width="${barWidth}" height="${height}" rx="5" fill="${index % 2 ? activeReport.accent : '#2f80ed'}"><title>${value}</title></rect>`; }).join("")}
+		</svg>` : values.length ? `
 		<svg viewBox="0 0 720 205" preserveAspectRatio="none" aria-label="${escapeHtml(activeReport.title)} trend">
 			<defs><linearGradient id="report-area" x1="0" y1="0" x2="0" y2="1"><stop stop-color="${activeReport.accent}" stop-opacity=".23"/><stop offset="1" stop-color="${activeReport.accent}" stop-opacity="0"/></linearGradient></defs>
 			<path d="M20 175H700M20 108H700M20 40H700" stroke="#e8eee9"/>
@@ -437,7 +522,7 @@ function renderReportVisuals(data) {
 
 	const groupFields = requestedReportType === "items" ? ["item_group", "item_name", "item_code"]
 		: requestedReportType === "open-bills" ? ["status", "customer_name", "party"]
-		: ["customer_group", "customer_name", "customer"];
+		: ["account", "account_name", "voucher_type", "customer_group", "customer_name", "customer"];
 	const groups = {};
 	rows.forEach(row => {
 		const field = groupFields.find(name => row[name]);
@@ -528,6 +613,11 @@ document.addEventListener('DOMContentLoaded', async function() {
 	background: linear-gradient(145deg, #f5faf7 0%, #f7f9fc 55%, #fbf8f5 100%);
 	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
+
+.sm-insights-strip{display:flex;align-items:center;gap:.75rem;padding:.85rem 1rem;margin-bottom:1rem;border:1px solid #d9e5ff;border-radius:14px;background:linear-gradient(110deg,#f0f6ff,#f8f3ff)}
+.sm-insights-strip>div{display:grid;margin-right:auto}.sm-insights-strip span{font-size:.76rem;color:var(--sm-muted)}.sm-insights-strip a{padding:.55rem .8rem;border-radius:9px;background:#fff;color:#5b43bd;text-decoration:none;font-weight:700;font-size:.8rem;box-shadow:0 3px 10px #5b43bd16}
+.sm-report-manager{width:min(620px,calc(100vw - 2rem));max-height:85dvh;border:0;border-radius:18px;padding:0;box-shadow:0 28px 80px #17203340}.sm-report-manager::backdrop{background:#17203380;backdrop-filter:blur(3px)}.sm-report-manager header{display:flex;padding:1.1rem 1.25rem;border-bottom:1px solid var(--sm-border)}.sm-report-manager header div{margin-right:auto}.sm-report-manager h2{margin:0}.sm-report-manager header p{margin:.25rem 0 0;color:var(--sm-muted);font-size:.8rem}.sm-report-manager header button{border:0;background:transparent;font-size:1.5rem}.sm-report-manager-list{padding:1rem;max-height:50dvh;overflow:auto}.sm-report-manager-list label{display:flex;align-items:center;padding:.75rem;border-bottom:1px solid var(--sm-border)}.sm-report-manager-list label span{display:grid;margin-right:auto}.sm-report-manager-list small{color:var(--sm-muted)}.sm-report-manager-list input{width:20px;height:20px}.sm-report-manager-add{display:flex;gap:.65rem;padding:1rem;border-top:1px solid var(--sm-border)}.sm-report-manager-add select{min-width:0;flex:1;border:1px solid var(--sm-border);border-radius:9px;padding:.65rem}
+@media(max-width:768px){.sm-insights-strip{align-items:stretch;flex-wrap:wrap}.sm-insights-strip>div{flex-basis:100%}.sm-insights-strip a{flex:1;text-align:center}.sm-report-manager{width:100%;height:100dvh;max-height:100dvh;border-radius:0}.sm-report-manager-add{padding-bottom:calc(1rem + env(safe-area-inset-bottom));flex-direction:column}}
 
 body[data-path="reports"] #freeze { display: none !important; pointer-events: none !important; }
 

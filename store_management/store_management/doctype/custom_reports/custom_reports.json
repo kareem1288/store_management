@@ -7,6 +7,11 @@
  "engine": "InnoDB",
  "field_order": [
   "report_name",
+  "route_key",
+  "is_visible",
+  "is_default",
+  "display_order",
+  "accent_color",
   "ref_doctype",
   "column_break_uofk",
   "report_type",
@@ -23,6 +28,39 @@
    "label": "Report Name",
    "options": "Report",
    "unique": 1
+  },
+  {
+   "fieldname": "route_key",
+   "fieldtype": "Data",
+   "label": "Route Key",
+   "read_only": 1,
+   "unique": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_visible",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Show in Reports Sidebar"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_default",
+   "fieldtype": "Check",
+   "label": "Default Report",
+   "read_only": 1
+  },
+  {
+   "default": "100",
+   "fieldname": "display_order",
+   "fieldtype": "Int",
+   "label": "Display Order"
+  },
+  {
+   "default": "#168650",
+   "fieldname": "accent_color",
+   "fieldtype": "Color",
+   "label": "Chart Colour"
   },
   {
    "fetch_from": "report_name.ref_doctype",

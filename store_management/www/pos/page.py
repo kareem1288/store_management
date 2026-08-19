@@ -23,6 +23,12 @@ def get_context(context):
 	context.title = "My Sales"
 	context.body_class = "store-pos-page"
 	context.meta_description = "My Sales mobile billing, master data, and reporting."
+	context.insights_dashboard_url = ""
+	if "insights" in frappe.get_installed_apps():
+		workbook = frappe.db.get_value("Insights Workbook", {"from_template": "insights/sales"}, "name")
+		dashboard = workbook and frappe.db.get_value("Insights Dashboard v3", {"workbook": workbook}, "name", order_by="creation asc")
+		if dashboard:
+			context.insights_dashboard_url = f"/insights/dashboard/{dashboard}"
 	try:
 		from store_management.api import get_pos_bootstrap
 

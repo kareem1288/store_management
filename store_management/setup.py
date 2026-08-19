@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 import frappe
 
@@ -9,6 +10,7 @@ PRINT_FORMAT_NAME = "My Sales Thermal Receipt"
 def after_migrate():
 	"""Install or update the app-owned thermal Sales Invoice print format."""
 	ensure_company_language_field()
+	ensure_default_reports()
 	ensure_mobile_otp_authentication()
 	ensure_upi_mode_of_payment()
 	template_path = Path(frappe.get_app_path("store_management", "print_formats", "my_sales_thermal_receipt.html"))
@@ -63,6 +65,34 @@ def ensure_company_language_field():
 	}, update=True)
 
 
+def ensure_default_reports():
+	"""Seed the standard report sidebar without overwriting user visibility choices."""
+	defaults = [
+		("Sales Register", "sales", 10, "#168650"),
+		("Item-wise Sales Register", "items", 20, "#2878c8"),
+		("Customer Ledger Summary", "customers", 30, "#7b5cc7"),
+		("Accounts Receivable", "open-bills", 40, "#d27a2d"),
+		("Profit and Loss Statement", "profit-and-loss", 50, "#e45756"),
+		("General Ledger", "general-ledger", 60, "#0f9d91"),
+		("Trial Balance", "trial-balance", 70, "#7c5ce5"),
+	]
+	for row in frappe.get_all("Custom Reports", filters={"route_key": ["is", "not set"]}, fields=["name", "report_name"]):
+		route_key = re.sub(r"[^a-z0-9]+", "-", row.report_name.lower()).strip("-")
+		frappe.db.set_value("Custom Reports", row.name, "route_key", route_key, update_modified=False)
+	for report_name, route_key, order, accent in defaults:
+		if not frappe.db.exists("Report", report_name):
+			continue
+		if frappe.db.exists("Custom Reports", report_name):
+			frappe.db.set_value("Custom Reports", report_name, {
+				"route_key": route_key, "is_default": 1, "display_order": order, "accent_color": accent,
+			}, update_modified=False)
+			continue
+		frappe.get_doc({
+			"doctype": "Custom Reports", "report_name": report_name, "route_key": route_key,
+			"is_visible": 1, "is_default": 1, "display_order": order, "accent_color": accent,
+		}).insert(ignore_permissions=True)
+
+
 def ensure_mobile_otp_authentication():
 	"""Keep signup users marked for app-owned OTP without enabling site-wide 2FA."""
 	role_name = "My Sales OTP User"
@@ -80,6 +110,8 @@ def ensure_mobile_otp_authentication():
 			user.mobile_no = signup.phone_number
 		if role_name not in {row.role for row in user.roles}:
 			user.append("roles", {"role": role_name})
+		if frappe.db.exists("Role", "Insights User") and "Insights User" not in {row.role for row in user.roles}:
+			user.append("roles", {"role": "Insights User"})
 		user.save(ignore_permissions=True)
 
 	return True

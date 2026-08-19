@@ -43,6 +43,7 @@
 .my-sales-table tbody tr { transition:background .15s ease,transform .15s ease; }
 .my-sales-table tbody tr:hover { background:#f4faf7; }
 @media(max-width:768px){.my-sales-kpis article:hover{transform:none}.my-sales-dash-card{box-shadow:0 5px 16px rgba(28,51,40,.07)!important}.my-sales-donut{box-shadow:0 7px 18px rgba(46,72,59,.12)}}
+.my-sales-dashboard>header>div:last-child{display:flex;align-items:flex-end;gap:.55rem;flex-direction:column}.my-sales-insights-link{padding:.5rem .75rem;border:1px solid #d8d2ff;border-radius:9px;background:linear-gradient(135deg,#f5f2ff,#edf6ff);color:#6246c7;text-decoration:none;font-size:.78rem;font-weight:800}.my-sales-insights-link:hover{box-shadow:0 5px 14px #6246c726;color:#4f36b4}@media(max-width:768px){.my-sales-dashboard>header>div:last-child{align-items:flex-start}.my-sales-insights-link{width:100%;text-align:center}}
 
 .sm-page-app {
 	min-height: 100vh;

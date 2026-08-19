@@ -3,7 +3,7 @@
   document.documentElement.classList.add("my-sales-app");
 
   const APP_NAME = "My Sales";
-  const MOBILE_UI_VERSION = "20260820-5";
+  const MOBILE_UI_VERSION = "20260820-6";
   let installPrompt = null;
 
   const appLanguage = window.frappe?.boot?.lang || window.frappe?.boot?.user?.language || "en";
@@ -170,7 +170,7 @@
       <nav>
         <a href="/pos" data-section="dashboard">${icons.home}<span>Dashboard</span></a>
         <details open><summary>${icons.pos}<span>POS</span></summary><div class="my-sales-mobile-submenu"><a href="/pos#billing-panel">New Sale</a><a href="/reports?type=open-bills">Open Bills</a><a href="/masters?doctype=Customer">Customers</a></div></details>
-        <details open><summary>${icons.reports}<span>Reports</span></summary><div class="my-sales-mobile-submenu"><a href="/reports?type=sales">Sales Report</a><a href="/reports?type=items">Item Report</a><a href="/reports?type=customers">Customer Report</a><a href="/reports?type=sales#day-closing">Day Closing</a></div></details>
+        <details open><summary>${icons.reports}<span>Reports</span></summary><div class="my-sales-mobile-submenu my-sales-report-links"><a href="/reports?type=sales">Sales Report</a><a href="/reports?type=items">Item Report</a><a href="/reports?type=customers">Customer Report</a></div></details>
         <details open><summary>${icons.masters}<span>Masters</span></summary><div class="my-sales-mobile-submenu"><a href="/masters?doctype=Item">Items</a><a href="/masters?doctype=Item%20Group">Item Groups</a><a href="/masters?doctype=Customer">Customers</a><a href="/masters?doctype=Item%20Tax%20Template">Tax Templates</a><a href="/masters?doctype=Company">Companies</a><a href="/masters?doctype=User">Users</a></div></details>
         <a href="/masters?doctype=Company" data-section="settings">${icons.more}<span>Settings</span></a>
       </nav>
@@ -254,7 +254,7 @@
           <div class="my-sales-menu-items"><a href="/pos#billing-panel">New Sale</a><a href="/reports?type=open-bills" class="${requestedReport === "open-bills" ? "active" : ""}">Open Bills</a></div>
         </div>
         <div class="my-sales-menu-group"><button type="button" class="my-sales-menu-toggle" aria-expanded="true">${icons.reports}<span>Reports</span><b>⌄</b></button>
-          <div class="my-sales-menu-items"><a href="/reports?type=sales" class="${requestedReport === "sales" ? "active" : ""}">Sales Report</a>
+          <div class="my-sales-menu-items my-sales-report-links"><a href="/reports?type=sales" class="${requestedReport === "sales" ? "active" : ""}">Sales Report</a>
           <a href="/reports?type=items" class="${requestedReport === "items" ? "active" : ""}">Item Wise Sales</a></div>
         </div>
         <div class="my-sales-menu-group"><button type="button" class="my-sales-menu-toggle" aria-expanded="true">${icons.masters}<span>Masters</span><b>⌄</b></button>
@@ -285,6 +285,21 @@
       top.querySelector(".my-sales-sidebar-toggle")?.addEventListener("click", () => document.documentElement.classList.toggle("my-sales-sidebar-collapsed"));
     }
   }
+
+  async function refreshReportNavigation() {
+    if (!window.frappe?.call) return;
+    frappe.call({
+      method: "store_management.api.get_report_sidebar",
+      silent: true,
+      callback(response) {
+        const reports = (response.message?.reports || []).filter(report => Number(report.is_visible));
+        const current = new URLSearchParams(location.search).get("type") || "sales";
+        const html = reports.map(report => `<a href="/reports?type=${encodeURIComponent(report.route_key)}" class="${current === report.route_key ? "active" : ""}">${String(report.report_name).replace(/[&<>"']/g, character => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[character])}</a>`).join("");
+        document.querySelectorAll(".my-sales-report-links").forEach(container => { container.innerHTML = html; });
+      }
+    });
+  }
+  window.refreshMySalesReportNavigation = refreshReportNavigation;
 
   function currency(value) {
     return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(Number(value || 0));
@@ -332,10 +347,11 @@
     }).join(",");
     const recentRows = (summary.recent_bills || []).map(row => `<tr><td>${row.name}</td><td>${row.customer}</td><td>${Number(row.total_qty || 0)}</td><td><b>${currency(row.grand_total)}</b></td><td>${String(row.posting_time || "").slice(0,5)}</td></tr>`).join("");
     const topRows = (summary.top_items || []).map(row => `<tr><td>${row.item_name}</td><td>${Number(row.sold || 0)}</td><td><b>${currency(row.revenue)}</b></td></tr>`).join("");
+	const insightsUrl = document.querySelector(".sm-pos-app")?.dataset.insightsDashboard || "/insights";
     const dashboard = document.createElement("section");
     dashboard.className = "my-sales-dashboard";
     dashboard.innerHTML = `
-      <header><div><span class="my-sales-live">● Live analytics</span><h1>Business Dashboard</h1><p>Sales, customers and product performance at a glance</p></div><time>${new Intl.DateTimeFormat("en-IN",{dateStyle:"medium",timeStyle:"short"}).format(new Date())}</time></header>
+      <header><div><span class="my-sales-live">● Live analytics</span><h1>Business Dashboard</h1><p>Sales, customers and product performance at a glance</p></div><div><a class="my-sales-insights-link" href="${insightsUrl}">↗ Frappe Insights</a><time>${new Intl.DateTimeFormat("en-IN",{dateStyle:"medium",timeStyle:"short"}).format(new Date())}</time></div></header>
       <div class="my-sales-kpis">
         <article data-tone="green"><i>${icons.pos}</i><span>Today Sales<strong>${currency(summary.today_sales)}</strong><small>${summary.today_bills || 0} bills · ${trendDelta >= 0 ? '↑' : '↓'} ${Math.abs(trendDelta)}% vs yesterday</small></span></article>
         <article data-tone="blue"><i>☷</i><span>Today Customers<strong>${summary.today_customers || 0}</strong><small>New customers today</small></span></article>
@@ -406,6 +422,7 @@
     enhancePosHome();
     enhanceMasters();
     buildDesktopShell();
+	refreshReportNavigation();
 	addBackButton();
     enhanceDesktopDashboard();
     arrangeDesktopBilling();

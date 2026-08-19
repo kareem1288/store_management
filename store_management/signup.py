@@ -40,7 +40,7 @@ def _provision_store(doc, password):
 		company.db_set("custom_application_language", doc.language or "en", update_modified=False)
 
 	available_roles = [
-		role for role in ("Sales User", "Sales Manager", "Stock User", "Stock Manager", "Accounts User", "My Sales OTP User")
+		role for role in ("Sales User", "Sales Manager", "Stock User", "Stock Manager", "Accounts User", "My Sales OTP User", "Insights User")
 		if frappe.db.exists("Role", role)
 	]
 	user = frappe.get_doc({

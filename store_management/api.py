@@ -2,6 +2,7 @@ import base64
 import io
 import json
 import secrets
+import re
 
 import frappe
 from frappe import _
@@ -141,7 +142,9 @@ def run_my_sales_report(report_type, filters=None):
 	"""Run an approved My Sales report with a reliable company default."""
 	from frappe.desk.query_report import run
 
-	report_name = MY_SALES_REPORTS.get(report_type)
+	report_name = MY_SALES_REPORTS.get(report_type) or frappe.db.get_value(
+		"Custom Reports", {"route_key": report_type}, "report_name"
+	)
 	if not report_name:
 		frappe.throw(_("Unsupported report type"))
 
@@ -158,6 +161,59 @@ def run_my_sales_report(report_type, filters=None):
 		user=frappe.session.user,
 		ignore_prepared_report=True,
 	)
+
+
+@frappe.whitelist()
+def get_report_sidebar(include_catalog=False):
+	"""Return the user's configurable report navigation and optional Report catalog."""
+	configured = frappe.get_all(
+		"Custom Reports",
+		fields=["report_name", "route_key", "is_visible", "is_default", "display_order", "accent_color", "report_description"],
+		order_by="display_order asc, report_name asc",
+	)
+	result = {"reports": configured}
+	if frappe.parse_json(include_catalog):
+		configured_names = {row.report_name for row in configured}
+		catalog = frappe.get_all(
+			"Report",
+			filters={"disabled": 0, "report_type": ["in", ["Query Report", "Script Report"]]},
+			fields=["name", "ref_doctype", "report_type"],
+			order_by="name asc",
+			limit_page_length=0,
+		)
+		result["catalog"] = [
+			row for row in catalog
+			if row.name not in configured_names and frappe.get_cached_doc("Report", row.name).is_permitted()
+		]
+	return result
+
+
+@frappe.whitelist()
+def add_report_to_sidebar(report_name):
+	"""Add an existing permitted Query/Script Report to My Sales navigation."""
+	report = frappe.get_doc("Report", report_name)
+	if report.disabled or report.report_type not in {"Query Report", "Script Report"}:
+		frappe.throw(_("Select an enabled Query Report or Script Report."))
+	if not frappe.has_permission("Report", "read", report):
+		frappe.throw(_("You do not have permission to use this report."), frappe.PermissionError)
+	if frappe.db.exists("Custom Reports", report_name):
+		frappe.db.set_value("Custom Reports", report_name, "is_visible", 1)
+	else:
+		route_key = re.sub(r"[^a-z0-9]+", "-", report_name.lower()).strip("-")
+		frappe.get_doc({
+			"doctype": "Custom Reports", "report_name": report_name, "route_key": route_key,
+			"is_visible": 1, "display_order": 100, "accent_color": "#168650",
+		}).insert()
+	return get_report_sidebar(include_catalog=True)
+
+
+@frappe.whitelist()
+def set_report_sidebar_visibility(report_name, visible=0):
+	"""Show or hide a configured report without deleting the underlying ERPNext Report."""
+	if not frappe.db.exists("Custom Reports", report_name):
+		frappe.throw(_("Report is not configured in My Sales."))
+	frappe.db.set_value("Custom Reports", report_name, "is_visible", 1 if frappe.parse_json(visible) else 0)
+	return get_report_sidebar(include_catalog=True)
 
 # ... [all existing functions remain the same] ...
 
