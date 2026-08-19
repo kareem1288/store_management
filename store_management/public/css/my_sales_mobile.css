@@ -819,4 +819,7 @@
   .sm-pos-app .sm-field-grid,.sm-pos-app .sm-upi-layout { grid-template-columns: 1fr !important; }
   .sm-pos-app .sm-drawer-footer { padding: .55rem .65rem calc(.55rem + var(--ms-safe-bottom)) !important; background: #fff !important; }
   .sm-pos-app .sm-payment-result { inset: 0 !important; padding: 5rem 1rem 1.25rem !important; background: #fff !important; }
+	.my-sales-back { min-width: 34px !important; min-height: 34px !important; padding: 0 !important; border: 0 !important; background: transparent !important; }
+	.my-sales-back b { display: none; }
+	.my-sales-back span { font-size: 1.2rem; }
 }

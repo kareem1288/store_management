@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#146c43">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="My Sales">
-<script defer src="/assets/store_management/js/my_sales_mobile.js?v=20260818-4"></script>
+<script defer src="/assets/store_management/js/my_sales_mobile.js?v=20260820-1"></script>
 {% endblock %}
 
 {% block page_content %}
@@ -160,7 +160,7 @@
 				<p class="sm-pos-kicker">Checkout | చెల్లింపు</p>
 				<h3>Ready to Generate Bill?</h3>
 			</div>
-			<button class="sm-icon-button" type="button" onclick="closeCheckout()">✕</button>
+			<button class="sm-icon-button" type="button" onclick="closeCheckout()" aria-label="Back to cart">←</button>
 		</div>
 
 		<div class="sm-checkout-content">
@@ -243,6 +243,7 @@
 		</div>
 
 		<div class="sm-payment-result" id="payment-result" aria-hidden="true">
+			<button class="sm-result-back" type="button" onclick="finishCheckout()" aria-label="Back to new sale">←</button>
 			<div class="sm-payment-result-icon">✓</div>
 			<h3>Bill Generated Successfully!</h3>
 			<p>Thank you for your purchase.</p>

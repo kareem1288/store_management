@@ -129,6 +129,18 @@
 .sm-page-app textarea { font-family: "DM Sans", sans-serif; }
 
 .sm-page-app button { transition: transform .18s ease, box-shadow .18s ease, background .18s ease; }
+.my-sales-back {
+	display: inline-flex; align-items: center; justify-content: center; gap: .4rem; min-height: 36px;
+	padding: .45rem .7rem; border: 1px solid #dfe6e2; border-radius: 9px; background: #fff; color: #263a30;
+	font: 700 .76rem/1 "DM Sans", sans-serif; cursor: pointer;
+}
+.my-sales-back span { font-size: 1.05rem; line-height: 1; }
+.my-sales-back:hover { background: #f2f8f4; color: #087c42; }
+.sm-payment-result .sm-result-back {
+	position: absolute; top: 1rem; left: 1rem; z-index: 2; width: 38px; min-width: 38px; height: 38px;
+	padding: 0 !important; border: 1px solid #dfe6e2 !important; border-radius: 9px; background: #fff !important;
+	color: #263a30 !important; font-size: 1.15rem; box-shadow: none !important;
+}
 .sm-page-app button:not(:disabled):hover { transform: translateY(-1px); }
 .sm-page-app button:focus-visible,
 .sm-page-app input:focus-visible,

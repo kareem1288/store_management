@@ -3,7 +3,7 @@
   document.documentElement.classList.add("my-sales-app");
 
   const APP_NAME = "My Sales";
-  const MOBILE_UI_VERSION = "20260818-3";
+  const MOBILE_UI_VERSION = "20260820-1";
   let installPrompt = null;
 
   async function refreshInstalledAppCache() {
@@ -77,6 +77,22 @@
       installPrompt = null;
       actions.querySelector(".my-sales-install").hidden = true;
     });
+  }
+
+  function addBackButton() {
+	const topNav = document.querySelector(".sm-top-nav");
+	if (!topNav || topNav.querySelector(".my-sales-back")) return;
+	const button = document.createElement("button");
+	button.type = "button";
+	button.className = "my-sales-back";
+	button.setAttribute("aria-label", "Go back");
+	button.innerHTML = '<span aria-hidden="true">←</span><b>Back</b>';
+	button.addEventListener("click", () => {
+		const previous = document.referrer ? new URL(document.referrer, location.href) : null;
+		if (previous?.origin === location.origin && history.length > 1) history.back();
+		else location.href = "/pos";
+	});
+	topNav.insertAdjacentElement("afterbegin", button);
   }
 
   const icons = {
@@ -352,6 +368,7 @@
     enhancePosHome();
     enhanceMasters();
     buildDesktopShell();
+	addBackButton();
     enhanceDesktopDashboard();
     arrangeDesktopBilling();
     syncDesktopPosView();
@@ -364,7 +381,7 @@
 
   if ("serviceWorker" in navigator && window.isSecureContext) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/my-sales-sw.js?v=13", { scope: "/" }).catch(error => {
+      navigator.serviceWorker.register("/my-sales-sw.js?v=14", { scope: "/" }).catch(error => {
         console.warn("My Sales offline support could not be enabled", error);
       });
     });
