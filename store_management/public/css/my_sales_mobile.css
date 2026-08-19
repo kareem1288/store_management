@@ -339,12 +339,16 @@
   .sm-masters-content { padding: 1rem !important; }
   .sm-masters-toolbar, .sm-report-toolbar { align-items: stretch !important; }
   .sm-masters-modal {
-    width: 100% !important; max-width: none !important; max-height: 92dvh !important;
-    top: auto !important; bottom: 0 !important; transform: translateY(105%) !important;
-    border-radius: 22px 22px 0 0 !important;
+	left: 0 !important; right: 0 !important; width: 100% !important; max-width: none !important;
+	top: 0 !important; bottom: 0 !important; height: 100dvh !important; max-height: 100dvh !important;
+	transform: translateX(105%) !important; border-radius: 0 !important;
   }
-  .sm-masters-modal.open { transform: translateY(0) !important; }
-  .sm-modal-footer { padding-bottom: calc(1rem + var(--ms-safe-bottom)) !important; }
+  .sm-masters-modal.open { transform: translateX(0) !important; }
+  .sm-modal-header { min-height: 62px; padding: max(.75rem, env(safe-area-inset-top)) 1rem .75rem !important; background:#fff; }
+  .sm-modal-body { padding: 1rem !important; overscroll-behavior: contain; }
+  .sm-modal-footer { padding: .75rem 1rem calc(.75rem + var(--ms-safe-bottom)) !important; background:#fff; box-shadow:0 -8px 24px rgba(15,23,42,.08); }
+  .sm-modal-footer .sm-masters-btn { flex:1; min-width:0 !important; }
+  body.sm-master-editor-open { overflow: hidden !important; }
   .sm-report-filters { grid-template-columns: 1fr !important; }
   .sm-report-table { min-width: 760px !important; }
   .sm-report-table-wrap { max-height: 62dvh !important; }
@@ -457,7 +461,7 @@
   .sm-table-cell:first-child { grid-column: 1 / -1; color: var(--ms-green-dark); font-weight: 800; font-size: .92rem; }
   .sm-table-actions { grid-column: 1 / -1; padding-top: .35rem; }
   .sm-action-btn { flex: 1; min-height: 40px !important; }
-  .sm-masters-modal { border-radius: 22px 22px 0 0 !important; }
+  .sm-masters-modal { border-radius: 0 !important; }
   .sm-form-row { display: block !important; }
   .sm-form-group { width: 100% !important; margin-bottom: .85rem; }
 

@@ -30,7 +30,7 @@ MOBILE_MASTER_DOCTYPES = {
 	"User",
 }
 
-MOBILE_LINK_DOCTYPES = MOBILE_MASTER_DOCTYPES | {"Country", "Currency", "Language"}
+MOBILE_LINK_DOCTYPES = MOBILE_MASTER_DOCTYPES | {"Country", "Currency", "Language", "Territory"}
 
 MY_SALES_REPORTS = {
 	"sales": "Sales Register",

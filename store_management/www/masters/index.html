@@ -5,7 +5,7 @@
 
 {% block head_include %}
 <link rel="stylesheet" href="/assets/store_management/css/store_management_ui.css?v=20260820-4">
-<link rel="stylesheet" href="/assets/store_management/css/my_sales_mobile.css?v=20260820-4">
+<link rel="stylesheet" href="/assets/store_management/css/my_sales_mobile.css?v=20260820-5">
 <link rel="manifest" href="/assets/store_management/my-sales.webmanifest?v=20260818-3">
 <meta name="theme-color" content="#146c43">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -852,22 +852,46 @@ const mastersDoctypes = {
 	'Item Group': {
 		title: 'Item Groups',
 		desc: 'Manage item categories',
-		fields: ['name', 'item_group_name', 'parent_item_group']
+		fields: ['name', 'item_group_name', 'parent_item_group'],
+		formFields: [
+			{ name: 'item_group_name', label: 'Item Group Name', type: 'text', required: true, fullWidth: true },
+			{ name: 'parent_item_group', label: 'Parent Item Group', type: 'link', doctype: 'Item Group' },
+			{ name: 'is_group', label: 'Is Group', type: 'checkbox' },
+			{ name: 'image', label: 'Item Group Image', type: 'image', fullWidth: true }
+		]
 	},
 	'Customer': {
 		title: 'Customers',
 		desc: 'Manage customer records',
-		fields: ['name', 'customer_name', 'customer_group','customer_type','territory']
+		fields: ['name', 'customer_name', 'customer_group','customer_type','territory'],
+		formFields: [
+			{ name: 'customer_name', label: 'Customer Name', type: 'text', required: true, fullWidth: true },
+			{ name: 'customer_type', label: 'Customer Type', type: 'select', options: ['Company', 'Individual', 'Partnership'], required: true },
+			{ name: 'customer_group', label: 'Customer Group', type: 'link', doctype: 'Customer Group', required: true },
+			{ name: 'territory', label: 'Territory', type: 'link', doctype: 'Territory', required: true },
+			{ name: 'tax_id', label: 'Tax ID / GSTIN', type: 'text' },
+			{ name: 'disabled', label: 'Disabled', type: 'checkbox', fullWidth: true }
+		]
 	},
 	'Customer Group': {
 		title: 'Customer Groups',
 		desc: 'Manage customer categories',
-		fields: ['name', 'customer_group_name', 'parent_customer_group']
+		fields: ['name', 'customer_group_name', 'parent_customer_group'],
+		formFields: [
+			{ name: 'customer_group_name', label: 'Customer Group Name', type: 'text', required: true, fullWidth: true },
+			{ name: 'parent_customer_group', label: 'Parent Customer Group', type: 'link', doctype: 'Customer Group' },
+			{ name: 'is_group', label: 'Is Group', type: 'checkbox' }
+		]
 	},
 	'Item Tax Template': {
 		title: 'Tax Templates',
 		desc: 'Manage tax templates',
-		fields: ['name', 'title', 'description']
+		fields: ['name', 'title', 'company'],
+		formFields: [
+			{ name: 'title', label: 'Title', type: 'text', required: true, fullWidth: true },
+			{ name: 'company', label: 'Company', type: 'link', doctype: 'Company', required: true },
+			{ name: 'disabled', label: 'Disabled', type: 'checkbox' }
+		]
 	},
 	'Company': {
 		title: 'Companies',
@@ -1147,6 +1171,14 @@ if (field.type === 'checkbox') {
 <input type="hidden" data-field="${field.name}" value="${escapeAttr(String(value))}">
 				</div>
 			`;
+		} else if (field.type === 'select') {
+			const options = (field.options || []).map(option => `<option value="${escapeAttr(option)}" ${String(value) === option ? 'selected' : ''}>${escapeHtml(option)}</option>`).join('');
+			html += `
+				<label class="sm-form-label">${field.label}${field.required ? '<span class="required">*</span>' : ''}</label>
+				<select class="sm-form-select" data-field="${field.name}" ${field.required ? 'required' : ''}>
+					${options}
+				</select>
+			`;
 		} else if (field.type === 'multiselect') {
 			// Multi-select checkbox list for roles
 			const currentValues = String(value || '').split(',').filter(v => v.trim());
@@ -1275,7 +1307,7 @@ function openLinkDropdown(fieldName) {
 	// Debounce the API call
 	linkSearchTimeout = setTimeout(() => {
 		frappe.call({
-			method: ['Country', 'Currency', 'Language'].includes(doctype)
+			method: ['Country', 'Currency', 'Language', 'Territory'].includes(doctype)
 				? 'store_management.api.get_master_link_records'
 				: 'store_management.api.get_master_records',
 			args: { doctype: doctype },
@@ -1485,7 +1517,7 @@ function saveRecord() {
 	const config = mastersDoctypes[currentDoctype];
 	const formData = {};
 
-document.querySelectorAll('input[data-field], textarea[data-field], select[data-field]').forEach(input => {
+	document.querySelectorAll('input[data-field], textarea[data-field], select[data-field]').forEach(input => {
 		let val = input.value;
 		// Handle checkbox inputs
 		if (input.type === 'checkbox') {
@@ -1495,6 +1527,13 @@ document.querySelectorAll('input[data-field], textarea[data-field], select[data-
 		}
 		formData[input.dataset.field] = val;
 	});
+
+	const missingField = (config.formFields || []).find(field => field.required && !String(formData[field.name] || '').trim());
+	if (missingField) {
+		document.querySelector(`[data-field="${missingField.name}"]`)?.focus();
+		frappe.show_alert({ message: 'Please complete all required fields', indicator: 'orange' });
+		return;
+	}
 
 	const method = editingRecord 
 		? 'store_management.api.update_master_record'
@@ -1548,11 +1587,15 @@ function deleteRecord(name) {
 function openModal() {
 	document.getElementById('masters-modal').classList.add('open');
 	document.getElementById('modal-backdrop').classList.add('open');
+	document.getElementById('masters-modal').setAttribute('aria-hidden', 'false');
+	document.body.classList.add('sm-master-editor-open');
 }
 
 function closeModal() {
 	document.getElementById('masters-modal').classList.remove('open');
 	document.getElementById('modal-backdrop').classList.remove('open');
+	document.getElementById('masters-modal').setAttribute('aria-hidden', 'true');
+	document.body.classList.remove('sm-master-editor-open');
 	editingRecord = null;
 	currentFormData = {};
 }
