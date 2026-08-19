@@ -69,16 +69,14 @@ def send_login_otp(challenge_id, delivery):
 	challenge.delivery = delivery
 	_save_challenge(challenge_id, challenge)
 
-	message = _("{0} is your My Sales login verification code. It expires in 5 minutes.").format(otp)
 	if delivery == "email" and user_details.email:
-		frappe.sendmail(recipients=[user_details.email], subject=_("My Sales login verification code"), message=message, now=True)
+		from store_management.brevo import send_otp_email
+		send_otp_email(user_details.email, otp)
 		masked = _mask_email(user_details.email)
 	elif delivery == "mobile" and (user_details.mobile_no or user_details.phone):
-		if not frappe.db.get_single_value("SMS Settings", "sms_gateway_url"):
-			frappe.throw(_("Mobile OTP is not configured. Please choose email or contact the administrator."))
-		from frappe.core.doctype.sms_settings.sms_settings import send_sms
+		from store_management.brevo import send_otp_sms
 		mobile = user_details.mobile_no or user_details.phone
-		send_sms([mobile], message, success_msg=False)
+		send_otp_sms(mobile, otp)
 		masked = _mask_mobile(mobile)
 	else:
 		frappe.throw(_("The selected OTP delivery method is unavailable for this user."))

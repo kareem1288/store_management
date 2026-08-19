@@ -1,0 +1,28 @@
+{
+ "actions": [],
+ "creation": "2026-08-20 16:30:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": ["enabled", "api_key", "email_section", "sender_name", "sender_email", "sms_section", "sms_sender", "help"],
+ "fields": [
+  {"default":"0","fieldname":"enabled","fieldtype":"Check","label":"Enabled"},
+  {"fieldname":"api_key","fieldtype":"Password","label":"Brevo API Key","mandatory_depends_on":"eval:doc.enabled"},
+  {"fieldname":"email_section","fieldtype":"Section Break","label":"Transactional Email"},
+  {"default":"My Sales","fieldname":"sender_name","fieldtype":"Data","label":"Sender Name","mandatory_depends_on":"eval:doc.enabled"},
+  {"description":"Must be a verified sender in Brevo.","fieldname":"sender_email","fieldtype":"Data","label":"Sender Email","mandatory_depends_on":"eval:doc.enabled","options":"Email"},
+  {"fieldname":"sms_section","fieldtype":"Section Break","label":"Transactional SMS"},
+  {"default":"MySales","description":"Brevo-approved sender, maximum 11 characters. Indian delivery may also require DLT registration.","fieldname":"sms_sender","fieldtype":"Data","label":"SMS Sender","mandatory_depends_on":"eval:doc.enabled"},
+  {"fieldname":"help","fieldtype":"HTML","options":"<div class='alert alert-info'>Email OTP uses Brevo transactional email credits. Mobile OTP uses separate transactional SMS credits. Never place the API key in client-side code.</div>"}
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-08-20 16:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Store Management",
+ "name": "Brevo OTP Settings",
+ "owner": "Administrator",
+ "permissions": [{"create":1,"read":1,"role":"System Manager","write":1}],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
