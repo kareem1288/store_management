@@ -1,10 +1,10 @@
-const CACHE_NAME = "my-sales-shell-v19";
+const CACHE_NAME = "my-sales-shell-v20";
 const APP_SHELL = [
   "/offline",
   "/assets/store_management/css/store_management_ui.css",
   "/assets/store_management/css/my_sales_mobile.css",
   "/assets/store_management/js/my_sales_mobile.js",
-  "/assets/store_management/js/reports_bootstrap.js",
+  "/assets/store_management/js/reports.js",
   "/assets/store_management/images/my-sales-icon-192.png",
   "/assets/store_management/images/my-sales-icon-512.png",
   "/assets/store_management/images/my-sales-icon.svg",
