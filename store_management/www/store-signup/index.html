@@ -2,7 +2,7 @@
 {% block head_include %}
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b8f46">
-<link rel="stylesheet" href="/assets/store_management/css/store_signup.css?v=20260820-1">
+<link rel="stylesheet" href="/assets/store_management/css/store_signup.css?v=20260820-2">
 {% endblock %}
 {% block page_content %}
 <main class="signup-page">
@@ -28,7 +28,7 @@
         <label>Password<div class="password-input"><input name="password" type="password" autocomplete="new-password" placeholder="Create a strong password" minlength="8" required><button type="button" id="show-password" aria-label="Show password">◉</button></div></label>
         <div class="password-rules"><span data-rule="length">✓ At least 8 characters</span><span data-rule="upper">✓ One uppercase letter</span><span data-rule="number">✓ One number or special character</span></div>
         <button class="primary next" type="button">Continue</button>
-        <p class="terms">By continuing, you agree to our<br><a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></p>
+        <p class="terms">By continuing, you agree to our<br><a href="#terms-of-service" data-policy="terms-dialog">Terms of Service</a> and <a href="#privacy-policy" data-policy="privacy-dialog">Privacy Policy</a></p>
       </section>
 
       <section class="signup-step" data-step="2">
@@ -59,5 +59,32 @@
     </form>
   </section>
 </main>
-<script src="/assets/store_management/js/store_signup.js?v=20260820-1"></script>
+<dialog class="policy-dialog" id="terms-dialog" aria-labelledby="terms-title">
+  <div class="policy-heading"><div><small>MY SALES</small><h2 id="terms-title">Terms of Service</h2><p>Effective 20 August 2026</p></div><button type="button" data-close-policy aria-label="Close">×</button></div>
+  <div class="policy-content">
+    <p>These terms apply when you create or use a My Sales account for retail billing, inventory, customer management, payments, and reporting. By creating an account, you confirm that you can accept these terms for yourself or your business.</p>
+    <h3>1. Your account</h3><p>You must provide accurate information, protect your password and OTPs, and notify us if you suspect unauthorized access. You are responsible for activity performed through your account.</p>
+    <h3>2. Free trial and continued access</h3><p>New stores receive a 20-day free trial beginning on signup. When the trial ends, the user account may be disabled until service is renewed. To continue, call or message <a href="tel:+919014040855">9014040855</a>.</p>
+    <h3>3. Acceptable use</h3><p>Do not use My Sales for unlawful transactions, fraudulent billing, unauthorized access, harmful code, service disruption, or infringement of another person’s rights. You remain responsible for the accuracy and legality of invoices, taxes, products, and customer records you enter.</p>
+    <h3>4. Payments and third-party services</h3><p>Payment gateways, SMS delivery, email delivery, and other connected services may have their own terms, availability, and charges. Testing-mode payments do not deduct the original amount. You must verify configuration before using Live mode.</p>
+    <h3>5. Availability and changes</h3><p>We work to keep the service available and secure, but maintenance, network failures, or external providers may occasionally interrupt it. Features and these terms may be updated when operational, security, or legal requirements change.</p>
+    <h3>6. Suspension and termination</h3><p>Access may be restricted for an expired trial, security risk, unlawful use, material violation of these terms, or non-payment. You may request account closure using the contact number above, subject to applicable record-retention requirements.</p>
+  </div>
+  <button class="primary policy-accept" type="button" data-close-policy>I understand</button>
+</dialog>
+
+<dialog class="policy-dialog" id="privacy-dialog" aria-labelledby="privacy-title">
+  <div class="policy-heading"><div><small>MY SALES</small><h2 id="privacy-title">Privacy Policy</h2><p>Effective 20 August 2026</p></div><button type="button" data-close-policy aria-label="Close">×</button></div>
+  <div class="policy-content">
+    <p>This policy explains how information is handled when you sign up for and use My Sales.</p>
+    <h3>1. Information we collect</h3><p>We collect signup and account information such as your name, email address, mobile number, store name, business type, address, country, preferences, and optional store logo. While using the service, we also process billing, inventory, customer, payment-reference, device, login, and audit information.</p>
+    <h3>2. How information is used</h3><p>Information is used to create and secure your account, configure your company, operate billing and reports, provide the free trial, authenticate logins, prevent abuse, troubleshoot problems, and communicate service information.</p>
+    <h3>3. OTP delivery and service providers</h3><p>Email OTPs use the outgoing email account configured in the system. If you choose mobile OTP, your mobile number and OTP message are sent to Brevo for transactional SMS delivery. Payment providers process information required for selected payment methods.</p>
+    <h3>4. Storage and security</h3><p>Passwords and API secrets are stored using Frappe’s protected password fields. OTPs are short-lived, stored as hashes, and limited by expiry and attempt controls. No online system is completely risk-free, so you should also protect devices and credentials.</p>
+    <h3>5. Sharing and retention</h3><p>We do not sell personal information. Data is shared only with configured service providers, authorized administrators, or authorities where legally required. Records are retained while the account is active and afterward as needed for billing, security, legal, backup, and compliance purposes.</p>
+    <h3>6. Your choices</h3><p>You may update account details, choose whether to use OTP login, select email or mobile OTP, and request access, correction, or deletion where applicable. For privacy or account questions, call or message <a href="tel:+919014040855">9014040855</a>.</p>
+  </div>
+  <button class="primary policy-accept" type="button" data-close-policy>I understand</button>
+</dialog>
+<script src="/assets/store_management/js/store_signup.js?v=20260820-2"></script>
 {% endblock %}

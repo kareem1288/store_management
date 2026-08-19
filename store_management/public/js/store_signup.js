@@ -4,6 +4,15 @@
   let currentStep = 1;
   let logoData = "";
 
+  document.querySelectorAll("[data-policy]").forEach(link => link.addEventListener("click", event => {
+    event.preventDefault();
+    document.getElementById(link.dataset.policy)?.showModal();
+  }));
+  document.querySelectorAll("[data-close-policy]").forEach(button => button.addEventListener("click", () => button.closest("dialog")?.close()));
+  document.querySelectorAll(".policy-dialog").forEach(dialog => dialog.addEventListener("click", event => {
+    if (event.target === dialog) dialog.close();
+  }));
+
   function showStep(step) {
     currentStep = step;
     document.querySelectorAll(".signup-step").forEach(el => el.classList.toggle("active", Number(el.dataset.step) === step));
