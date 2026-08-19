@@ -1,4 +1,4 @@
-const CACHE_NAME = "my-sales-shell-v14";
+const CACHE_NAME = "my-sales-shell-v15";
 const APP_SHELL = [
   "/offline",
   "/assets/store_management/css/store_management_ui.css",

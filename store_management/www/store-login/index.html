@@ -779,7 +779,7 @@ body .page-footer {
 {% endblock %}
 
 {% block page_content %}
-<button class="login-back-button" type="button" onclick="if (document.referrer && new URL(document.referrer, location.href).origin === location.origin && history.length > 1) history.back(); else location.href='/pos';" aria-label="Go back">← <span>Back</span></button>
+<button class="login-back-button" type="button" onclick="if (history.length > 1) history.back(); else location.href='/pos';" aria-label="Go back">← <span>Back</span></button>
 <section class="page-shell">
     <div class="login-shell">
         <div class="left-panel">

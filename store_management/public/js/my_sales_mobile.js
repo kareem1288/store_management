@@ -3,7 +3,7 @@
   document.documentElement.classList.add("my-sales-app");
 
   const APP_NAME = "My Sales";
-  const MOBILE_UI_VERSION = "20260820-1";
+  const MOBILE_UI_VERSION = "20260820-2";
   let installPrompt = null;
 
   async function refreshInstalledAppCache() {
@@ -88,8 +88,7 @@
 	button.setAttribute("aria-label", "Go back");
 	button.innerHTML = '<span aria-hidden="true">←</span><b>Back</b>';
 	button.addEventListener("click", () => {
-		const previous = document.referrer ? new URL(document.referrer, location.href) : null;
-		if (previous?.origin === location.origin && history.length > 1) history.back();
+		if (history.length > 1) history.back();
 		else location.href = "/pos";
 	});
 	topNav.insertAdjacentElement("afterbegin", button);
@@ -381,7 +380,7 @@
 
   if ("serviceWorker" in navigator && window.isSecureContext) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/my-sales-sw.js?v=14", { scope: "/" }).catch(error => {
+      navigator.serviceWorker.register("/my-sales-sw.js?v=15", { scope: "/" }).catch(error => {
         console.warn("My Sales offline support could not be enabled", error);
       });
     });
