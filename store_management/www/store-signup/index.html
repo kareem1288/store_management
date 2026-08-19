@@ -1,0 +1,63 @@
+{% extends "templates/web.html" %}
+{% block head_include %}
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b8f46">
+<link rel="stylesheet" href="/assets/store_management/css/store_signup.css?v=20260820-1">
+{% endblock %}
+{% block page_content %}
+<main class="signup-page">
+  <aside class="signup-intro">
+    <div class="signup-brand"><span>M</span><div><b>My Sales</b><small>Retail Billing</small></div></div>
+    <div class="store-art" aria-hidden="true"><div class="awning"></div><div class="shop"><span>MY SALES</span></div><i></i><i></i></div>
+    <div><h1>Create your Store<br>Get Started with My Sales</h1><p>Manage billing, inventory, customers and grow your business — all in one place.</p>
+      <ul><li>▣ Easy Billing &amp; Invoicing</li><li>♙ Inventory &amp; Stock Management</li><li>⌁ Insights &amp; Reports</li></ul>
+    </div>
+    <p class="signin-link">Already have an account? <a href="/store-login">Sign in</a></p>
+  </aside>
+
+  <section class="signup-card">
+    <a class="mobile-back" href="/store-login" aria-label="Back to login">←</a>
+    <div class="mobile-brand"><span>M</span><b>My Sales</b><small>Retail Billing Made Simple</small></div>
+    <div class="signup-progress" aria-label="Signup progress"><i class="active">1</i><b></b><i>2</i><b></b><i>3</i><b></b><i>4</i></div>
+    <form id="signup-form" novalidate>
+      <section class="signup-step active" data-step="1">
+        <div class="step-title"><span>1</span><div><h2>Create Account</h2><p>Let’s start with your account details.</p></div></div>
+        <label>Full Name<input name="full_name" autocomplete="name" placeholder="Enter your full name" required></label>
+        <label>Email Address<input name="email_address" type="email" autocomplete="email" placeholder="Enter your email address" required></label>
+        <label>Phone Number<div class="phone-input"><span>🇮🇳 +91</span><input name="phone_number" inputmode="tel" autocomplete="tel" placeholder="Enter your phone number" required></div></label>
+        <label>Password<div class="password-input"><input name="password" type="password" autocomplete="new-password" placeholder="Create a strong password" minlength="8" required><button type="button" id="show-password" aria-label="Show password">◉</button></div></label>
+        <div class="password-rules"><span data-rule="length">✓ At least 8 characters</span><span data-rule="upper">✓ One uppercase letter</span><span data-rule="number">✓ One number or special character</span></div>
+        <button class="primary next" type="button">Continue</button>
+        <p class="terms">By continuing, you agree to our<br><a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></p>
+      </section>
+
+      <section class="signup-step" data-step="2">
+        <div class="step-title"><span>2</span><div><h2>Business / Store Details</h2><p>Tell us about your business.</p></div></div>
+        <label>Business / Store Name<input name="store_name" placeholder="Enter store or business name" required></label>
+        <label>Business Type<select name="business_type" required><option value="">Select business type</option><option>Retail Store</option><option>Grocery Store</option><option>Supermarket</option><option>Pharmacy</option><option>Fashion &amp; Apparel</option><option>Electronics</option><option>Restaurant</option><option>Wholesale</option><option>Other</option></select></label>
+        <label>Store Address<textarea name="store_address" placeholder="Enter complete address" required></textarea></label>
+        <div class="two-cols"><label>City<input name="city" placeholder="Enter city" required></label><label>PIN Code<input name="pin_code" inputmode="numeric" placeholder="Enter pin code" required></label></div>
+        <div class="two-cols"><label>State<input name="state" placeholder="Enter state" required></label><label>Country<select name="country" required><option selected>India</option><option>United States</option><option>United Kingdom</option><option>United Arab Emirates</option></select></label></div>
+        <div class="step-actions"><button class="secondary previous" type="button">Back</button><button class="primary next" type="button">Continue</button></div>
+      </section>
+
+      <section class="signup-step" data-step="3">
+        <div class="step-title"><span>3</span><div><h2>Business Setup</h2><p>Set up your store preferences.</p></div></div>
+        <label>Currency<select name="currency" required><option value="INR">INR – Indian Rupee (₹)</option><option value="USD">USD – US Dollar ($)</option><option value="GBP">GBP – Pound Sterling (£)</option><option value="AED">AED – UAE Dirham</option></select></label>
+        <label>Financial Year Start<select name="financial_year_start" required><option>1 April</option><option>1 January</option><option>1 July</option><option>1 October</option></select></label>
+        <label>Tax Preference<select name="tax_preference" required><option>GST</option><option>No Tax</option><option>VAT</option><option>Other</option></select></label>
+        <label class="logo-upload">Upload Store Logo <small>(Optional)</small><em>Add your store logo. It will appear on your invoices and reports.</em><input id="store-logo" name="store_logo" type="file" accept="image/png,image/jpeg,image/webp"><span id="logo-label">⇧<b>Click to upload</b> or drag &amp; drop<small>PNG, JPG (Max. 2MB)</small></span></label>
+        <div class="step-actions"><button class="secondary previous" type="button">Back</button><button class="primary" id="submit-signup" type="submit">Create Account</button></div>
+        <div id="signup-message" role="status" aria-live="polite"></div>
+      </section>
+
+      <section class="signup-step success" data-step="4">
+        <div class="success-icon">✓</div><h2>Account Created!</h2><p>Your details were submitted successfully.<br>You can now start managing your store after approval.</p>
+        <div class="account-summary"><h3>Your Account Details</h3><p><span>Email</span><b id="summary-email"></b></p><p><span>Store Name</span><b id="summary-store"></b></p><p><span>Country</span><b id="summary-country"></b></p></div>
+        <a class="primary button-link" href="/store-login">Go to Login</a>
+      </section>
+    </form>
+  </section>
+</main>
+<script src="/assets/store_management/js/store_signup.js?v=20260820-1"></script>
+{% endblock %}
