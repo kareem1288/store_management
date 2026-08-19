@@ -46,13 +46,13 @@ def after_migrate():
 
 
 def ensure_mobile_otp_authentication():
-	"""Enable Frappe SMS 2FA only for users carrying the app-owned OTP role."""
+	"""Keep signup users marked for app-owned OTP without enabling site-wide 2FA."""
 	role_name = "My Sales OTP User"
 	if frappe.db.exists("Role", role_name):
 		role = frappe.get_doc("Role", role_name)
 	else:
 		role = frappe.get_doc({"doctype": "Role", "role_name": role_name, "desk_access": 1})
-	role.two_factor_auth = 1
+	role.two_factor_auth = 0
 	role.save(ignore_permissions=True)
 	for signup in frappe.get_all("Sign Up Details", filters={"user": ["is", "set"]}, fields=["user", "phone_number"]):
 		if not frappe.db.exists("User", signup.user):
@@ -64,33 +64,7 @@ def ensure_mobile_otp_authentication():
 			user.append("roles", {"role": role_name})
 		user.save(ignore_permissions=True)
 
-	# Enabling SMS 2FA without a gateway would make valid users unable to receive
-	# their code. Keep the role ready and activate it after SMS Settings is saved.
-	if not frappe.db.get_single_value("SMS Settings", "sms_gateway_url"):
-		return False
-
-	settings = frappe.get_single("System Settings")
-	was_enabled = bool(settings.enable_two_factor_auth)
-	changed = False
-	if not settings.enable_two_factor_auth:
-		settings.enable_two_factor_auth = 1
-		changed = True
-	if settings.two_factor_method != "SMS":
-		settings.two_factor_method = "SMS"
-		changed = True
-	if changed:
-		settings.save(ignore_permissions=True)
-	# Frappe marks the global All role during first-time activation. Restrict the
-	# new requirement to My Sales customers instead of changing unrelated users.
-	if not was_enabled and frappe.db.exists("Role", "All"):
-		frappe.db.set_value("Role", "All", "two_factor_auth", 0, update_modified=False)
 	return True
-
-
-def activate_mobile_otp_after_sms_setup(doc=None, method=None):
-	"""Activate customer OTP as soon as an administrator saves an SMS gateway."""
-	if doc and doc.sms_gateway_url:
-		ensure_mobile_otp_authentication()
 
 
 def ensure_upi_mode_of_payment():

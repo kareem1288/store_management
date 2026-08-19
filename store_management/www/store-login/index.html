@@ -972,9 +972,22 @@ body .page-footer {
 
                     <button class="btn-submit" type="submit">Sign In</button>
                 </form>
+                <section class="login-form" id="store-otp-choice" hidden>
+                    <div class="login-card-heading" style="margin-bottom:1.35rem;">
+                        <span class="auth-eyebrow">Security check</span>
+                        <h1>Verify your identity</h1>
+                        <p>Choose where you want to receive your one-time code.</p>
+                    </div>
+                    <div style="display:grid;gap:.85rem;">
+                        <button class="btn-submit otp-choice-button" id="send-email-otp" type="button" style="display:flex;align-items:center;justify-content:flex-start;gap:.8rem;padding:0 1.15rem;">✉ <span>Send code to email<br><small id="masked-email" style="font-weight:400;opacity:.82;"></small></span></button>
+                        <button class="btn-submit otp-choice-button" id="send-mobile-otp" type="button" style="display:flex;align-items:center;justify-content:flex-start;gap:.8rem;padding:0 1.15rem;">▣ <span>Send code to mobile<br><small id="masked-mobile" style="font-weight:400;opacity:.82;"></small></span></button>
+                    </div>
+                    <div class="message-container" id="choice-message" role="status" aria-live="polite" style="display:none;"></div>
+                    <button id="choice-back-button" type="button" style="display:block;margin:1rem auto 0;border:0;background:none;color:#526075;cursor:pointer;">← Back to login</button>
+                </section>
                 <form class="login-form" id="store-otp-form" hidden>
                     <div class="login-card-heading" style="margin-bottom:1.2rem;">
-                        <span class="auth-eyebrow">Mobile verification</span>
+                        <span class="auth-eyebrow">Identity verification</span>
                         <h1>Enter OTP</h1>
                         <p id="otp-prompt">Enter the verification code sent to your mobile.</p>
                     </div>
@@ -1003,7 +1016,7 @@ body .page-footer {
 <script>
 const redirectTo = '/pos';
 let otpTemporaryId = '';
-let pendingCredentials = null;
+let selectedOtpDelivery = '';
 
 function sanitizeRedirect(path) {
     if (!path) return '/pos';
@@ -1056,55 +1069,63 @@ function submitLogin(event) {
         return;
     }
 
-    const formData = new URLSearchParams();
-    formData.append('usr', email);
-    formData.append('pwd', password);
-
-    fetch('/api/method/login', {
+    fetch('/api/method/store_management.otp_auth.begin_otp_login', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Accept': 'application/json'
-        },
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
         credentials: 'same-origin',
-        body: formData
+        body: JSON.stringify({email, password})
     })
-    .then(res => res.json())
+    .then(async res => {
+        const data = await res.json();
+        if (!res.ok || data.exc) throw new Error('Invalid credentials');
+        return data;
+    })
     .then(data => {
-
         resetButton(submitBtn);
-
-        if (data.verification && data.tmp_id) {
-            if (!data.verification.setup) {
-                showMessage('Mobile OTP could not be sent. Please ask the administrator to configure SMS Settings.', 'error');
-                return;
-            }
-            otpTemporaryId = data.tmp_id;
-            pendingCredentials = { email, password };
-            document.getElementById('otp-prompt').textContent = data.verification.prompt || 'Enter the verification code sent to your mobile.';
-            document.getElementById('store-login-form').hidden = true;
-            document.getElementById('store-otp-form').hidden = false;
-            document.getElementById('login_otp').value = '';
-            document.getElementById('login_otp').focus();
-            return;
-        }
-
-        if (data.message === 'Logged In') {
-            showMessage('Login successful...', 'success');
-
-            setTimeout(() => {
-                window.location.href = sanitizeRedirect(redirectTo);
-            }, 1200);
-
-        } else {
-            showLoginFailure(email);
-        }
-
+        const details = data.message;
+        otpTemporaryId = details.challenge_id;
+        document.getElementById('masked-email').textContent = details.masked_email || 'Not available';
+        document.getElementById('masked-mobile').textContent = details.masked_mobile || 'Not available';
+        document.getElementById('send-email-otp').disabled = !details.email_available;
+        document.getElementById('send-mobile-otp').disabled = !details.mobile_available;
+        document.getElementById('store-login-form').hidden = true;
+        document.getElementById('store-otp-choice').hidden = false;
     })
     .catch(() => {
         resetButton(submitBtn);
         showLoginFailure(email);
     });
+}
+
+async function chooseOtpDelivery(delivery) {
+    const message = document.getElementById('choice-message');
+    const buttons = document.querySelectorAll('.otp-choice-button');
+    buttons.forEach(button => button.disabled = true);
+    message.style.display = 'none';
+    try {
+        const response = await fetch('/api/method/store_management.otp_auth.send_login_otp', {
+            method:'POST', headers:{'Content-Type':'application/json','Accept':'application/json'}, credentials:'same-origin',
+            body:JSON.stringify({challenge_id:otpTemporaryId, delivery})
+        });
+        const data = await response.json();
+        if (!response.ok || data.exc) {
+            let text = 'Unable to send OTP. Please try another option.';
+            if (data._server_messages) {
+                try { text = JSON.parse(data._server_messages).map(JSON.parse).map(row => row.message).join(' '); } catch (error) {}
+            }
+            throw new Error(text);
+        }
+        selectedOtpDelivery = delivery;
+        document.getElementById('otp-prompt').textContent = `Enter the 6-digit code sent to ${data.message.masked_destination}.`;
+        document.getElementById('store-otp-choice').hidden = true;
+        document.getElementById('store-otp-form').hidden = false;
+        document.getElementById('login_otp').value = '';
+        document.getElementById('login_otp').focus();
+    } catch (error) {
+        message.textContent = error.message;
+        message.className = 'message-container error show';
+        message.style.display = 'block';
+    } finally { buttons.forEach(button => button.disabled = false); }
 }
 
 function submitOtp(event) {
@@ -1120,11 +1141,10 @@ function submitOtp(event) {
     }
     button.disabled = true;
     button.textContent = 'Verifying...';
-    const formData = new URLSearchParams({otp, tmp_id: otpTemporaryId});
-    fetch('/api/method/login', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded','Accept':'application/json'}, credentials:'same-origin', body:formData})
-        .then(response => response.json())
+    fetch('/api/method/store_management.otp_auth.verify_login_otp', {method:'POST', headers:{'Content-Type':'application/json','Accept':'application/json'}, credentials:'same-origin', body:JSON.stringify({challenge_id:otpTemporaryId, otp})})
+        .then(async response => { const data = await response.json(); if (!response.ok || data.exc) throw new Error('Incorrect or expired OTP.'); return data; })
         .then(data => {
-            if (data.message === 'Logged In') {
+            if (data.message && data.message.status === 'Logged In') {
                 window.location.href = sanitizeRedirect(redirectTo);
                 return;
             }
@@ -1140,16 +1160,17 @@ function submitOtp(event) {
 
 function returnToLogin() {
     otpTemporaryId = '';
+    selectedOtpDelivery = '';
     document.getElementById('store-otp-form').hidden = true;
+    document.getElementById('store-otp-choice').hidden = true;
     document.getElementById('store-login-form').hidden = false;
 }
 
 function resendOtp() {
-    if (!pendingCredentials) returnToLogin();
-    returnToLogin();
-    document.getElementById('login_email').value = pendingCredentials.email;
-    document.getElementById('login_password').value = pendingCredentials.password;
-    document.getElementById('store-login-form').requestSubmit();
+    if (!selectedOtpDelivery) return;
+    document.getElementById('store-otp-form').hidden = true;
+    document.getElementById('store-otp-choice').hidden = false;
+    chooseOtpDelivery(selectedOtpDelivery);
 }
 
 async function showLoginFailure(email) {
@@ -1216,6 +1237,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('store-otp-form')?.addEventListener('submit', submitOtp);
     document.getElementById('change-login-button')?.addEventListener('click', returnToLogin);
     document.getElementById('resend-otp-button')?.addEventListener('click', resendOtp);
+    document.getElementById('choice-back-button')?.addEventListener('click', returnToLogin);
+    document.getElementById('send-email-otp')?.addEventListener('click', () => chooseOtpDelivery('email'));
+    document.getElementById('send-mobile-otp')?.addEventListener('click', () => chooseOtpDelivery('mobile'));
 });
 </script>
 {% endblock %}
