@@ -10,7 +10,8 @@
 <meta name="theme-color" content="#146c43">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="My Sales">
-<script defer src="/assets/store_management/js/my_sales_mobile.js?v=20260820-6"></script>
+<script defer src="/assets/store_management/js/my_sales_mobile.js?v=20260820-7"></script>
+<script defer src="/assets/store_management/js/reports_bootstrap.js?v=20260820-1"></script>
 {% endblock %}
 
 {% block page_content %}
@@ -587,6 +588,7 @@ let reportPageInitialized = false;
 async function initializeReportsPage() {
 	if (reportPageInitialized) return;
 	if (!window.frappe?.call) {
+		setReportStatus("Connecting to the report service…");
 		window.setTimeout(initializeReportsPage, 100);
 		return;
 	}
@@ -601,11 +603,7 @@ async function initializeReportsPage() {
 	loadSalesRegisterReport();
 }
 
-if (document.readyState === "loading") {
-	document.addEventListener("DOMContentLoaded", initializeReportsPage, { once: true });
-} else {
-	initializeReportsPage();
-}
+initializeReportsPage();
 </script>
 
 <style>

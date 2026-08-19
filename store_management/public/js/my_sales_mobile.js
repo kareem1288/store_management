@@ -3,7 +3,7 @@
   document.documentElement.classList.add("my-sales-app");
 
   const APP_NAME = "My Sales";
-  const MOBILE_UI_VERSION = "20260820-6";
+  const MOBILE_UI_VERSION = "20260820-7";
   let installPrompt = null;
 
   const appLanguage = window.frappe?.boot?.lang || window.frappe?.boot?.user?.language || "en";
