@@ -389,16 +389,24 @@ function runSalesRegisterReport() {
 			filters: filters
 		},
 		callback: function(response) {
-			const data = response.message || {};
-			smReportsState.report.data = data;
-			renderSalesRegisterTable(data);
-			renderReportSummary(data);
-			renderReportVisuals(data);
-			setReportStatus(`Report loaded with ${data.result?.length || 0} rows.`);
+			try {
+				const data = response.message || {};
+				smReportsState.report.data = data;
+				renderSalesRegisterTable(data);
+				renderReportSummary(data);
+				renderReportVisuals(data);
+				setReportStatus(`Report loaded with ${data.result?.length || 0} rows.`);
+			} catch (error) {
+				console.error(`Unable to render ${activeReport.title}`, error);
+				setReportStatus("The report data loaded, but a visual could not be rendered. Refresh to try again.");
+			} finally {
+				window.setTimeout(clearStaleReportOverlay, 0);
+			}
 		},
 		error: function(error) {
 			console.error("Unable to run Sales Register report", error);
 			setReportStatus("Error loading report. Please try again.");
+			window.setTimeout(clearStaleReportOverlay, 0);
 		}
 	});
 }
@@ -461,15 +469,16 @@ function getNumericValue(row) {
 function renderReportVisuals(data) {
 	const rows = normalizeResultRows(data).filter(row => row && typeof row === "object");
 	const chart = document.getElementById("report-trend-chart");
+	if (!chart) return;
 	const values = rows.slice(0, 24).map(getNumericValue);
-	const max = Math.max(...values, 1);
+	const max = Math.max(...values.map(value => Math.abs(value)), 1);
 	const width = 720;
 	const points = values.map((value, index) => `${20 + index * ((width - 40) / Math.max(values.length - 1, 1))},${175 - value / max * 135}`).join(" ");
 	const useBars = ["profit-and-loss", "trial-balance"].includes(requestedReportType);
 	chart.innerHTML = values.length && useBars ? `
 		<svg viewBox="0 0 720 205" preserveAspectRatio="none" aria-label="${escapeHtml(activeReport.title)} comparison">
 			<path d="M20 175H700M20 108H700M20 40H700" stroke="#e8eee9"/>
-			${values.map((value,index) => { const barWidth = Math.max(8, 620 / Math.max(values.length,1) * .62); const x = 35 + index * (650 / Math.max(values.length,1)); const height = Math.abs(value) / max * 135; return `<rect x="${x}" y="${175-height}" width="${barWidth}" height="${height}" rx="5" fill="${index % 2 ? activeReport.accent : '#2f80ed'}"><title>${value}</title></rect>`; }).join("")}
+			${values.map((value,index) => { const barWidth = Math.max(8, 620 / Math.max(values.length,1) * .62); const x = 35 + index * (650 / Math.max(values.length,1)); const height = Math.min(135, Math.abs(value) / max * 135); return `<rect x="${x}" y="${175-height}" width="${barWidth}" height="${height}" rx="5" fill="${value < 0 ? '#e45756' : (index % 2 ? activeReport.accent : '#2f80ed')}"><title>${value}</title></rect>`; }).join("")}
 		</svg>` : values.length ? `
 		<svg viewBox="0 0 720 205" preserveAspectRatio="none" aria-label="${escapeHtml(activeReport.title)} trend">
 			<defs><linearGradient id="report-area" x1="0" y1="0" x2="0" y2="1"><stop stop-color="${activeReport.accent}" stop-opacity=".23"/><stop offset="1" stop-color="${activeReport.accent}" stop-opacity="0"/></linearGradient></defs>

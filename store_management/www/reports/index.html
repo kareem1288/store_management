@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="My Sales">
 <script type="application/json" id="my-sales-report-config">{{ configured_reports_json | safe }}</script>
 <script defer src="/assets/store_management/js/my_sales_mobile.js?v=20260820-8"></script>
-<script defer src="/assets/store_management/js/reports.js?v=20260820-6" data-my-sales-report-engine="1"></script>
+<script defer src="/assets/store_management/js/reports.js?v=20260820-7" data-my-sales-report-engine="1"></script>
 {% endblock %}
 
 {% block page_content %}
@@ -223,8 +223,8 @@ body[data-path="reports"] #freeze { display: none !important; pointer-events: no
 .sm-report-chart-card header p,
 .sm-report-table-title p { margin: .25rem 0 0; color: #78857e; font-size: .72rem; }
 .sm-chart-period { padding: .35rem .6rem; border: 1px solid #dfe7e2; border-radius: 8px; color: #5c6d64; font-size: .7rem; }
-.sm-report-chart { min-height: 215px; }
-.sm-report-chart svg { display: block; width: 100%; height: 215px; }
+.sm-report-chart { height: 215px; min-height: 215px; max-height: 215px; overflow: hidden; }
+.sm-report-chart svg { display: block; width: 100%; height: 215px; max-height: 215px; overflow: hidden; }
 .sm-chart-empty { display: grid; place-items: center; min-height: 215px; color: #849189; font-size: .85rem; }
 .sm-report-donut { display: grid; place-items: center; width: 155px; height: 155px; margin: .5rem auto 1rem; border-radius: 50%; box-shadow:0 12px 25px rgba(33,57,45,.14); }
 .sm-report-donut::before { content: ""; grid-area: 1/1; width: 92px; height: 92px; border-radius: 50%; background: #fff; }
