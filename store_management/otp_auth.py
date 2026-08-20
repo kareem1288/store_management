@@ -37,6 +37,16 @@ def _mask_mobile(number):
 	return f"******{digits[-4:]}" if len(digits) >= 4 else "registered mobile"
 
 
+def _email_otp_available():
+	return bool(frappe.db.exists("Email Account", {"enable_outgoing": 1}))
+
+
+def _mobile_otp_available():
+	from store_management.brevo import is_brevo_configured
+
+	return is_brevo_configured()
+
+
 @frappe.whitelist(allow_guest=True)
 @rate_limit(key="email", limit=10, seconds=300, methods="POST")
 def password_login(email, password):
@@ -57,11 +67,12 @@ def begin_otp_login(email, password):
 	user_details = frappe.db.get_value("User", user, ["email", "mobile_no", "phone"], as_dict=True)
 	mobile = user_details.mobile_no or user_details.phone
 	challenge_id = secrets.token_urlsafe(24)
-	_save_challenge(challenge_id, {"user": user, "password": password, "attempts": 0})
+	# Credentials are validated above and must never be retained in the OTP challenge.
+	_save_challenge(challenge_id, {"user": user, "attempts": 0})
 	return {
 		"challenge_id": challenge_id,
-		"email_available": bool(user_details.email),
-		"mobile_available": bool(mobile),
+		"email_available": bool(user_details.email) and _email_otp_available(),
+		"mobile_available": bool(mobile) and _mobile_otp_available(),
 		"masked_email": _mask_email(user_details.email) if user_details.email else None,
 		"masked_mobile": _mask_mobile(mobile) if mobile else None,
 	}
@@ -80,6 +91,8 @@ def send_login_otp(challenge_id, delivery):
 	_save_challenge(challenge_id, challenge)
 
 	if delivery == "email" and user_details.email:
+		if not _email_otp_available():
+			frappe.throw(_("Email OTP is not configured. Ask an administrator to configure an outgoing Email Account."))
 		message = _("{0} is your My Sales login verification code. It expires in 5 minutes. Do not share it with anyone.").format(otp)
 		frappe.sendmail(
 			recipients=[user_details.email],
@@ -114,7 +127,7 @@ def verify_login_otp(challenge_id, otp):
 		frappe.throw(_("Incorrect verification code."), frappe.AuthenticationError)
 
 	manager = frappe.local.login_manager
-	manager.authenticate(user=challenge.user, pwd=challenge.password)
+	manager.user = challenge.user
 	frappe.cache.delete_value(_key(challenge_id))
 	manager.post_login()
 	return {"status": "Logged In", "redirect_to": "/pos"}

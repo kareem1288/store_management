@@ -7,6 +7,13 @@ from frappe import _
 BREVO_API_URL = "https://api.brevo.com/v3"
 
 
+def is_brevo_configured():
+	if not frappe.db.exists("DocType", "Brevo OTP Settings"):
+		return False
+	settings = frappe.get_single("Brevo OTP Settings")
+	return bool(settings.enabled and settings.sms_sender and settings.get_password("api_key", raise_exception=False))
+
+
 def _configuration():
 	if not frappe.db.exists("DocType", "Brevo OTP Settings"):
 		frappe.throw(_("Brevo OTP Settings is not installed. Run bench migrate."))
