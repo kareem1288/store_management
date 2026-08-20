@@ -67,6 +67,13 @@ def ensure_company_language_field():
 
 def ensure_default_reports():
 	"""Seed the standard report sidebar without overwriting user visibility choices."""
+	removed_reports = {"Asset Depreciation Ledger"}
+	for report_name in removed_reports:
+		if frappe.db.exists("Custom Reports", report_name):
+			frappe.db.set_value(
+				"Custom Reports", report_name,
+				{"is_visible": 0, "is_default": 0}, update_modified=False,
+			)
 	defaults = [
 		("Sales Register", "sales", 10, "#168650"),
 		("Item-wise Sales Register", "items", 20, "#2878c8"),

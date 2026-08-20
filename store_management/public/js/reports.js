@@ -464,19 +464,22 @@ function renderReportVisuals(data) {
 	const values = rows.slice(0, 24).map(getNumericValue);
 	const max = Math.max(...values.map(value => Math.abs(value)), 1);
 	const width = 720;
+	const compactMoney = value => new Intl.NumberFormat("en-IN", {
+		style: "currency", currency: "INR", notation: "compact", maximumFractionDigits: 1
+	}).format(value || 0);
 	const points = values.map((value, index) => `${20 + index * ((width - 40) / Math.max(values.length - 1, 1))},${175 - value / max * 135}`).join(" ");
 	const useBars = ["profit-and-loss", "trial-balance"].includes(requestedReportType);
 	chart.innerHTML = values.length && useBars ? `
 		<svg viewBox="0 0 720 205" preserveAspectRatio="none" aria-label="${escapeHtml(activeReport.title)} comparison">
 			<path d="M20 175H700M20 108H700M20 40H700" stroke="#e8eee9"/>
-			${values.map((value,index) => { const barWidth = Math.max(8, 620 / Math.max(values.length,1) * .62); const x = 35 + index * (650 / Math.max(values.length,1)); const height = Math.min(135, Math.abs(value) / max * 135); return `<rect x="${x}" y="${175-height}" width="${barWidth}" height="${height}" rx="5" fill="${value < 0 ? '#e45756' : (index % 2 ? activeReport.accent : '#2f80ed')}"><title>${value}</title></rect>`; }).join("")}
+			${values.map((value,index) => { const barWidth = Math.max(8, 620 / Math.max(values.length,1) * .62); const x = 35 + index * (650 / Math.max(values.length,1)); const height = Math.min(125, Math.abs(value) / max * 125); const y = 170-height; return `<g><rect x="${x}" y="${y}" width="${barWidth}" height="${height}" rx="5" fill="${value < 0 ? '#e45756' : (index % 2 ? activeReport.accent : '#2f80ed')}"><title>${compactMoney(value)}</title></rect><text x="${x + barWidth / 2}" y="${Math.max(14, y - 5)}" text-anchor="middle" font-size="9" font-weight="700" fill="#425349">${compactMoney(value)}</text></g>`; }).join("")}
 		</svg>` : values.length ? `
 		<svg viewBox="0 0 720 205" preserveAspectRatio="none" aria-label="${escapeHtml(activeReport.title)} trend">
 			<defs><linearGradient id="report-area" x1="0" y1="0" x2="0" y2="1"><stop stop-color="${activeReport.accent}" stop-opacity=".23"/><stop offset="1" stop-color="${activeReport.accent}" stop-opacity="0"/></linearGradient></defs>
 			<path d="M20 175H700M20 108H700M20 40H700" stroke="#e8eee9"/>
 			<polygon points="20,175 ${points} 700,175" fill="url(#report-area)"/>
 			<polyline points="${points}" fill="none" stroke="${activeReport.accent}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-			${values.map((value,index) => `<circle cx="${20 + index * ((width - 40) / Math.max(values.length - 1, 1))}" cy="${175-value/max*135}" r="3.5" fill="${activeReport.accent}"/>`).join("")}
+			${values.map((value,index) => { const x = 20 + index * ((width - 40) / Math.max(values.length - 1, 1)); const y = 175-value/max*135; return `<g><circle cx="${x}" cy="${y}" r="3.5" fill="${activeReport.accent}"/><text x="${x}" y="${Math.max(12, y - 9)}" text-anchor="middle" font-size="9" font-weight="700" fill="#425349">${compactMoney(value)}</text><title>${compactMoney(value)}</title></g>`; }).join("")}
 		</svg>` : '<div class="sm-chart-empty">No trend data for these filters</div>';
 
 	const groupFields = requestedReportType === "items" ? ["item_group", "item_name", "item_code"]
@@ -493,10 +496,9 @@ function renderReportVisuals(data) {
 	const colors = [activeReport.accent, "#2f80ed", "#f4a340", "#7559c7", "#16a6a1", "#e85d75"];
 	let angle = 0;
 	const segments = entries.map((entry,index) => { const start = angle; angle += total ? entry[1]/total*360 : 0; return `${colors[index]} ${start}deg ${angle}deg`; }).join(",");
-	const money = value => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", notation: "compact", maximumFractionDigits: 1 }).format(value || 0);
 	const donut = document.getElementById("report-donut");
 	donut.style.background = `conic-gradient(${segments || "#e7ece9 0 360deg"})`;
-	donut.innerHTML = `<span>${money(total)}</span>`;
+	donut.innerHTML = `<span>${compactMoney(total)}</span>`;
 	document.getElementById("report-breakdown-title").textContent = requestedReportType === "items" ? "Sales by Item" : requestedReportType === "open-bills" ? "Bills Breakdown" : "Sales by Customer";
 	document.getElementById("report-breakdown-list").innerHTML = entries.map((entry,index) => { const percent = total ? Math.round(entry[1]/total*100) : 0; return `<li><i style="background:${colors[index]}"></i><span title="${escapeHtml(String(entry[0]))}">${escapeHtml(String(entry[0]))}<em><u style="width:${percent}%;background:${colors[index]}"></u></em></span><b>${percent}%</b></li>`; }).join("") || "<li>No breakdown data</li>";
 	document.getElementById("report-row-count").textContent = `${rows.length} record${rows.length === 1 ? "" : "s"}`;
