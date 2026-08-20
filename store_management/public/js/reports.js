@@ -55,24 +55,6 @@ const VISIBLE_REPORT_FILTERS = {
 };
 let defaultReportCompany = document.getElementById("sm-reports-app")?.dataset.defaultCompany || "";
 
-function clearStaleReportOverlay() {
-	document.getElementById("freeze")?.remove();
-	if (window.frappe?.dom) window.frappe.dom.freeze_count = 0;
-}
-
-function installReportOverlayGuard() {
-	const body = document.getElementById("body") || document.body;
-	if (!body || body.dataset.reportOverlayGuard === "1") return;
-	body.dataset.reportOverlayGuard = "1";
-	new MutationObserver(() => {
-		const freeze = document.getElementById("freeze");
-		if (freeze) clearStaleReportOverlay();
-	}).observe(body, { childList: true, subtree: true });
-}
-
-clearStaleReportOverlay();
-installReportOverlayGuard();
-
 function resolveDefaultReportCompany() {
 	if (defaultReportCompany) return Promise.resolve(defaultReportCompany);
 	return new Promise(resolve => {
@@ -315,11 +297,10 @@ function renderSalesRegisterFilters() {
 		const fieldname = escapeHtml(filter.fieldname);
 
 		if (filter.fieldtype === "Check") {
-			const isLedger = fieldname === "include_payments";
 			return `
-				<label class="sm-report-field sm-report-field-check ${isLedger ? 'sm-ledger-toggle' : ''}">
+				<label class="sm-report-field sm-report-field-check">
 					<span>${label}</span>
-					<div class="sm-report-check ${isLedger ? 'sm-toggle-switch' : ''}">
+					<div class="sm-report-check sm-toggle-switch">
 						<input data-report-filter="${fieldname}" type="checkbox" ${Number(value) ? "checked" : ""}>
 						<span class="sm-toggle-slider"></span>
 					</div>
@@ -412,14 +393,11 @@ function runSalesRegisterReport() {
 			} catch (error) {
 				console.error(`Unable to render ${activeReport.title}`, error);
 				setReportStatus("The report data loaded, but a visual could not be rendered. Refresh to try again.");
-			} finally {
-				window.setTimeout(clearStaleReportOverlay, 0);
 			}
 		},
 		error: function(error) {
 			console.error("Unable to run Sales Register report", error);
 			setReportStatus("Error loading report. Please try again.");
-			window.setTimeout(clearStaleReportOverlay, 0);
 		}
 	});
 }
@@ -592,7 +570,6 @@ async function initializeReportsPage() {
 	}
 	reportPageInitialized = true;
 	bindReportActions();
-	clearStaleReportOverlay();
 	document.getElementById("report-title").textContent = activeReport.title;
 	document.getElementById("report-subtitle").textContent = activeReport.subtitle;
 	document.documentElement.style.setProperty("--sm-report-accent", activeReport.accent);
