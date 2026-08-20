@@ -20,6 +20,18 @@ const DEFAULT_REPORT_TYPES = {
 	"open-bills": {
 		title: "Open Bills", reportName: "Accounts Receivable",
 		subtitle: "Monitor unpaid invoices, due dates and outstanding amounts.", accent: "#d27a2d"
+	},
+	"profit-and-loss": {
+		title: "Profit and Loss Statement", reportName: "Profit and Loss Statement",
+		subtitle: "Compare income, expenses and net profit across the selected period.", accent: "#e45756"
+	},
+	"general-ledger": {
+		title: "General Ledger", reportName: "General Ledger",
+		subtitle: "Review account-wise debits, credits, vouchers and running balances.", accent: "#0f9d91"
+	},
+	"trial-balance": {
+		title: "Trial Balance", reportName: "Trial Balance",
+		subtitle: "Compare opening, debit, credit and closing balances for every account.", accent: "#7c5ce5"
 	}
 };
 const REPORT_TYPES = { ...DEFAULT_REPORT_TYPES, ...Object.fromEntries(CONFIGURED_REPORTS.map(report => [report.route_key, {
@@ -36,7 +48,10 @@ const activeReport = REPORT_TYPES[requestedReportType] || REPORT_TYPES.sales || 
 const VISIBLE_REPORT_FILTERS = {
 	sales: ["from_date", "to_date", "customer", "company", "mode_of_payment"],
 	items: ["from_date", "to_date", "item_code", "item_group", "company"],
-	"open-bills": ["company", "report_date", "party", "ageing_based_on"]
+	"open-bills": ["company", "report_date", "party", "ageing_based_on"],
+	"profit-and-loss": ["company", "filter_based_on", "period_start_date", "period_end_date", "from_fiscal_year", "to_fiscal_year", "periodicity", "accumulated_values"],
+	"general-ledger": ["company", "from_date", "to_date", "account", "party_type", "party", "voucher_no", "cost_center"],
+	"trial-balance": ["company", "fiscal_year", "from_date", "to_date", "cost_center", "project", "include_default_book_entries", "show_net_values"]
 };
 let defaultReportCompany = document.getElementById("sm-reports-app")?.dataset.defaultCompany || "";
 
@@ -207,16 +222,29 @@ function installReportScriptSupport() {
 }
 
 function useFallbackSalesRegisterFilters() {
+	const today = getToday();
+	const fiscalStartYear = new Date(today).getMonth() < 3 ? new Date(today).getFullYear() - 1 : new Date(today).getFullYear();
 	if (requestedReportType === "profit-and-loss") {
-		const today = getToday();
-		const year = new Date(today).getMonth() < 3 ? new Date(today).getFullYear() - 1 : new Date(today).getFullYear();
 		smReportsState.report.filters = normalizeReportFilters([
 			{ fieldname: "company", label: "Company", fieldtype: "Link", options: "Company", default: defaultReportCompany },
 			{ fieldname: "filter_based_on", label: "Filter Based On", fieldtype: "Select", options: "Fiscal Year\nDate Range", default: "Date Range" },
-			{ fieldname: "period_start_date", label: "From Date", fieldtype: "Date", default: `${year}-04-01` },
+			{ fieldname: "period_start_date", label: "From Date", fieldtype: "Date", default: `${fiscalStartYear}-04-01` },
 			{ fieldname: "period_end_date", label: "To Date", fieldtype: "Date", default: today },
 			{ fieldname: "periodicity", label: "Periodicity", fieldtype: "Select", options: "Monthly\nQuarterly\nHalf-Yearly\nYearly", default: "Monthly" },
 			{ fieldname: "accumulated_values", label: "Accumulated Values", fieldtype: "Check", default: 0 }
+		]);
+		smReportsState.report.loaded = true;
+		renderSalesRegisterFilters();
+		runSalesRegisterReport();
+		return;
+	}
+	if (requestedReportType === "trial-balance") {
+		smReportsState.report.filters = normalizeReportFilters([
+			{ fieldname: "company", label: "Company", fieldtype: "Link", options: "Company", default: defaultReportCompany },
+			{ fieldname: "fiscal_year", label: "Fiscal Year", fieldtype: "Link", options: "Fiscal Year", default: `${fiscalStartYear}-${fiscalStartYear + 1}` },
+			{ fieldname: "from_date", label: "From Date", fieldtype: "Date", default: `${fiscalStartYear}-04-01` },
+			{ fieldname: "to_date", label: "To Date", fieldtype: "Date", default: today },
+			{ fieldname: "show_net_values", label: "Show Net Values", fieldtype: "Check", default: 0 }
 		]);
 		smReportsState.report.loaded = true;
 		renderSalesRegisterFilters();

@@ -10,7 +10,7 @@
     const existing = document.querySelector('script[data-my-sales-report-engine]');
     if (existing) return;
     const script = document.createElement("script");
-    script.src = "/assets/store_management/js/reports.js?v=20260820-4";
+    script.src = "/assets/store_management/js/reports.js?v=20260820-6";
     script.defer = true;
     script.dataset.mySalesReportEngine = "1";
     script.onload = () => window.initializeReportsPage?.();
