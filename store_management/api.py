@@ -215,6 +215,18 @@ def set_report_sidebar_visibility(report_name, visible=0):
 	frappe.db.set_value("Custom Reports", report_name, "is_visible", 1 if frappe.parse_json(visible) else 0)
 	return get_report_sidebar(include_catalog=True)
 
+
+@frappe.whitelist()
+def remove_report_from_sidebar(report_name):
+	"""Remove a user-added report configuration without deleting the ERPNext Report."""
+	name = frappe.db.get_value("Custom Reports", {"report_name": report_name}, "name")
+	if not name:
+		frappe.throw(_("Report is not configured in My Sales."))
+	if frappe.db.get_value("Custom Reports", name, "is_default"):
+		frappe.throw(_("Default reports can be hidden, but cannot be removed."))
+	frappe.delete_doc("Custom Reports", name)
+	return get_report_sidebar(include_catalog=True)
+
 # ... [all existing functions remain the same] ...
 
 @frappe.whitelist(allow_guest=True)

@@ -413,11 +413,22 @@ function closeReportManager() { document.getElementById("report-manager").close(
 
 function renderReportManager(data) {
 	document.getElementById("configured-report-list").innerHTML = (data.reports || []).map(report => `
-		<label><span><strong>${escapeHtml(report.report_name)}</strong>${report.is_default ? "<small>Default report</small>" : "<small>Added report</small>"}</span>
-		<input type="checkbox" data-report-visibility="${encodeURIComponent(report.report_name)}" ${Number(report.is_visible) ? "checked" : ""}></label>`).join("");
+		<div class="sm-report-manager-row"><span><strong>${escapeHtml(report.report_name)}</strong>${report.is_default ? "<small>Default report · can be hidden</small>" : "<small>Added from Report doctype</small>"}</span>
+		<div class="sm-report-manager-actions"><button type="button" data-report-open="${encodeURIComponent(report.route_key)}">Open</button><label title="Show or hide this report"><input type="checkbox" data-report-visibility="${encodeURIComponent(report.report_name)}" ${Number(report.is_visible) ? "checked" : ""}><small>${Number(report.is_visible) ? "Shown" : "Hidden"}</small></label>${report.is_default ? "" : `<button class="danger" type="button" data-report-remove="${encodeURIComponent(report.report_name)}">Remove</button>`}</div></div>`).join("");
 	document.querySelectorAll("[data-report-visibility]").forEach(input => input.addEventListener("change", () => setReportVisibility(decodeURIComponent(input.dataset.reportVisibility), input.checked)));
+	document.querySelectorAll("[data-report-open]").forEach(button => button.addEventListener("click", () => { window.location.href = `/reports?type=${button.dataset.reportOpen}`; }));
+	document.querySelectorAll("[data-report-remove]").forEach(button => button.addEventListener("click", () => removeConfiguredReport(decodeURIComponent(button.dataset.reportRemove))));
 	document.getElementById("report-catalog").innerHTML = '<option value="">Select an existing report…</option>' +
 		(data.catalog || []).map(report => `<option value="${escapeHtml(report.name)}">${escapeHtml(report.name)} · ${escapeHtml(report.ref_doctype || "")}</option>`).join("");
+}
+
+function removeConfiguredReport(reportName) {
+	if (!window.confirm(`Remove ${reportName} from My Sales reports? The original ERPNext Report will not be deleted.`)) return;
+	frappe.call({ method: "store_management.api.remove_report_from_sidebar", args: { report_name: reportName }, callback(response) {
+		renderReportManager(response.message || {});
+		window.refreshMySalesReportNavigation?.();
+		frappe.show_alert({ message: `${reportName} removed`, indicator: "green" });
+	}});
 }
 
 function setReportVisibility(reportName, visible) {
@@ -431,8 +442,11 @@ function addSelectedReport() {
 	const reportName = document.getElementById("report-catalog").value;
 	if (!reportName) return frappe.show_alert({ message: "Select a report to add", indicator: "orange" });
 	frappe.call({ method: "store_management.api.add_report_to_sidebar", args: { report_name: reportName }, callback(response) {
-		renderReportManager(response.message || {});
+		const data = response.message || {};
+		renderReportManager(data);
 		window.refreshMySalesReportNavigation?.();
+		const added = (data.reports || []).find(report => report.report_name === reportName);
+		if (added?.route_key) window.location.href = `/reports?type=${encodeURIComponent(added.route_key)}`;
 	}});
 }
 
