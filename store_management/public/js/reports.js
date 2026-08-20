@@ -60,7 +60,18 @@ function clearStaleReportOverlay() {
 	if (window.frappe?.dom) window.frappe.dom.freeze_count = 0;
 }
 
+function installReportOverlayGuard() {
+	const body = document.getElementById("body") || document.body;
+	if (!body || body.dataset.reportOverlayGuard === "1") return;
+	body.dataset.reportOverlayGuard = "1";
+	new MutationObserver(() => {
+		const freeze = document.getElementById("freeze");
+		if (freeze) clearStaleReportOverlay();
+	}).observe(body, { childList: true, subtree: true });
+}
+
 clearStaleReportOverlay();
+installReportOverlayGuard();
 
 function resolveDefaultReportCompany() {
 	if (defaultReportCompany) return Promise.resolve(defaultReportCompany);
@@ -139,6 +150,7 @@ function loadSalesRegisterReport() {
 	frappe.call({
 		method: "frappe.desk.query_report.get_script",
 		silent: true,
+		freeze: false,
 		args: { report_name: activeReport.reportName },
 		callback: function(response) {
 			const settings = response.message || {};
@@ -384,6 +396,7 @@ function runSalesRegisterReport() {
 	frappe.call({
 		method: "store_management.api.run_my_sales_report",
 		silent: true,
+		freeze: false,
 		args: {
 			report_type: requestedReportType,
 			filters: filters
