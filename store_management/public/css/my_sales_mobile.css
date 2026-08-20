@@ -827,3 +827,47 @@
 	.my-sales-back b { display: none; }
 	.my-sales-back span { font-size: 1.2rem; }
 }
+
+/* Current mobile app shell: bottom navigation plus a complete off-canvas sidebar. */
+@media (max-width: 768px) {
+  .my-sales-mobile-menu {
+    display: grid !important; place-items: center; flex: 0 0 36px;
+    width: 36px !important; min-height: 36px !important; padding: 0 !important;
+    border: 1px solid #e3ebe6 !important; border-radius: 9px !important;
+    background: #fff !important; color: #17251e !important; font-size: 0 !important;
+  }
+  .my-sales-mobile-menu::before { content: "☰"; font-size: 1rem; }
+  .my-sales-mobile-overlay {
+    display: none !important; position: fixed !important; z-index: 2490 !important;
+    inset: 0 !important; width: 100% !important; height: 100dvh !important;
+    border: 0 !important; background: rgba(9,24,16,.4) !important; backdrop-filter: blur(2px);
+  }
+  .my-sales-mobile-drawer {
+    display: flex !important; position: fixed !important; z-index: 2500 !important;
+    inset: 0 auto 0 0 !important; width: min(84vw,320px) !important; height: 100dvh !important;
+    padding: .85rem .75rem calc(.85rem + var(--ms-safe-bottom)) !important;
+    transform: translateX(-105%) !important; transition: transform .24s ease !important;
+    background: #fff !important; box-shadow: 18px 0 45px rgba(18,40,28,.18) !important;
+  }
+  .my-sales-mobile-nav-open { overflow: hidden !important; }
+  .my-sales-mobile-nav-open .my-sales-mobile-overlay { display: block !important; }
+  .my-sales-mobile-nav-open .my-sales-mobile-drawer { transform: translateX(0) !important; }
+  .my-sales-mobile-drawer nav { padding: .35rem 0 !important; overflow-y: auto !important; }
+  .my-sales-mobile-drawer nav > a,
+  .my-sales-mobile-drawer summary {
+    min-height: 42px !important; padding: .55rem .65rem !important;
+    gap: .65rem !important; border-radius: 9px !important; font-size: .8rem !important;
+  }
+  .my-sales-mobile-drawer summary::after { display: block !important; }
+  .my-sales-mobile-submenu { display: block !important; }
+  .my-sales-mobile-drawer details > .my-sales-mobile-submenu > a {
+    display: block !important; min-height: 34px !important; padding: .45rem .65rem !important;
+    color: #40564a !important; font-size: .74rem !important; text-decoration: none !important;
+  }
+  .sm-reports-app .sm-report-toolbar { display: block !important; }
+  .sm-reports-app .sm-report-toolbar .sm-toolbar-actions {
+    display: grid !important; grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+    gap: .5rem !important; margin-top: .75rem !important;
+  }
+  .sm-report-manager-actions { display: flex !important; }
+}
