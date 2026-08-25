@@ -1251,6 +1251,10 @@ function openImageUploader(fieldName) {
 
 	new frappe.ui.FileUploader({
 		allow_multiple: false,
+		make_attachments_public: false,
+		allow_toggle_private: false,
+		disable_file_browser: true,
+		allow_web_link: false,
 		restrictions: {
 			allowed_file_types: ['image/*']
 		},

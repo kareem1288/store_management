@@ -13,6 +13,11 @@ app_license = "mit"
 # Frappe and ERPNext; they must not be installed as ordinary pip packages.
 required_apps = ["erpnext"]
 
+# Files uploaded through Desk, web pages, or the mobile PWA are always private.
+override_whitelisted_methods = {
+	"upload_file": "store_management.uploads.upload_private_file",
+}
+
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
 # 	{
