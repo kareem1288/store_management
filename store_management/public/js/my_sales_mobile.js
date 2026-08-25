@@ -3,7 +3,7 @@
   document.documentElement.classList.add("my-sales-app");
 
   const APP_NAME = "My Sales";
-  const MOBILE_UI_VERSION = "20260820-12";
+  const MOBILE_UI_VERSION = "20260825-1";
   let installPrompt = null;
 
   const appLanguage = window.frappe?.boot?.lang || window.frappe?.boot?.user?.language || "en";
@@ -42,17 +42,22 @@
   }
 
   async function refreshInstalledAppCache() {
-	if (localStorage.getItem("my-sales-ui-version") === MOBILE_UI_VERSION) return false;
-	if ("caches" in window) {
-		const keys = await caches.keys();
-		await Promise.all(keys.filter(key => key.startsWith("my-sales-shell-")).map(key => caches.delete(key)));
+	try {
+		if (localStorage.getItem("my-sales-ui-version") === MOBILE_UI_VERSION) return false;
+		if ("caches" in window) {
+			const keys = await caches.keys();
+			await Promise.all(keys.filter(key => key.startsWith("my-sales-shell-")).map(key => caches.delete(key)));
+		}
+		if ("serviceWorker" in navigator) {
+			const registrations = await navigator.serviceWorker.getRegistrations();
+			await Promise.all(registrations.map(registration => registration.update()));
+		}
+		localStorage.setItem("my-sales-ui-version", MOBILE_UI_VERSION);
+		return true;
+	} catch (error) {
+		console.warn("My Sales cache refresh was skipped", error);
+		return false;
 	}
-	if ("serviceWorker" in navigator) {
-		const registrations = await navigator.serviceWorker.getRegistrations();
-		await Promise.all(registrations.map(registration => registration.update()));
-	}
-	localStorage.setItem("my-sales-ui-version", MOBILE_UI_VERSION);
-	return true;
   }
 
   const section = location.pathname.includes("masters")
@@ -190,10 +195,18 @@
     const setOpen = open => {
       document.documentElement.classList.toggle("my-sales-mobile-nav-open", open);
       toggle.setAttribute("aria-expanded", String(open));
+	  drawer.setAttribute("aria-hidden", String(!open));
     };
+	drawer.setAttribute("aria-hidden", "true");
     toggle.addEventListener("click", () => setOpen(true));
     overlay.addEventListener("click", () => setOpen(false));
     drawer.querySelectorAll("a").forEach(link => link.addEventListener("click", () => setOpen(false)));
+	document.addEventListener("keydown", event => {
+	  if (event.key === "Escape" && document.documentElement.classList.contains("my-sales-mobile-nav-open")) {
+		setOpen(false);
+		toggle.focus();
+	  }
+	});
   }
 
   function enhancePosHome() {
@@ -437,7 +450,7 @@
 
   if ("serviceWorker" in navigator && window.isSecureContext) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/my-sales-sw.js?v=17", { scope: "/" }).catch(error => {
+      navigator.serviceWorker.register("/my-sales-sw.js?v=18", { scope: "/" }).catch(error => {
         console.warn("My Sales offline support could not be enabled", error);
       });
     });

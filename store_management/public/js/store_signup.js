@@ -4,6 +4,21 @@
   let currentStep = 1;
   let logoData = "";
 
+  const country = document.getElementById("signup-country");
+  const phonePrefix = document.getElementById("phone-prefix");
+  const countryPhones = {
+    India: ["🇮🇳", "+91"],
+    "United States": ["🇺🇸", "+1"],
+    "United Kingdom": ["🇬🇧", "+44"],
+    "United Arab Emirates": ["🇦🇪", "+971"]
+  };
+  const updatePhonePrefix = () => {
+    const [flag, prefix] = countryPhones[country.value] || ["", "+"];
+    phonePrefix.textContent = `${flag} ${prefix}`.trim();
+  };
+  country.addEventListener("change", updatePhonePrefix);
+  updatePhonePrefix();
+
   const language = document.getElementById("signup-language");
   const savedLanguage = localStorage.getItem("my-sales-language");
   if (savedLanguage && [...language.options].some(option => option.value === savedLanguage)) language.value = savedLanguage;
@@ -73,10 +88,20 @@
     button.disabled = true; button.textContent = "Creating…"; message.textContent = "";
     const data = Object.fromEntries(new FormData(form).entries());
     delete data.store_logo; data.store_logo = logoData;
+	const selectedPrefix = countryPhones[country.value]?.[1];
+	if (selectedPrefix && data.phone_number && !data.phone_number.trim().startsWith("+")) {
+	  data.phone_number = `${selectedPrefix}${data.phone_number.replace(/\D/g, "")}`;
+	}
     try {
-      const response = await fetch("/api/method/store_management.signup.create_signup_details", {method:"POST", headers:{"Content-Type":"application/json", "X-Frappe-CSRF-Token": window.frappe?.csrf_token || ""}, body:JSON.stringify({data})});
+      const response = await fetch("/api/method/store_management.signup.create_signup_details", {method:"POST", credentials:"same-origin", headers:{"Content-Type":"application/json", "X-Frappe-CSRF-Token": window.frappe?.csrf_token || ""}, body:JSON.stringify({data})});
       const result = await response.json();
-      if (!response.ok || result.exc) throw new Error(result._server_messages ? JSON.parse(result._server_messages).map(JSON.parse).map(x => x.message).join(" ") : "Unable to create your account.");
+      if (!response.ok || result.exc || !result.message) {
+        let serverMessage = result.message;
+        try {
+          if (result._server_messages) serverMessage = JSON.parse(result._server_messages).map(item => JSON.parse(item).message).filter(Boolean).join(" ");
+        } catch (_) { /* Use the safe fallback below. */ }
+        throw new Error(typeof serverMessage === "string" && serverMessage ? serverMessage : "Unable to create your account.");
+      }
       const details = result.message;
       document.getElementById("summary-email").textContent = details.email;
       document.getElementById("summary-store").textContent = details.store_name;
@@ -86,6 +111,7 @@
       showStep(4);
     } catch (error) {
       message.textContent = error.message || "Something went wrong. Please try again.";
+      message.scrollIntoView({ block: "nearest", behavior: "smooth" });
     } finally { button.disabled = false; button.textContent = "Create Account"; }
   });
 })();

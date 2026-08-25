@@ -8,6 +8,14 @@ from frappe.utils import add_days, nowdate, validate_email_address
 
 
 TRIAL_DAYS = 20
+ALLOWED_BUSINESS_TYPES = {
+	"Retail Store", "Grocery Store", "Supermarket", "Pharmacy", "Fashion & Apparel",
+	"Electronics", "Restaurant", "Wholesale", "Other",
+}
+ALLOWED_COUNTRIES = {"India", "United States", "United Kingdom", "United Arab Emirates"}
+ALLOWED_CURRENCIES = {"INR", "USD", "GBP", "AED"}
+ALLOWED_FINANCIAL_YEAR_STARTS = {"1 April", "1 January", "1 July", "1 October"}
+ALLOWED_TAX_PREFERENCES = {"GST", "No Tax", "VAT", "Other"}
 
 
 def _unique_company_abbreviation(store_name):
@@ -87,14 +95,28 @@ def create_signup_details(data):
 	data.phone_number = phone_number
 	if not validate_email_address(email):
 		frappe.throw(_("Enter a valid email address."))
+	if not re.fullmatch(r"\+?\d{7,15}", phone_number):
+		frappe.throw(_("Enter a valid phone number."))
 	if frappe.db.exists("Sign Up Details", {"email_address": email}):
 		frappe.throw(_("A signup request already exists for this email address."))
 	if frappe.db.exists("User", email):
 		frappe.throw(_("A user account already exists for this email address."))
 	if frappe.db.exists("Company", (data.store_name or "").strip()):
 		frappe.throw(_("A company already exists with this store name."))
-	if len(data.password or "") < 8:
-		frappe.throw(_("Password must contain at least 8 characters."))
+	password = data.password or ""
+	if len(password) < 8 or not re.search(r"[A-Z]", password) or not re.search(r"[0-9\W]", password):
+		frappe.throw(_("Password must contain at least 8 characters, one uppercase letter, and one number or special character."))
+	required_text = ("full_name", "store_name", "store_address", "city", "pin_code", "state")
+	if any(not str(data.get(fieldname) or "").strip() for fieldname in required_text):
+		frappe.throw(_("Complete all required account and store details."))
+	if data.business_type not in ALLOWED_BUSINESS_TYPES or data.country not in ALLOWED_COUNTRIES:
+		frappe.throw(_("Select valid business and country details."))
+	if data.currency not in ALLOWED_CURRENCIES:
+		frappe.throw(_("Select a valid currency."))
+	if data.financial_year_start not in ALLOWED_FINANCIAL_YEAR_STARTS:
+		frappe.throw(_("Select a valid financial year start."))
+	if data.tax_preference not in ALLOWED_TAX_PREFERENCES:
+		frappe.throw(_("Select a valid tax preference."))
 	language = (data.language or "en").strip()
 	if not frappe.db.exists("Language", language):
 		frappe.throw(_("Select a valid application language."))
