@@ -34,8 +34,8 @@
 		return `
 			<div class="store-login-promo">
 				<div class="store-login-brand">
-					<div class="store-login-badge">SM</div>
-					<h1>Retail Billing</h1>
+					<img class="store-login-badge" src="/api/method/store_management.api.get_brand_asset?name=my-sales-logo.svg" alt="">
+					<h1>My Sales</h1>
 					<p>Simple billing for kirana, retail, and growing stores.</p>
 				</div>
 

@@ -214,7 +214,8 @@
   .my-sales-mobile-nav-open .my-sales-mobile-overlay { display: block; }
   .my-sales-mobile-nav-open .my-sales-mobile-drawer { transform: translateX(0); }
   .my-sales-mobile-brand { display: flex; align-items: center; gap: .7rem; padding: .2rem .3rem 1rem; color: #17251e; text-decoration: none; }
-  .my-sales-mobile-brand > b { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 10px; background: #087d43; color: #fff; font-size: 1.1rem; }
+  .my-sales-mobile-brand > b { display: grid; place-items: center; width: 38px; height: 38px; }
+  .my-sales-mobile-brand > b img { display: block; width: 100%; height: 100%; object-fit: contain; }
   .my-sales-mobile-brand strong,.my-sales-mobile-brand small { display: block; }
   .my-sales-mobile-brand small { margin-top: .15rem; color: #69766f; font-size: .58rem; text-transform: uppercase; }
   .my-sales-mobile-drawer nav { flex: 1; overflow-y: auto; }
@@ -266,7 +267,7 @@
   .sm-report-table-title { padding: .7rem; }
 }
 
-.sm-brand-mark, .sm-main-button, .sm-masters-btn.sm-btn-primary { background: var(--ms-green) !important; }
+.sm-main-button, .sm-masters-btn.sm-btn-primary { background: var(--ms-green) !important; }
 .sm-brand-lockup strong { color: var(--ms-green-dark); }
 .sm-nav-link.active { color: var(--ms-green) !important; background: var(--ms-green-soft) !important; }
 
@@ -492,7 +493,7 @@
   body { color: #101828 !important; }
   .sm-page-app { min-height: 100dvh; background: #fff !important; }
   .sm-page-app .sm-top-nav { position: relative; background: #fff !important; border: 0 !important; }
-  .sm-page-app .sm-brand-mark { background: linear-gradient(145deg,#16854f,#086638) !important; }
+  .sm-page-app .sm-brand-mark { background: transparent !important; }
   .my-sales-app-actions { position: relative; }
   .my-sales-app-actions .my-sales-connection { display: none; }
   .my-sales-logout { background: #eef8f2; border: 0; }
@@ -636,7 +637,13 @@
   .sm-pos-app .sm-pos-hero { display: none !important; }
   .sm-pos-app .sm-pos-workspace { display: none !important; }
   .my-sales-dashboard { display: grid; gap: .75rem; }
-  .my-sales-dashboard > header { display: none; }
+  .my-sales-dashboard > header { display: block; padding: 0 !important; border: 0 !important; background: transparent !important; box-shadow: none !important; }
+  .my-sales-dashboard > header > div:first-child,.my-sales-dashboard .my-sales-insights-link { display: none !important; }
+  .my-sales-dashboard-actions { display: block !important; }
+  .my-sales-period-filter { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem; }
+  .my-sales-period-filter label:first-child { grid-column: 1 / -1; }
+  .my-sales-period-filter input { width: 100%; min-width: 0; height: 38px; font-size: .65rem; }
+  .my-sales-period-filter select { width: 100%; min-width: 0; height: 40px; font-size: .72rem; }
   .my-sales-kpis { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .55rem; }
   .my-sales-kpis article {
     display: flex; align-items: center; gap: .6rem; min-width: 0; min-height: 82px; padding: .7rem;
@@ -894,3 +901,6 @@
   }
   .my-sales-mobile-drawer a.active { background: #e9f6ee !important; color: #06773d !important; }
 }
+
+@media(max-width:768px){.my-sales-dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.my-sales-trend,.my-sales-top-products{grid-column:1/-1}.my-sales-categories{display:grid!important;grid-template-columns:1fr!important;align-items:center}.my-sales-categories h2{grid-column:1}.my-sales-donut{width:104px!important;height:104px!important}.my-sales-donut::before{width:64px!important;height:64px!important}.my-sales-categories ul{display:none}.my-sales-payments{display:grid!important}.my-sales-top-products{display:block!important}.my-sales-top-products table{display:table!important}.my-sales-hourly,.my-sales-stores,.my-sales-recent,.my-sales-weekly-overview,.my-sales-month-summary,.my-sales-orders{display:none!important}.my-sales-kpis article{display:block!important;min-height:180px!important}.my-sales-kpis article>i{width:28px!important;height:28px!important;margin-bottom:.25rem}.my-sales-kpis article>span{display:block}.my-sales-kpis article footer{min-height:74px!important;margin:.55rem -.55rem -.55rem!important;padding:.55rem!important}.my-sales-kpis small{overflow:hidden;text-overflow:ellipsis}.my-sales-top-products th,.my-sales-top-products td{padding:.45rem!important;font-size:.6rem!important}}
+@media(max-width:768px){.sm-nav-primary{grid-template-columns:repeat(5,1fr)!important}.my-sales-sparkline{height:24px!important}.my-sales-kpis article{position:relative!important;overflow:hidden!important;padding-bottom:28px!important}.my-sales-dashboard{max-width:430px;margin:0 auto}.my-sales-period-filter label span{display:none}.my-sales-period-filter select{height:34px!important}.my-sales-top-products{max-height:210px;overflow:hidden!important}}

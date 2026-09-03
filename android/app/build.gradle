@@ -26,7 +26,7 @@ def twaManifest = [
     launchUrl: '/pos?source=pwa', // The start path for the TWA. Must be relative to the domain.
     name: 'My Sales', // The application name.
     launcherName: 'My Sales', // The name shown on the Android Launcher.
-    themeColor: '#146C43', // The color used for the status bar.
+    themeColor: '#159447', // The color used for the status bar.
     themeColorDark: '#0D5031', // The color used for the dark status bar.
     navigationColor: '#FFFFFF', // The color used for the navigation bar.
     navigationColorDark: '#0D5031', // The color used for the dark navbar.

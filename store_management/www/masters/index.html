@@ -5,12 +5,12 @@
 
 {% block head_include %}
 <link rel="stylesheet" href="/assets/store_management/css/store_management_ui.css?v=20260820-5">
-<link rel="stylesheet" href="/assets/store_management/css/my_sales_mobile.css?v=20260825-1">
+<link rel="stylesheet" href="/assets/store_management/css/my_sales_mobile.css?v=20260903-11">
 <link rel="manifest" href="/assets/store_management/my-sales.webmanifest?v=20260818-3">
 <meta name="theme-color" content="#146c43">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="My Sales">
-<script defer src="/assets/store_management/js/my_sales_mobile.js?v=20260825-1"></script>
+<script defer src="/assets/store_management/js/my_sales_mobile.js?v=20260903-11"></script>
 {% endblock %}
 
 {% block page_content %}
@@ -21,7 +21,7 @@
 	<!-- Top Navigation -->
 	<div class="sm-top-nav">
 		<a class="sm-brand-lockup" href="/pos" aria-label="My Sales home">
-			<span class="sm-brand-mark">M</span><span><strong>My Sales</strong><small>Mobile Store</small></span>
+			<img class="sm-brand-mark" src="/api/method/store_management.api.get_brand_asset?name=my-sales-logo.svg" alt=""><span><strong>My Sales</strong><small>Retail Billing</small></span>
 		</a>
 		<nav class="sm-nav-primary" aria-label="Main navigation">
 			<a href="/masters" class="sm-nav-link active" aria-current="page">Masters</a>

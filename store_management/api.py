@@ -1,12 +1,14 @@
 import base64
 import io
 import json
+import mimetypes
+from pathlib import Path
 import secrets
 import re
 
 import frappe
 from frappe import _
-from frappe.utils import add_days, flt, get_first_day, nowdate
+from frappe.utils import add_days, add_months, flt, get_first_day, get_last_day, getdate, nowdate
 
 CATEGORY_COLORS = [
 	"#1F9D55",
@@ -39,6 +41,27 @@ MY_SALES_REPORTS = {
 	"customers": "Customer Ledger Summary",
 	"open-bills": "Accounts Receivable",
 }
+
+PUBLIC_BRAND_ASSETS = {
+	"my-sales-logo.svg",
+	"my-sales-icon.svg",
+	"my-sales-icon-192.png",
+	"my-sales-icon-512.png",
+}
+
+
+@frappe.whitelist(allow_guest=True)
+def get_brand_asset(name):
+	"""Serve approved app-brand assets while keeping their source files outside public/."""
+	if name not in PUBLIC_BRAND_ASSETS:
+		frappe.throw(_("Brand asset not found."), frappe.DoesNotExistError)
+	asset_path = Path(frappe.get_app_path("store_management")) / "private" / "images" / name
+	with open(asset_path, "rb") as asset_file:
+		frappe.local.response.filecontent = asset_file.read()
+	frappe.local.response.filename = name
+	frappe.local.response.type = "download"
+	frappe.local.response.display_content_as = "inline"
+	frappe.local.response.content_type = mimetypes.guess_type(name)[0] or "application/octet-stream"
 
 
 def _make_qr_data_uri(value):
@@ -416,44 +439,102 @@ def _resolve_customer(customer=None, customer_phone=None):
 	return _get_default_customer()
 
 
-def _get_dashboard_summary():
+def _get_dashboard_summary(month=None, year=None, company=None, from_date=None, to_date=None):
 	today = nowdate()
-	sales = frappe.get_all(
+	today_date = getdate(today)
+	try:
+		selected_month = int(month or today_date.month)
+		selected_year = int(year or today_date.year)
+	except (TypeError, ValueError):
+		frappe.throw(_("Month and year must be valid numbers."))
+	if not 1 <= selected_month <= 12 or not 2000 <= selected_year <= 2100:
+		frappe.throw(_("Select a valid month and year."))
+
+	if from_date or to_date:
+		if not from_date or not to_date:
+			frappe.throw(_("Select both From Date and To Date."))
+		period_start, period_end = getdate(from_date), getdate(to_date)
+		if period_start > period_end:
+			frappe.throw(_("From Date cannot be after To Date."))
+		if (period_end - period_start).days > 366:
+			frappe.throw(_("Dashboard date range cannot exceed 366 days."))
+		selected_month, selected_year = period_start.month, period_start.year
+	else:
+		period_start = getdate(f"{selected_year:04d}-{selected_month:02d}-01")
+		period_end = get_last_day(period_start)
+		if selected_year == today_date.year and selected_month == today_date.month:
+			period_end = today_date
+	if company and not frappe.db.exists("Company", company):
+		frappe.throw(_("Select a valid store."))
+	today_filters = {"docstatus": 1, "posting_date": today}
+	period_filters = {"docstatus": 1, "posting_date": ["between", [period_start, period_end]]}
+	all_status_period_filters = {"posting_date": ["between", [period_start, period_end]]}
+	if company:
+		today_filters["company"] = company
+		period_filters["company"] = company
+		all_status_period_filters["company"] = company
+
+	today_sales_rows = frappe.get_all(
 		"Sales Invoice",
-		filters={"docstatus": 1, "posting_date": today},
+		filters=today_filters,
 		fields=["name", "customer", "grand_total", "posting_time", "total_qty"],
 		order_by="modified desc",
 		limit_page_length=0,
 	)
 
-	month_start = get_first_day(today)
-	month_sales = frappe.get_all(
+	period_sales = frappe.get_all(
 		"Sales Invoice",
-		filters={"docstatus": 1, "posting_date": ["between", [month_start, today]]},
-		fields=[{"SUM": "grand_total", "as": "total"}],
+		filters=period_filters,
+		fields=["name", "customer", "company", "grand_total", "posting_date", "posting_time", "total_qty"],
+		order_by="posting_date desc, posting_time desc",
+		limit_page_length=0,
 	)
 	today_customers = frappe.db.count(
 		"Customer", {"creation": ["between", [f"{today} 00:00:00", f"{today} 23:59:59"]]}
 	)
 	today_items = frappe.get_all(
 		"Sales Invoice Item",
-		filters={"docstatus": 1, "parent": ["in", [row.name for row in sales] or [""]]},
+		filters={"docstatus": 1, "parent": ["in", [row.name for row in today_sales_rows] or [""]]},
 		fields=[{"SUM": "qty", "as": "qty"}],
 	)
 
-	trend = []
-	for offset in range(-6, 1):
-		day = add_days(today, offset)
-		day_total = frappe.get_all(
+	period_invoice_names = [row.name for row in period_sales]
+	period_customer_count = frappe.db.count(
+		"Customer",
+		{"creation": ["between", [f"{period_start} 00:00:00", f"{period_end} 23:59:59"]]},
+	)
+	period_customer_names = list({row.customer for row in period_sales if row.customer})
+	new_period_customers = frappe.db.count(
+		"Customer",
+		{
+			"name": ["in", period_customer_names or [""]],
+			"creation": ["between", [f"{period_start} 00:00:00", f"{period_end} 23:59:59"]],
+		},
+	)
+	period_items = frappe.get_all(
+		"Sales Invoice Item",
+		filters={"docstatus": 1, "parent": ["in", period_invoice_names or [""]]},
+		fields=[{"SUM": "qty", "as": "qty"}],
+	)
+	trend_totals = {
+		str(row.posting_date): flt(row.total)
+		for row in frappe.get_all(
 			"Sales Invoice",
-			filters={"docstatus": 1, "posting_date": day},
-			fields=[{"SUM": "grand_total", "as": "total"}],
+			filters=period_filters,
+			fields=["posting_date", {"SUM": "grand_total", "as": "total"}],
+			group_by="posting_date",
+			order_by="posting_date asc",
 		)
-		trend.append({"date": str(day), "total": flt(day_total[0].total if day_total else 0)})
+	}
+	trend = []
+	day = period_start
+	while day <= period_end:
+		trend.append({"date": str(day), "total": trend_totals.get(str(day), 0)})
+		day = add_days(day, 1)
 
 	categories = frappe.get_all(
 		"Sales Invoice Item",
-		filters={"docstatus": 1, "creation": ["between", [f"{month_start} 00:00:00", f"{today} 23:59:59"]]},
+		filters={"docstatus": 1, "parent": ["in", period_invoice_names or [""]]},
 		fields=["item_group as label", {"SUM": "base_net_amount", "as": "value"}],
 		group_by="item_group",
 		order_by="value desc",
@@ -461,7 +542,7 @@ def _get_dashboard_summary():
 	)
 	top_items = frappe.get_all(
 		"Sales Invoice Item",
-		filters={"docstatus": 1, "creation": ["between", [f"{month_start} 00:00:00", f"{today} 23:59:59"]]},
+		filters={"docstatus": 1, "parent": ["in", period_invoice_names or [""]]},
 		fields=[
 			"item_name",
 			{"SUM": "qty", "as": "sold"},
@@ -471,25 +552,129 @@ def _get_dashboard_summary():
 		order_by="sold desc",
 		limit=5,
 	)
-	recent_bills = frappe.get_all(
-		"Sales Invoice",
-		filters={"docstatus": 1},
-		fields=["name", "customer", "grand_total", "posting_date", "posting_time", "total_qty"],
-		order_by="posting_date desc, posting_time desc",
-		limit=5,
+	recent_bills = period_sales[:5]
+	period_total = round(sum(flt(row.grand_total) for row in period_sales), 2)
+	week_start = max(period_start, add_days(period_end, -6))
+	weekly_sales = round(
+		sum(flt(row.grand_total) for row in period_sales if getdate(row.posting_date) >= getdate(week_start)), 2
 	)
+	weekly_trend = [row for row in trend if getdate(row["date"]) >= getdate(week_start)]
+	payment_methods = frappe.get_all(
+		"Sales Invoice Payment",
+		filters={"parent": ["in", period_invoice_names or [""]]},
+		fields=["mode_of_payment as label", {"SUM": "amount", "as": "value"}],
+		group_by="mode_of_payment",
+		order_by="value desc",
+	)
+	payment_totals = {row.label or _("Other"): flt(row.value) for row in payment_methods}
+	payment_entry_names = frappe.get_all(
+		"Payment Entry Reference",
+		filters={"reference_doctype": "Sales Invoice", "reference_name": ["in", period_invoice_names or [""]]},
+		pluck="parent",
+		limit_page_length=0,
+	)
+	if payment_entry_names:
+		for row in frappe.get_all(
+			"Payment Entry",
+			filters={"name": ["in", payment_entry_names], "docstatus": 1},
+			fields=["mode_of_payment", "received_amount"],
+			limit_page_length=0,
+		):
+			label = row.mode_of_payment or _("Other")
+			payment_totals[label] = payment_totals.get(label, 0) + flt(row.received_amount)
+	payment_methods = [
+		{"label": label, "value": round(value, 2)}
+		for label, value in sorted(payment_totals.items(), key=lambda item: item[1], reverse=True)
+	]
+	hour_totals = {}
+	for row in period_sales:
+		hour = int(str(row.posting_time or "0:00").split(":", 1)[0])
+		hour_totals[hour] = hour_totals.get(hour, 0) + flt(row.grand_total)
+	sales_by_hour = [{"hour": hour, "value": round(hour_totals.get(hour, 0), 2)} for hour in range(6, 22)]
+	store_totals = {}
+	for row in period_sales:
+		store_totals[row.company] = store_totals.get(row.company, 0) + flt(row.grand_total)
+	sales_by_store = [
+		{"label": company, "value": round(value, 2)}
+		for company, value in sorted(store_totals.items(), key=lambda item: item[1], reverse=True)
+	]
+	order_status_rows = frappe.get_all(
+		"Sales Invoice",
+		filters=all_status_period_filters,
+		fields=["docstatus", {"COUNT": "name", "as": "count"}],
+		group_by="docstatus",
+	)
+	order_status = {str(row.docstatus): row.count for row in order_status_rows}
+	expenses = frappe.get_all(
+		"Purchase Invoice",
+		filters=period_filters,
+		fields=[{"SUM": "grand_total", "as": "total"}],
+	)
+	monthly_overview = []
+	for offset in range(4, -1, -1):
+		month_start = getdate(get_first_day(add_months(period_end, -offset)))
+		month_end = getdate(get_last_day(month_start))
+		month_filters = {"docstatus": 1, "posting_date": ["between", [month_start, month_end]]}
+		if company:
+			month_filters["company"] = company
+		month_sales = frappe.get_all(
+			"Sales Invoice", filters=month_filters, fields=[{"SUM": "grand_total", "as": "total"}]
+		)
+		month_expenses = frappe.get_all(
+			"Purchase Invoice", filters=month_filters, fields=[{"SUM": "grand_total", "as": "total"}]
+		)
+		sales_value = flt(month_sales[0].total if month_sales else 0)
+		expense_value = flt(month_expenses[0].total if month_expenses else 0)
+		monthly_overview.append(
+			{
+				"month": month_start.strftime("%b"),
+				"sales": round(sales_value, 2),
+				"profit": round(sales_value - expense_value, 2),
+			}
+		)
 
 	return {
-		"today_sales": round(sum(flt(row.grand_total) for row in sales), 2),
-		"today_bills": len(sales),
+		"today_sales": round(sum(flt(row.grand_total) for row in today_sales_rows), 2),
+		"today_bills": len(today_sales_rows),
 		"today_customers": today_customers,
 		"today_items_sold": flt(today_items[0].qty if today_items else 0),
-		"month_sales": flt(month_sales[0].total if month_sales else 0),
+		"month_sales": period_total,
+		"period_sales": period_total,
+		"weekly_sales": weekly_sales,
+		"weekly_trend": weekly_trend,
+		"period_bills": len(period_sales),
+		"period_customers": period_customer_count,
+		"active_customers": len(period_customer_names),
+		"new_customers": new_period_customers,
+		"returning_customers": max(0, len(period_customer_names) - new_period_customers),
+		"period_items_sold": flt(period_items[0].qty if period_items else 0),
+		"average_bill_value": round(period_total / len(period_sales), 2) if period_sales else 0,
+		"daily_target": 2000,
+		"monthly_target": max(5000, round(period_total * 1.25, -2)) if period_total else 5000,
+		"period": {"month": selected_month, "year": selected_year, "start": str(period_start), "end": str(period_end), "company": company or ""},
+		"stores": frappe.get_all("Company", pluck="name", order_by="name asc"),
 		"recent_bills": recent_bills,
 		"trend": trend,
 		"categories": categories,
 		"top_items": top_items,
+		"payment_methods": payment_methods,
+		"sales_by_hour": sales_by_hour,
+		"sales_by_store": sales_by_store,
+		"period_expenses": flt(expenses[0].total if expenses else 0),
+		"order_status": {
+			"completed": order_status.get("1", 0),
+			"pending": order_status.get("0", 0),
+			"cancelled": order_status.get("2", 0),
+		},
+		"monthly_overview": monthly_overview,
 	}
+
+
+@frappe.whitelist()
+def get_dashboard_summary(month=None, year=None, company=None, from_date=None, to_date=None):
+	return _get_dashboard_summary(
+		month=month, year=year, company=company, from_date=from_date, to_date=to_date
+	)
 
 
 @frappe.whitelist()
@@ -586,6 +771,298 @@ def create_sample_dashboard_data():
 		"created": True,
 		"invoices": created_invoices,
 		"message": _("Created sample customers, items, and seven submitted invoices."),
+	}
+
+
+@frappe.whitelist()
+def create_demo_company_data():
+	"""Create a complete, repeat-safe demo company dataset with paid sales invoices."""
+	frappe.only_for("System Manager")
+	company_name = "Demo Company"
+	company = frappe.db.exists("Company", company_name)
+	if not company:
+		company_doc = frappe.get_doc(
+			{
+				"doctype": "Company",
+				"company_name": company_name,
+				"abbr": "DEMO",
+				"default_currency": "INR",
+				"country": "India",
+				"chart_of_accounts": "Standard",
+			}
+		)
+		company_doc.insert(ignore_permissions=True)
+		company = company_doc.name
+
+	existing_invoices = frappe.get_all(
+		"Sales Invoice",
+		filters={"company": company, "remarks": ["like", "%Demo Company Sample Data%"]},
+		pluck="name",
+		limit_page_length=0,
+	)
+	if existing_invoices:
+		return {
+			"created": False,
+			"company": company,
+			"items": frappe.get_all("Item", filters={"item_code": ["like", "DEMO-%"]}, pluck="name"),
+			"customers": frappe.get_all("Customer", filters={"customer_name": ["like", "%Demo Company%"]}, pluck="name"),
+			"invoices": existing_invoices,
+			"payments": frappe.get_all(
+				"Payment Entry Reference",
+				filters={"reference_doctype": "Sales Invoice", "reference_name": ["in", existing_invoices]},
+				pluck="parent",
+			),
+			"message": _("Demo Company sample data already exists."),
+		}
+
+	customer_group = _get_leaf_customer_group()
+	territory = _get_leaf_territory()
+	if not customer_group or not territory:
+		frappe.throw(_("Create a leaf Customer Group and Territory before generating demo data."))
+
+	customers = []
+	for customer_name in [
+		"Aarav Retail (Demo Company)",
+		"Meera Stores (Demo Company)",
+		"Sai Traders (Demo Company)",
+		"Lakshmi Mart (Demo Company)",
+		"Walk-in Customer (Demo Company)",
+	]:
+		customer = frappe.db.exists("Customer", {"customer_name": customer_name})
+		if not customer:
+			customer = frappe.get_doc(
+				{
+					"doctype": "Customer",
+					"customer_name": customer_name,
+					"customer_type": "Company" if "Stores" in customer_name or "Traders" in customer_name else "Individual",
+					"customer_group": customer_group,
+					"territory": territory,
+				}
+			).insert(ignore_permissions=True).name
+		customers.append(customer)
+
+	items = []
+	item_specs = [
+		("DEMO-RICE-5KG", "Premium Rice 5 kg", 420),
+		("DEMO-OIL-1L", "Sunflower Oil 1 L", 155),
+		("DEMO-SUGAR-1KG", "Sugar 1 kg", 52),
+		("DEMO-FLOUR-5KG", "Wheat Flour 5 kg", 285),
+		("DEMO-DAL-1KG", "Toor Dal 1 kg", 175),
+		("DEMO-SOAP-PACK", "Bath Soap Pack", 120),
+	]
+	item_group = _get_first_available(
+		"Item Group", preferred_names=["Products", "Groceries"], extra_filters={"is_group": 0}
+	)
+	for item_code, item_name, rate in item_specs:
+		if not frappe.db.exists("Item", item_code):
+			frappe.get_doc(
+				{
+					"doctype": "Item",
+					"item_code": item_code,
+					"item_name": item_name,
+					"item_group": item_group,
+					"stock_uom": "Nos",
+					"is_stock_item": 0,
+					"is_sales_item": 1,
+					"standard_rate": rate,
+				}
+			).insert(ignore_permissions=True)
+		items.append(item_code)
+
+	cash_account = frappe.db.get_value(
+		"Account", {"company": company, "account_type": "Cash", "is_group": 0}, "name"
+	)
+	if not cash_account:
+		frappe.throw(_("Demo Company does not have a usable cash account."))
+
+	from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry
+
+	created_invoices = []
+	created_payments = []
+	today = getdate(nowdate())
+	month_start = getdate(f"{today.year:04d}-{today.month:02d}-01")
+	for index in range(12):
+		posting_date = max(month_start, add_days(today, -(index * 2)))
+		first_item = item_specs[index % len(item_specs)]
+		second_item = item_specs[(index + 2) % len(item_specs)]
+		invoice = frappe.get_doc(
+			{
+				"doctype": "Sales Invoice",
+				"company": company,
+				"customer": customers[index % len(customers)],
+				"posting_date": posting_date,
+				"due_date": posting_date,
+				"set_posting_time": 1,
+				"posting_time": f"{9 + (index % 10):02d}:{(index * 7) % 60:02d}:00",
+				"remarks": "Demo Company Sample Data",
+				"items": [
+					{"item_code": first_item[0], "qty": (index % 4) + 1, "rate": first_item[2]},
+					{"item_code": second_item[0], "qty": (index % 3) + 1, "rate": second_item[2]},
+				],
+			}
+		)
+		invoice.insert(ignore_permissions=True)
+		invoice.submit()
+		created_invoices.append(invoice.name)
+
+		payment = get_payment_entry(
+			"Sales Invoice", invoice.name, bank_account=cash_account, reference_date=posting_date
+		)
+		payment.posting_date = posting_date
+		payment.mode_of_payment = "Cash"
+		payment.insert(ignore_permissions=True)
+		payment.submit()
+		created_payments.append(payment.name)
+
+	frappe.db.commit()
+	return {
+		"created": True,
+		"company": company,
+		"items": items,
+		"customers": customers,
+		"invoices": created_invoices,
+		"payments": created_payments,
+		"message": _("Created Demo Company with sample items, customers, invoices, and linked payments."),
+	}
+
+
+@frappe.whitelist()
+def create_company_date_range_samples():
+	"""Create daily paid invoices for all demo companies from 1 August through yesterday."""
+	frappe.only_for("System Manager")
+	from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry
+
+	companies = [name for name in ["ABC Store", "Demo Company"] if frappe.db.exists("Company", name)]
+	if len(companies) != 2:
+		frappe.throw(_("ABC Store and Demo Company must both exist."))
+	items = frappe.get_all(
+		"Item",
+		filters={"item_code": ["like", "DEMO-%"], "disabled": 0, "is_sales_item": 1},
+		fields=["name", "standard_rate"],
+		order_by="name asc",
+		limit_page_length=0,
+	)
+	customers = frappe.get_all(
+		"Customer",
+		filters={"customer_name": ["like", "%Demo Company%"], "disabled": 0},
+		pluck="name",
+		limit_page_length=0,
+	)
+	if not items or not customers:
+		frappe.throw(_("Create the Demo Company sample items and customers first."))
+
+	payment_modes = ["Cash", "UPI", "Card", "Bank Transfer", "Wallet"]
+	company_accounts = {}
+	for company in companies:
+		cash_account = frappe.db.get_value(
+			"Account", {"company": company, "account_type": "Cash", "is_group": 0}, "name"
+		)
+		bank_account = frappe.db.get_value(
+			"Account", {"company": company, "account_type": "Bank", "is_group": 0}, "name"
+		)
+		if not bank_account:
+			bank_parent = frappe.db.get_value(
+				"Account", {"company": company, "account_name": "Bank Accounts", "is_group": 1}, "name"
+			)
+			if not bank_parent:
+				frappe.throw(_("Bank Accounts group is missing for {0}.").format(company))
+			bank_account = frappe.get_doc(
+				{
+					"doctype": "Account",
+					"account_name": "Sample Bank",
+					"parent_account": bank_parent,
+					"company": company,
+					"account_type": "Bank",
+					"is_group": 0,
+				}
+			).insert(ignore_permissions=True).name
+		company_accounts[company] = {"Cash": cash_account, "Bank": bank_account}
+
+		for mode in payment_modes:
+			mode_doc = frappe.get_doc("Mode of Payment", mode) if frappe.db.exists("Mode of Payment", mode) else frappe.new_doc("Mode of Payment")
+			if mode_doc.is_new():
+				mode_doc.mode_of_payment = mode
+				mode_doc.type = "Cash" if mode == "Cash" else "Bank"
+			default_account = cash_account if mode == "Cash" else bank_account
+			account_row = next((row for row in mode_doc.accounts if row.company == company), None)
+			if account_row:
+				account_row.default_account = default_account
+			else:
+				mode_doc.append("accounts", {"company": company, "default_account": default_account})
+			mode_doc.save(ignore_permissions=True)
+
+	start_date = getdate("2026-08-01")
+	end_date = add_days(nowdate(), -1)
+	if getdate(end_date) < start_date:
+		frappe.throw(_("Yesterday is earlier than 1 August 2026."))
+	marker = "Daily Range Sample Aug-Sep 2026"
+	created_invoices, created_payments, reused_invoices = [], [], []
+	day = start_date
+	day_index = 0
+	while day <= getdate(end_date):
+		for company_index, company in enumerate(companies):
+			existing = frappe.db.get_value(
+				"Sales Invoice",
+				{"company": company, "posting_date": day, "remarks": marker, "docstatus": 1},
+				["name", "outstanding_amount"],
+				as_dict=True,
+			)
+			if existing:
+				invoice_name = existing.name
+				reused_invoices.append(invoice_name)
+			else:
+				first_item = items[(day_index + company_index) % len(items)]
+				second_item = items[(day_index + company_index + 2) % len(items)]
+				invoice = frappe.get_doc(
+					{
+						"doctype": "Sales Invoice",
+						"company": company,
+						"customer": customers[(day_index + company_index) % len(customers)],
+						"posting_date": day,
+						"due_date": day,
+						"set_posting_time": 1,
+						"posting_time": f"{9 + (day_index % 10):02d}:{(day_index * 11 + company_index * 7) % 60:02d}:00",
+						"remarks": marker,
+						"items": [
+							{"item_code": first_item.name, "qty": (day_index % 4) + 1, "rate": flt(first_item.standard_rate)},
+							{"item_code": second_item.name, "qty": ((day_index + 1) % 3) + 1, "rate": flt(second_item.standard_rate)},
+						],
+					}
+				)
+				invoice.insert(ignore_permissions=True)
+				invoice.submit()
+				invoice_name = invoice.name
+				created_invoices.append(invoice_name)
+
+			invoice = frappe.get_doc("Sales Invoice", invoice_name)
+			if flt(invoice.outstanding_amount) > 0:
+				mode = payment_modes[(day_index + company_index) % len(payment_modes)]
+				account_type = "Cash" if mode == "Cash" else "Bank"
+				payment = get_payment_entry(
+					"Sales Invoice",
+					invoice_name,
+					bank_account=company_accounts[company][account_type],
+					reference_date=day,
+				)
+				payment.posting_date = day
+				payment.mode_of_payment = mode
+				payment.reference_no = f"SAMPLE-{company_index + 1}-{day.strftime('%Y%m%d')}"
+				payment.reference_date = day
+				payment.insert(ignore_permissions=True)
+				payment.submit()
+				created_payments.append(payment.name)
+		day = add_days(day, 1)
+		day_index += 1
+
+	frappe.db.commit()
+	return {
+		"companies": companies,
+		"from_date": str(start_date),
+		"to_date": str(end_date),
+		"created_invoices": len(created_invoices),
+		"reused_invoices": len(reused_invoices),
+		"created_payments": len(created_payments),
+		"payment_methods": payment_modes,
 	}
 
 

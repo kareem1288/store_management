@@ -11,22 +11,22 @@
   "lang": "en-IN",
   "dir": "ltr",
   "background_color": "#f4f8f5",
-  "theme_color": "#146c43",
+  "theme_color": "#159447",
   "icons": [
     {
-      "src": "/assets/store_management/images/my-sales-icon-192.png",
+      "src": "/api/method/store_management.api.get_brand_asset?name=my-sales-icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/assets/store_management/images/my-sales-icon-512.png",
+      "src": "/api/method/store_management.api.get_brand_asset?name=my-sales-icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/assets/store_management/images/my-sales-icon.svg",
+      "src": "/api/method/store_management.api.get_brand_asset?name=my-sales-icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "monochrome"

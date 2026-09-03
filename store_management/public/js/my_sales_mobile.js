@@ -3,7 +3,7 @@
   document.documentElement.classList.add("my-sales-app");
 
   const APP_NAME = "My Sales";
-  const MOBILE_UI_VERSION = "20260825-1";
+  const MOBILE_UI_VERSION = "20260903-11";
   let installPrompt = null;
 
   const appLanguage = window.frappe?.boot?.lang || window.frappe?.boot?.user?.language || "en";
@@ -89,6 +89,41 @@
     showStatus.timer = window.setTimeout(() => toast.classList.remove("visible"), 3200);
   }
 
+  function setupChartTooltips() {
+    if (document.querySelector(".my-sales-chart-tooltip")) return;
+    const tooltip = document.createElement("div");
+    tooltip.className = "my-sales-chart-tooltip";
+    tooltip.setAttribute("role", "tooltip");
+    document.body.appendChild(tooltip);
+    const show = (target, event) => {
+      tooltip.textContent = target.dataset.chartValue;
+      tooltip.classList.add("visible");
+      const rect = target.getBoundingClientRect();
+      const left = event?.clientX || rect.left + rect.width / 2;
+      const top = event?.clientY || rect.top;
+      tooltip.style.left = `${Math.min(window.innerWidth - 12, Math.max(12, left))}px`;
+      tooltip.style.top = `${Math.max(12, top - 12)}px`;
+    };
+    document.addEventListener("pointerover", event => {
+      const target = event.target.closest?.("[data-chart-value]");
+      if (target) show(target, event);
+    });
+    document.addEventListener("pointermove", event => {
+      const target = event.target.closest?.("[data-chart-value]");
+      if (target) show(target, event);
+    });
+    document.addEventListener("pointerout", event => {
+      if (event.target.closest?.("[data-chart-value]")) tooltip.classList.remove("visible");
+    });
+    document.addEventListener("focusin", event => {
+      const target = event.target.closest?.("[data-chart-value]");
+      if (target) show(target);
+    });
+    document.addEventListener("focusout", event => {
+      if (event.target.closest?.("[data-chart-value]")) tooltip.classList.remove("visible");
+    });
+  }
+
   function updateConnection() {
     document.documentElement.classList.toggle("my-sales-offline", !navigator.onLine);
     showStatus(
@@ -121,6 +156,7 @@
 
   function addBackButton() {
 	const topNav = document.querySelector(".sm-top-nav");
+	if (location.pathname === "/pos" && !location.hash) return;
 	if (!topNav || topNav.querySelector(".my-sales-back")) return;
 	const button = document.createElement("button");
 	button.type = "button";
@@ -147,10 +183,11 @@
     if (!nav) return;
     const page = location.pathname.includes("masters") ? "masters" : location.pathname.includes("reports") ? "reports" : location.hash === "#billing-panel" ? "pos" : "home";
     nav.innerHTML = `
-      <a href="/pos" class="sm-nav-link ${page === "home" ? "active" : ""}">${icons.home}<span>Dashboard</span></a>
+      <a href="/pos" class="sm-nav-link ${page === "home" ? "active" : ""}">${icons.home}<span>Home</span></a>
       <a href="/pos#billing-panel" class="sm-nav-link ${page === "pos" ? "active" : ""}">${icons.pos}<span>POS</span></a>
-      <a href="/reports?type=sales" class="sm-nav-link ${page === "reports" ? "active" : ""}">${icons.reports}<span>Reports</span></a>
-      <a href="/masters?doctype=Item" class="sm-nav-link ${page === "masters" ? "active" : ""}">${icons.masters}<span>Masters</span></a>
+      <a href="/reports?type=sales" class="sm-nav-link ${page === "reports" ? "active" : ""}">${icons.pos}<span>Sales</span></a>
+      <a href="/reports?type=items" class="sm-nav-link">${icons.reports}<span>Reports</span></a>
+      <a href="/masters?doctype=Item" class="sm-nav-link ${page === "masters" ? "active" : ""}">${icons.more}<span>More</span></a>
     `;
   }
 
@@ -171,7 +208,7 @@
     const drawer = document.createElement("aside");
     drawer.className = "my-sales-mobile-drawer";
     drawer.innerHTML = `
-      <a class="my-sales-mobile-brand" href="/pos"><b>M</b><span><strong>My Sales</strong><small>Mobile Store</small></span></a>
+      <a class="my-sales-mobile-brand" href="/pos"><b><img src="/api/method/store_management.api.get_brand_asset?name=my-sales-logo.svg" alt=""></b><span><strong>My Sales</strong><small>Retail Billing</small></span></a>
       <nav>
         <a href="/pos" data-section="dashboard">${icons.home}<span>Dashboard</span></a>
         <details open><summary>${icons.pos}<span>POS</span></summary><div class="my-sales-mobile-submenu"><a href="/pos#billing-panel">New Sale</a><a href="/reports?type=open-bills">Open Bills</a><a href="/masters?doctype=Customer">Customers</a></div></details>
@@ -260,24 +297,29 @@
     const sidebar = document.createElement("aside");
     sidebar.className = "my-sales-desktop-sidebar";
     sidebar.innerHTML = `
-      <a class="my-sales-desktop-brand" href="/pos"><b>M</b><span><strong>My Sales</strong><small>Mobile Store</small></span></a>
+      <a class="my-sales-desktop-brand" href="/pos"><b><img src="/api/method/store_management.api.get_brand_asset?name=my-sales-logo.svg" alt=""></b><span><strong>My Sales</strong><small>Retail Billing</small></span></a>
       <nav>
         <a href="/pos" class="${active === "dashboard" ? "active" : ""}">${icons.home}<span>Dashboard</span></a>
-        <div class="my-sales-menu-group"><button type="button" class="my-sales-menu-toggle" aria-expanded="true">${icons.pos}<span>POS</span><b>⌄</b></button>
+        <div class="my-sales-menu-group collapsed"><button type="button" class="my-sales-menu-toggle" aria-expanded="false">${icons.pos}<span>POS</span><b>⌄</b></button>
           <div class="my-sales-menu-items"><a href="/pos#billing-panel">New Sale</a><a href="/reports?type=open-bills" class="${requestedReport === "open-bills" ? "active" : ""}">Open Bills</a></div>
         </div>
-        <div class="my-sales-menu-group"><button type="button" class="my-sales-menu-toggle" aria-expanded="true">${icons.reports}<span>Reports</span><b>⌄</b></button>
+        <div class="my-sales-menu-group collapsed"><button type="button" class="my-sales-menu-toggle" aria-expanded="false">${icons.reports}<span>Sales</span><b>⌄</b></button>
           <div class="my-sales-menu-items my-sales-report-links"><a href="/reports?type=sales" class="${requestedReport === "sales" ? "active" : ""}">Sales Report</a>
           <a href="/reports?type=items" class="${requestedReport === "items" ? "active" : ""}">Item Wise Sales</a></div>
         </div>
-        <div class="my-sales-menu-group"><button type="button" class="my-sales-menu-toggle" aria-expanded="true">${icons.masters}<span>Masters</span><b>⌄</b></button>
-          <div class="my-sales-menu-items"><a href="/masters?doctype=Item" class="${active === "masters" && requestedMaster === "Item" ? "active" : ""}">Items</a>
+        <a href="/reports">${icons.reports}<span>Reports</span></a>
+        <div class="my-sales-menu-group collapsed"><button type="button" class="my-sales-menu-toggle" aria-expanded="false">${icons.masters}<span>Masters</span><b>⌄</b></button>
+          <div class="my-sales-menu-items"><a href="/masters?doctype=Item" class="${active === "masters" && requestedMaster === "Item" ? "active" : ""}">Masters</a>
           <a href="/masters?doctype=Item%20Group" class="${requestedMaster === "Item Group" ? "active" : ""}">Item Groups</a><a href="/masters?doctype=Customer" class="${requestedMaster === "Customer" ? "active" : ""}">Customers</a>
           <a href="/masters?doctype=Customer%20Group" class="${requestedMaster === "Customer Group" ? "active" : ""}">Customer Groups</a><a href="/masters?doctype=Item%20Tax%20Template" class="${requestedMaster === "Item Tax Template" ? "active" : ""}">Tax Templates</a>
           <a href="/masters?doctype=Company" class="${requestedMaster === "Company" ? "active" : ""}">Companies</a><a href="/masters?doctype=User" class="${requestedMaster === "User" ? "active" : ""}">Users</a></div>
         </div>
+        <a href="/masters?doctype=Company">${icons.masters}<span>Store Management</span></a>
+        <a href="/reports?type=expenses">${icons.reports}<span>Expenses</span></a>
+        <a href="/masters?doctype=Company">${icons.more}<span>Settings</span></a>
       </nav>
-      <a class="my-sales-desktop-logout" href="/logout">↪ <span>Logout</span></a>
+      <div class="my-sales-sidebar-promo"><strong>♛ &nbsp; Go Premium</strong><p>Unlock powerful reports and advanced features.</p><a href="/contact">Upgrade Now</a></div>
+      <div class="my-sales-sidebar-help"><strong>◉ &nbsp; Need Help?</strong><p>Our support team is here to help you.</p><a href="mailto:support@mysales.app">Contact Support</a></div>
     `;
     document.body.appendChild(sidebar);
 
@@ -321,9 +363,52 @@
   function buildTrendSvg(rows) {
     const values = rows.map(row => Number(row.total || 0));
     const max = Math.max(...values, 1);
-    const points = values.map((value, index) => `${24 + index * 86},${155 - value / max * 120}`).join(" ");
-    const area = `24,155 ${points} ${24 + Math.max(values.length - 1, 0) * 86},155`;
-    return `<svg viewBox="0 0 570 180" preserveAspectRatio="none" aria-label="Seven day sales trend"><defs><linearGradient id="sales-fill" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#10b981" stop-opacity=".38"/><stop offset=".55" stop-color="#38bdf8" stop-opacity=".13"/><stop offset="1" stop-color="#6366f1" stop-opacity="0"/></linearGradient><linearGradient id="sales-line" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#059669"/><stop offset=".52" stop-color="#0ea5e9"/><stop offset="1" stop-color="#6366f1"/></linearGradient></defs><path d="M24 155H548M24 95H548M24 35H548" stroke="#e7edf4" stroke-dasharray="5 5"/><polygon points="${area}" fill="url(#sales-fill)"/><polyline points="${points}" fill="none" stroke="url(#sales-line)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>${values.map((value,index) => `<circle cx="${24 + index*86}" cy="${155-value/max*120}" r="6" fill="#fff" stroke="${index === values.length-1 ? '#6366f1' : '#0b9a68'}" stroke-width="4"><title>${rows[index]?.date || ''}: ${currency(value)}</title></circle>`).join("")}</svg>`;
+    const x = index => 24 + index * 524 / Math.max(values.length - 1, 1);
+    const points = values.map((value, index) => `${x(index)},${155 - value / max * 120}`).join(" ");
+    const area = `24,155 ${points} ${x(Math.max(values.length - 1, 0))},155`;
+    return `<svg viewBox="0 0 570 180" preserveAspectRatio="none" aria-label="Sales trend for selected month"><defs><linearGradient id="sales-fill" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#10b981" stop-opacity=".38"/><stop offset=".55" stop-color="#38bdf8" stop-opacity=".13"/><stop offset="1" stop-color="#6366f1" stop-opacity="0"/></linearGradient><linearGradient id="sales-line" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#059669"/><stop offset=".52" stop-color="#0ea5e9"/><stop offset="1" stop-color="#6366f1"/></linearGradient></defs><path d="M24 155H548M24 95H548M24 35H548" stroke="#e7edf4" stroke-dasharray="5 5"/><polygon points="${area}" fill="url(#sales-fill)"/><polyline points="${points}" fill="none" stroke="url(#sales-line)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>${values.map((value,index) => `<circle tabindex="0" data-chart-value="${rows[index]?.date || ''}: ${currency(value)}" cx="${x(index)}" cy="${155-value/max*120}" r="${values.length > 16 ? 3.5 : 6}" fill="#fff" stroke="${index === values.length-1 ? '#6366f1' : '#0b9a68'}" stroke-width="${values.length > 16 ? 2.5 : 4}"/>`).join("")}</svg>`;
+  }
+
+  function buildDonutChart(rows, colors, total, centerLabel = "Total") {
+    const circumference = 263.89;
+    let offset = 0;
+    const segments = rows.map((row, index) => {
+      const value = Number(row.value || 0);
+      const percent = total ? value / total * 100 : 0;
+      const length = circumference * percent / 100;
+      const dashOffset = -offset;
+      offset += length;
+      const label = String(row.label || "Other").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
+      return `<circle tabindex="0" data-chart-value="${label}: ${currency(value)} (${Math.round(percent)}%)" cx="50" cy="50" r="42" fill="none" stroke="${colors[index % colors.length]}" stroke-width="16" stroke-dasharray="${length} ${circumference - length}" stroke-dashoffset="${dashOffset}"/>`;
+    }).join("");
+    return `<div class="my-sales-donut"><svg viewBox="0 0 100 100" aria-label="${centerLabel}"><circle cx="50" cy="50" r="42" fill="none" stroke="#e8eeea" stroke-width="16"/>${segments}</svg><span>${currency(total)}<small>${centerLabel}</small></span></div>`;
+  }
+
+  function buildSparkline(rows) {
+    const values = rows.map(row => Number(row.total || 0));
+    const max = Math.max(...values, 1);
+    const points = values.map((value, index) => `${index * 100 / Math.max(values.length - 1, 1)},${27 - value / max * 22}`).join(" ");
+    return `<svg class="my-sales-sparkline" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true"><polyline points="${points}" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>`;
+  }
+
+  function buildWeeklyOverviewChart(rows) {
+    const max = Math.max(...rows.map(row => Number(row.total || 0)), 1);
+    return `<div class="my-sales-weekly-chart"><svg viewBox="0 0 320 165" preserveAspectRatio="none" aria-label="Weekly sales bar chart"><path d="M10 125H314M10 82H314M10 39H314" stroke="#e7eee9" stroke-dasharray="4 5"/>${rows.map((row, index) => {
+      const date = new Date(`${row.date}T00:00:00`);
+      const height = Math.max(3, Number(row.total || 0) / max * 82);
+      const x = 20 + index * 43;
+      return `<text x="${x + 11}" y="${Math.max(12, 120 - height)}" text-anchor="middle" class="chart-value">${currency(row.total).replace(".00", "")}</text><rect x="${x}" y="${125 - height}" width="22" height="${height}" rx="4" tabindex="0" data-chart-value="${date.toLocaleDateString("en-IN", {day:"numeric", month:"short"})}: ${currency(row.total)}"/><text x="${x + 11}" y="142" text-anchor="middle" class="chart-day">${date.toLocaleDateString("en-IN", {weekday:"short"})}</text><text x="${x + 11}" y="154" text-anchor="middle" class="chart-date">${date.toLocaleDateString("en-IN", {day:"numeric", month:"short"})}</text>`;
+    }).join("")}</svg></div>`;
+  }
+
+  function buildMonthlySummaryChart(rows) {
+    const max = Math.max(...rows.flatMap(row => [Number(row.sales || 0), Number(row.profit || 0)]), 1);
+    return `<div class="my-sales-month-chart"><svg viewBox="0 0 300 120" preserveAspectRatio="none" aria-label="Monthly sales and profit bar chart"><path d="M8 95H294M8 55H294M8 15H294" stroke="#e7eee9" stroke-dasharray="4 5"/>${rows.map((row,index) => {
+      const salesHeight = Math.max(3, Number(row.sales || 0) / max * 76);
+      const profitHeight = Math.max(3, Number(row.profit || 0) / max * 76);
+      const x = 25 + index * 55;
+      return `<rect class="sales-bar" x="${x}" y="${95-salesHeight}" width="13" height="${salesHeight}" rx="3" tabindex="0" data-chart-value="${row.month} sales: ${currency(row.sales)}"/><rect class="profit-bar" x="${x+16}" y="${95-profitHeight}" width="13" height="${profitHeight}" rx="3" tabindex="0" data-chart-value="${row.month} profit: ${currency(row.profit)}"/><text x="${x+14}" y="110" text-anchor="middle">${row.month}</text>`;
+    }).join("")}</svg><footer><span><i></i>Sales (₹)</span><span><i></i>Profit (₹)</span></footer></div>`;
   }
 
   function enhanceDesktopDashboard(providedBootstrap) {
@@ -349,35 +434,89 @@
     const categoryColors = ["#07914c", "#2186e8", "#ffad14", "#6846dd", "#15a6a1"];
     const categories = summary.categories || [];
 	const weekTotal = trend.reduce((sum, row) => sum + Number(row.total || 0), 0);
-	const todayTrend = Number(trend[trend.length - 1]?.total || 0);
-	const yesterdayTrend = Number(trend[trend.length - 2]?.total || 0);
-	const trendDelta = yesterdayTrend ? Math.round((todayTrend - yesterdayTrend) / yesterdayTrend * 100) : (todayTrend ? 100 : 0);
     const categoryTotal = categories.reduce((sum,row) => sum + Number(row.value || 0), 0);
-    let angle = 0;
-    const segments = categories.map((row,index) => {
-      const start = angle; angle += categoryTotal ? Number(row.value || 0) / categoryTotal * 360 : 0;
-      return `${categoryColors[index % categoryColors.length]} ${start}deg ${angle}deg`;
-    }).join(",");
+    const paymentColors = ["#07914c", "#2186e8", "#ff7a18", "#8254e8", "#ef476f"];
+    const paymentMethods = summary.payment_methods || [];
+    const paymentTotal = paymentMethods.reduce((sum, row) => sum + Number(row.value || 0), 0);
+    const hourly = summary.sales_by_hour || [];
+    const maxHourly = Math.max(...hourly.map(row => Number(row.value || 0)), 1);
+    const storeSales = summary.sales_by_store || [];
+    const maxStore = Math.max(...storeSales.map(row => Number(row.value || 0)), 1);
+    const orderStatus = summary.order_status || {};
+    const orderTotal = Number(orderStatus.completed || 0) + Number(orderStatus.pending || 0) + Number(orderStatus.cancelled || 0);
+    const orderRows = [
+      {label: "Completed", value: Number(orderStatus.completed || 0)},
+      {label: "Pending", value: Number(orderStatus.pending || 0)},
+      {label: "Cancelled", value: Number(orderStatus.cancelled || 0)},
+    ];
+    const orderColors = ["#07914c", "#2186e8", "#ff7a18"];
     const recentRows = (summary.recent_bills || []).map(row => `<tr><td>${row.name}</td><td>${row.customer}</td><td>${Number(row.total_qty || 0)}</td><td><b>${currency(row.grand_total)}</b></td><td>${String(row.posting_time || "").slice(0,5)}</td></tr>`).join("");
     const topRows = (summary.top_items || []).map(row => `<tr><td>${row.item_name}</td><td>${Number(row.sold || 0)}</td><td><b>${currency(row.revenue)}</b></td></tr>`).join("");
 	const insightsUrl = document.querySelector(".sm-pos-app")?.dataset.insightsDashboard || "/insights";
+    const now = new Date();
+    const selectedMonth = Number(summary.period?.month || now.getMonth() + 1);
+    const selectedYear = Number(summary.period?.year || now.getFullYear());
+    const selectedCompany = summary.period?.company || "";
+    const stores = summary.stores || [];
+    const selectedFrom = summary.period?.start || `${selectedYear}-${String(selectedMonth).padStart(2, "0")}-01`;
+    const selectedTo = summary.period?.end || now.toISOString().slice(0, 10);
+    const shortDate = value => new Date(`${value}T00:00:00`).toLocaleDateString("en-IN", {day: "2-digit", month: "short", year: "numeric"});
+    const periodLabel = `${shortDate(selectedFrom)} – ${shortDate(selectedTo)}`;
+    const tickStep = Math.max(1, Math.ceil(trend.length / 7));
+    const trendTicks = trend.filter((_, index) => index === 0 || index === trend.length - 1 || index % tickStep === 0);
+    const topItem = (summary.top_items || [])[0];
+    const dailyTargetPercent = Math.min(100, Math.round(Number(summary.today_sales || 0) / Math.max(Number(summary.daily_target || 2000), 1) * 100));
+    const monthlyTargetPercent = Math.min(100, Math.round(Number(summary.period_sales || 0) / Math.max(Number(summary.monthly_target || 5000), 1) * 100));
+    const weeklyTrend = summary.weekly_trend || trend.slice(-7);
+    const weeklyMax = Math.max(...weeklyTrend.map(row => Number(row.total || 0)), 1);
+    const weeklyBars = `<div class="my-sales-week-bars">${weeklyTrend.map((row,index) => `<i tabindex="0" data-chart-value="${row.date || ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][index]}: ${currency(row.total)}" style="height:${Math.max(8, Number(row.total || 0)/weeklyMax*100)}%"><small>${["M","T","W","T","F","S","S"][index] || ""}</small></i>`).join("")}</div>`;
     const dashboard = document.createElement("section");
     dashboard.className = "my-sales-dashboard";
     dashboard.innerHTML = `
-      <header><div><span class="my-sales-live">● Live analytics</span><h1>Business Dashboard</h1><p>Sales, customers and product performance at a glance</p></div><div><a class="my-sales-insights-link" href="${insightsUrl}">↗ Frappe Insights</a><time>${new Intl.DateTimeFormat("en-IN",{dateStyle:"medium",timeStyle:"short"}).format(new Date())}</time></div></header>
+      <header><div><span class="my-sales-live">● Live analytics</span><h1>Business Dashboard</h1><p>Sales, customers and product performance at a glance</p></div><div class="my-sales-dashboard-actions"><form class="my-sales-period-filter" aria-label="Dashboard filters"><label><span>Store</span><select name="company"><option value="">All Stores</option>${stores.map(store => `<option value="${store}" ${store === selectedCompany ? "selected" : ""}>${store}</option>`).join("")}</select></label><label><span>From Date</span><input name="from_date" type="date" value="${selectedFrom}"></label><label><span>To Date</span><input name="to_date" type="date" value="${selectedTo}"></label></form><a class="my-sales-insights-link" href="${insightsUrl}">↗ Frappe Insights</a></div></header>
       <div class="my-sales-kpis">
-        <article data-tone="green"><i>${icons.pos}</i><span>Today Sales<strong>${currency(summary.today_sales)}</strong><small>${summary.today_bills || 0} bills · ${trendDelta >= 0 ? '↑' : '↓'} ${Math.abs(trendDelta)}% vs yesterday</small></span></article>
-        <article data-tone="blue"><i>☷</i><span>Today Customers<strong>${summary.today_customers || 0}</strong><small>New customers today</small></span></article>
-        <article data-tone="orange"><i>◇</i><span>Today Items Sold<strong>${Number(summary.today_items_sold || 0)}</strong><small>Across completed bills</small></span></article>
-        <article data-tone="purple"><i>↗</i><span>Total Sales (Month)<strong>${currency(summary.month_sales)}</strong><small>${currency(weekTotal)} in last 7 days</small></span></article>
+        <article data-tone="green"><i>${icons.pos}</i><span>Today's Sales<strong>${currency(summary.today_sales)}</strong><small>↑ Current day</small></span><footer><b class="my-sales-target-ring" tabindex="0" data-chart-value="Daily target: ${currency(summary.today_sales)} of ${currency(summary.daily_target)} (${dailyTargetPercent}%)" style="--target:${dailyTargetPercent * 3.6}deg">${dailyTargetPercent}%</b><span><strong>${dailyTargetPercent}%</strong><small>of ${currency(summary.daily_target)} daily target</small></span></footer></article>
+        <article data-tone="purple"><i>▣</i><span>Weekly Sales<strong>${currency(summary.weekly_sales)}</strong><small>↑ Last 7 days</small></span><footer>${weeklyBars}</footer></article>
+        <article data-tone="blue"><i>↗</i><span>Total Sales<strong>${currency(summary.period_sales ?? summary.month_sales)}</strong><small>↑ Selected period</small></span><footer><span><strong>${currency(summary.period_sales)} / ${currency(summary.monthly_target)}</strong><em tabindex="0" data-chart-value="Monthly target: ${currency(summary.period_sales)} of ${currency(summary.monthly_target)} (${monthlyTargetPercent}%)"><u style="width:${monthlyTargetPercent}%"></u></em><small>${monthlyTargetPercent}% of monthly target</small></span></footer></article>
+        <article data-tone="orange"><i>▤</i><span>Total Bills<strong>${summary.period_bills || 0}</strong><small>↑ Selected period</small></span><footer><b>▤</b><span><small>Avg. Bill Value</small><strong>${currency(summary.average_bill_value)}</strong></span></footer></article>
+        <article data-tone="pink"><i>◇</i><span>Items Sold<strong>${Number(summary.period_items_sold || 0)}</strong><small>↑ Selected period</small></span><footer><b>☆</b><span><small>Top Item</small><strong>${topItem ? `${topItem.item_name} · ${Number(topItem.sold || 0)} sold` : "No sales"}</strong></span></footer></article>
+        <article data-tone="teal"><i>♙</i><span>Customers<strong>${summary.active_customers || 0}</strong><small>↑ Active customers</small></span><footer class="my-sales-customer-split"><span><strong>${summary.new_customers || 0}</strong><small>New</small></span><span><strong>${summary.returning_customers || 0}</strong><small>Returning</small></span></footer></article>
       </div>
       <div class="my-sales-dashboard-grid">
-        <article class="my-sales-dash-card my-sales-trend"><h2><span>Sales Trend<small>Last 7 days</small></span><b>${currency(weekTotal)}</b></h2>${buildTrendSvg(trend)}<div>${trend.map(row => `<span>${new Date(row.date).toLocaleDateString("en-IN",{day:"numeric",month:"short"})}</span>`).join("")}</div></article>
-        <article class="my-sales-dash-card my-sales-categories"><h2><span>Sales by Category<small>Current month</small></span></h2><div class="my-sales-donut" style="background:conic-gradient(${segments || "#e8eeea 0 360deg"})"><span>${currency(categoryTotal)}<small>Total</small></span></div><ul>${categories.map((row,index) => { const percent = categoryTotal ? Math.round(Number(row.value || 0)/categoryTotal*100) : 0; return `<li><i style="background:${categoryColors[index%categoryColors.length]}"></i><span>${row.label || "Other"}<em><u style="width:${percent}%;background:${categoryColors[index%categoryColors.length]}"></u></em></span><b>${percent}%</b></li>`; }).join("") || "<li>No sales this month</li>"}</ul></article>
-        <article class="my-sales-dash-card my-sales-table"><h2>Recent Sales <a href="/reports">View All →</a></h2><table><thead><tr><th>Bill No</th><th>Customer</th><th>Items</th><th>Amount</th><th>Time</th></tr></thead><tbody>${recentRows || '<tr><td colspan="5">No sales today</td></tr>'}</tbody></table></article>
-        <article class="my-sales-dash-card my-sales-table"><h2>Top Products <a href="/reports">View All →</a></h2><table><thead><tr><th>Item</th><th>Sold</th><th>Revenue</th></tr></thead><tbody>${topRows || '<tr><td colspan="3">No sales this month</td></tr>'}</tbody></table></article>
+        <article class="my-sales-dash-card my-sales-trend"><h2><span>Sales Trend<small>${periodLabel}</small></span><b>${currency(weekTotal)}</b></h2>${buildTrendSvg(trend)}<div style="grid-template-columns:repeat(${Math.max(trendTicks.length, 1)},1fr)">${trendTicks.map(row => `<span>${new Date(`${row.date}T00:00:00`).toLocaleDateString("en-IN",{day:"numeric",month:"short"})}</span>`).join("")}</div></article>
+        <article class="my-sales-dash-card my-sales-categories"><h2><span>Sales by Category<small>${periodLabel}</small></span></h2>${buildDonutChart(categories, categoryColors, categoryTotal)}<ul>${categories.map((row,index) => { const percent = categoryTotal ? Math.round(Number(row.value || 0)/categoryTotal*100) : 0; return `<li tabindex="0" data-chart-value="${row.label || "Other"}: ${currency(row.value)} (${percent}%)"><i style="background:${categoryColors[index%categoryColors.length]}"></i><span>${row.label || "Other"}<em><u style="width:${percent}%;background:${categoryColors[index%categoryColors.length]}"></u></em></span><b>${percent}%</b></li>`; }).join("") || `<li>No sales in ${periodLabel}</li>`}</ul></article>
+        <article class="my-sales-dash-card my-sales-categories my-sales-payments"><h2><span>Payment Methods<small>${periodLabel}</small></span></h2>${buildDonutChart(paymentMethods, paymentColors, paymentTotal)}<ul>${paymentMethods.map((row,index) => { const percent = paymentTotal ? Math.round(Number(row.value || 0)/paymentTotal*100) : 0; return `<li tabindex="0" data-chart-value="${row.label || "Other"}: ${currency(row.value)} (${percent}%)"><i style="background:${paymentColors[index%paymentColors.length]}"></i><span>${row.label || "Other"}</span><b>${percent}%</b></li>`; }).join("") || `<li>No payment data</li>`}</ul></article>
+        <article class="my-sales-dash-card my-sales-hourly"><h2><span>Sales by Hour<small>${periodLabel}</small></span></h2><div class="my-sales-bars">${hourly.map((row,index) => `<span><i tabindex="0" data-chart-value="${row.hour % 12 || 12}${row.hour < 12 ? " AM" : " PM"}: ${currency(row.value)}" style="height:${Math.max(3, Number(row.value || 0) / maxHourly * 100)}%;--bar-index:${index}"></i><small>${row.hour % 12 || 12}${row.hour < 12 ? "a" : "p"}</small><b>${currency(row.value)}</b></span>`).join("")}</div></article>
+        <article class="my-sales-dash-card my-sales-table my-sales-top-products"><h2>Top Products <a href="/reports">View All →</a></h2><table><thead><tr><th>Item</th><th>Sold</th><th>Revenue</th></tr></thead><tbody>${topRows || `<tr><td colspan="3">No sales in ${periodLabel}</td></tr>`}</tbody></table></article>
+        <article class="my-sales-dash-card my-sales-stores"><h2><span>Sales by Store<small>${periodLabel}</small></span></h2><div>${storeSales.map((row,index) => `<p><span>${row.label}</span><i><u tabindex="0" data-chart-value="${row.label}: ${currency(row.value)}" style="width:${Number(row.value || 0) / maxStore * 100}%;--store-index:${index}"></u></i><b>${currency(row.value)}</b></p>`).join("") || "<p>No store sales</p>"}</div></article>
+        <article class="my-sales-dash-card my-sales-table my-sales-recent"><h2>Recent Sales <a href="/reports">View All →</a></h2><table><thead><tr><th>Bill No</th><th>Customer</th><th>Items</th><th>Amount</th><th>Time</th></tr></thead><tbody>${recentRows || `<tr><td colspan="5">No sales in ${periodLabel}</td></tr>`}</tbody></table></article>
+        <article class="my-sales-dash-card my-sales-weekly-overview"><h2><span>Weekly Summary (Current Week)<small>${periodLabel}</small></span></h2><div class="my-sales-week-summary"><span><i>🛒</i><b>${currency(summary.weekly_sales)}</b><small>Total Sales</small></span><span><i>▣</i><b>${weeklyTrend.reduce((sum,row) => sum + (Number(row.total || 0) > 0 ? 1 : 0), 0)}</b><small>Active Days</small></span><span><i>▤</i><b>${currency(summary.average_bill_value)}</b><small>Avg. Order Value</small></span></div>${buildWeeklyOverviewChart(weeklyTrend)}</article>
+        <article class="my-sales-dash-card my-sales-month-summary"><h2><span>Monthly Summary (Current Month)<small>${periodLabel}</small></span></h2><div class="my-sales-summary-metrics"><span><i>▧</i><small>Total Sales</small><b>${currency(summary.period_sales)}</b></span><span><i>▣</i><small>Total Orders</small><b>${summary.period_bills || 0}</b></span><span><i>▤</i><small>Total Expenses</small><b>${currency(summary.period_expenses)}</b></span><span><i>⌘</i><small>Net Profit</small><b>${currency(Number(summary.period_sales || 0)-Number(summary.period_expenses || 0))}</b></span></div>${buildMonthlySummaryChart(summary.monthly_overview || [])}</article>
+        <article class="my-sales-dash-card my-sales-orders"><h2><span>Order Status<small>${periodLabel}</small></span></h2>${buildDonutChart(orderRows, orderColors, orderTotal, "Total Orders")}<ul>${orderRows.map((row,index) => { const percent = orderTotal ? Math.round(row.value/orderTotal*100) : 0; return `<li tabindex="0" data-chart-value="${row.label}: ${row.value} (${percent}%)"><i style="background:${orderColors[index]}"></i>${row.label} <b>${row.value}</b></li>`; }).join("")}</ul></article>
       </div>`;
     shell.prepend(dashboard);
+    if (window.matchMedia("(min-width: 901px)").matches) {
+      const topNav = document.querySelector(".sm-pos-app .sm-top-nav");
+      topNav?.querySelector(".my-sales-period-filter")?.remove();
+      const toolbarFilter = dashboard.querySelector(".my-sales-period-filter");
+      if (topNav && toolbarFilter) topNav.insertBefore(toolbarFilter, topNav.querySelector(".my-sales-app-actions, .sm-user-chip"));
+    }
+    document.querySelectorAll(".my-sales-period-filter select, .my-sales-period-filter input").forEach(control => control.addEventListener("change", () => {
+      const form = control.closest(".my-sales-period-filter");
+      form.classList.add("loading");
+      form.querySelectorAll("select, input").forEach(field => { field.disabled = true; });
+      frappe.call({
+        method: "store_management.api.get_dashboard_summary",
+        args: {from_date: form.elements.from_date.value, to_date: form.elements.to_date.value, company: form.elements.company.value},
+        callback(response) { if (response.message) enhanceDesktopDashboard({summary: response.message}); },
+        error(error) {
+          form.classList.remove("loading");
+          form.querySelectorAll("select, input").forEach(field => { field.disabled = false; });
+          showStatus("Could not load dashboard data for that period.", "offline");
+          console.error("Unable to filter My Sales dashboard", error);
+        }
+      });
+    }));
 
     const hasDashboardData = Number(summary.today_bills || 0) > 0
       || Number(summary.month_sales || 0) > 0
@@ -430,6 +569,7 @@
 		return;
 	}
     buildMobileNavigation();
+    setupChartTooltips();
     buildMobileDrawer();
     addAppActions();
     enhancePosHome();

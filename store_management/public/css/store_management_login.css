@@ -65,16 +65,7 @@ body.store-login-page .store-login-brand {
 body.store-login-page .store-login-badge {
 	width: 58px;
 	height: 58px;
-	border-radius: 18px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background: linear-gradient(135deg, #16a34a, #2563eb);
-	color: #ffffff;
-	font-size: 18px;
-	font-weight: 800;
-	letter-spacing: 0.04em;
-	box-shadow: 0 14px 30px rgba(37, 99, 235, 0.18);
+	object-fit: contain;
 }
 
 body.store-login-page .store-login-brand h1 {
