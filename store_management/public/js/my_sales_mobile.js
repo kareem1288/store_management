@@ -3,7 +3,7 @@
   document.documentElement.classList.add("my-sales-app");
 
   const APP_NAME = "My Sales";
-  const MOBILE_UI_VERSION = "20260903-11";
+  const MOBILE_UI_VERSION = "20260903-12";
   let installPrompt = null;
 
   const appLanguage = window.frappe?.boot?.lang || window.frappe?.boot?.user?.language || "en";
@@ -517,6 +517,12 @@
         }
       });
     }));
+    document.querySelectorAll('.my-sales-period-filter input[type="date"]').forEach(input => {
+      input.addEventListener("click", () => {
+        if (typeof input.showPicker !== "function" || input.disabled) return;
+        try { input.showPicker(); } catch (error) { /* Native click remains available as fallback. */ }
+      });
+    });
 
     const hasDashboardData = Number(summary.today_bills || 0) > 0
       || Number(summary.month_sales || 0) > 0

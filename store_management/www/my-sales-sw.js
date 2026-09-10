@@ -1,9 +1,9 @@
-const CACHE_NAME = "my-sales-shell-v41";
+const CACHE_NAME = "my-sales-shell-v43";
 const APP_SHELL = [
   "/offline",
-  "/assets/store_management/css/store_management_ui.css?v=20260820-12",
-  "/assets/store_management/css/my_sales_mobile.css?v=20260903-11",
-  "/assets/store_management/js/my_sales_mobile.js?v=20260903-11",
+  "/assets/store_management/css/store_management_ui.css?v=20260911-1",
+  "/assets/store_management/css/my_sales_mobile.css?v=20260903-12",
+  "/assets/store_management/js/my_sales_mobile.js?v=20260903-12",
   "/assets/store_management/js/reports.js?v=20260820-11",
   "/assets/store_management/js/reports_bootstrap.js?v=20260820-11",
   "/api/method/store_management.api.get_brand_asset?name=my-sales-icon-192.png",
@@ -20,7 +20,7 @@ self.addEventListener("install", event => {
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))))
+      .then(keys => Promise.all(keys.filter(key => key.startsWith("my-sales-shell-") && key !== CACHE_NAME).map(key => caches.delete(key))))
       .then(() => self.clients.claim())
   );
 });
@@ -39,9 +39,11 @@ self.addEventListener("fetch", event => {
 
   if (url.pathname.startsWith("/assets/store_management/")) {
     event.respondWith(
-      fetch(request).then(response => {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+      fetch(request, { cache: "no-cache" }).then(response => {
+        if (response.ok) {
+          const copy = response.clone();
+          event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.put(request, copy)));
+        }
         return response;
       }).catch(() => caches.match(request))
     );
