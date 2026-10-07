@@ -1,13 +1,13 @@
 import frappe
-from frappe.utils import sanitise_redirect
 
 
 def get_context(context):
+    context.no_cache = 1
     if frappe.session.user != "Guest":
-        frappe.local.flags.redirect_location = "/masters"
+        frappe.local.flags.redirect_location = "/pos"
         raise frappe.Redirect
 
-    context.redirect_to = "/masters"
+    context.redirect_to = "/pos"
     context.no_cache = 1
     context.no_header = True
     context.no_breadcrumbs = True
