@@ -1,5 +1,4 @@
 import frappe
-import json
 
 
 def _empty_bootstrap():
@@ -40,4 +39,4 @@ def get_context(context):
 		frappe.log_error(frappe.get_traceback(), "POS Page Bootstrap Failed")
 		context.pos_bootstrap = _empty_bootstrap()
 
-	context.pos_bootstrap_json = json.dumps(context.pos_bootstrap)
+	context.pos_bootstrap_json = frappe.as_json(context.pos_bootstrap)

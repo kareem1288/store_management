@@ -4,6 +4,9 @@ import json
 
 def get_context(context):
 	context.no_cache = 1
+	if frappe.session.user == "Guest":
+		frappe.local.flags.redirect_location = "/store-login"
+		raise frappe.Redirect
 	context.show_sidebar = 0
 	context.login_required = 1
 	context.title = "Reports · My Sales"

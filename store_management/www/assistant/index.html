@@ -1,0 +1,25 @@
+{% extends "templates/web.html" %}
+{% block header %}{% endblock %}
+{% block navbar %}{% endblock %}
+{% block head_include %}
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="stylesheet" href="/assets/store_management/css/store_management_ui.css?v=20260911-1">
+<link rel="stylesheet" href="/assets/store_management/css/my_sales_mobile.css?v=20261007-1">
+<link rel="stylesheet" href="/assets/store_management/css/my_sales_design.css?v=20261007-4">
+<script defer src="/assets/store_management/js/my_sales_mobile.js?v=20261007-5"></script>
+<script defer src="/assets/store_management/js/my_sales_reference.js?v=20261007-4"></script>
+{% endblock %}
+{% block page_content %}
+<div class="sm-page-app sm-assistant-app">
+ <div class="sm-top-nav"><a class="sm-brand-lockup" href="/pos"><img class="sm-brand-mark" src="/api/method/store_management.api.get_brand_asset?name=my-sales-logo.svg" alt=""><span><strong>My Sales</strong><small>Retail Billing</small></span></a><nav class="sm-nav-primary" aria-label="Main navigation"></nav><div class="sm-user-chip">{{ frappe.session.user }}</div></div>
+ <main class="msa-shell">
+  <header class="msa-heading"><div><h1>✣ MSA</h1><small>My Sales Assistant</small><p>Your assistant for sales, reports, inventory and more.</p></div><button id="msa-new-chat" type="button">＋ New Chat</button></header>
+  <aside class="msa-history"><strong>Chat History</strong><div id="msa-history"></div></aside>
+  <section class="msa-chat">
+   <div class="msa-conversation" id="msa-conversation" role="log" aria-live="polite" aria-label="Conversation"><article class="msa-message msa-assistant">Hello! I'm MSA, your Sales Assistant. 👋<br>I can help you with sales, reports, inventory, customers and more.<br>What would you like to know?</article></div>
+   <div class="msa-suggestions"><button type="button" data-msa-question="Show today's sales">Show today's sales</button><button type="button" data-msa-question="Top 5 selling items">Top 5 selling items</button><button type="button" data-msa-question="Which items are low in stock?">Which items are low in stock?</button><button type="button" data-msa-question="Show this week's sales">Show this week's sales</button><a href="/reports?type=sales">Generate sales report</a><button type="button" data-msa-question="Cash collected today">Cash collected today</button></div>
+   <form id="msa-form"><label class="sr-only" for="msa-question">Your question</label><input id="msa-question" placeholder="Type your question here…" maxlength="500" required autocomplete="off"><button type="submit" aria-label="Send question">➤</button></form>
+  </section>
+ </main>
+</div>
+{% endblock %}

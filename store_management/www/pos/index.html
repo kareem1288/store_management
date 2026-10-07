@@ -10,8 +10,9 @@
 <meta name="theme-color" content="#146c43">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="My Sales">
-<script defer src="/assets/store_management/js/my_sales_mobile.js?v=20261007-3"></script>
-<link rel="stylesheet" href="/assets/store_management/css/my_sales_design.css?v=20261007-1">
+<script defer src="/assets/store_management/js/my_sales_mobile.js?v=20261007-5"></script>
+<link rel="stylesheet" href="/assets/store_management/css/my_sales_design.css?v=20261007-4">
+<script defer src="/assets/store_management/js/my_sales_reference.js?v=20261007-4"></script>
 {% endblock %}
 
 {% block page_content %}
@@ -87,7 +88,7 @@
 				<section class="sm-current-bill">
 					<div class="sm-current-bill-head">
 						<h3>Current Bill</h3>
-						<div class="sm-panel-badge" id="cart-count">0 items</div>
+						<button class="sm-resume-held" type="button" onclick="resumeHeldBill()">Resume Held Bill</button><div class="sm-panel-badge" id="cart-count">0 items</div>
 					</div>
 
 					<div class="sm-bill-table">
@@ -113,8 +114,8 @@
 					</div>
 
 					<div class="sm-bill-actions">
-						<button class="sm-chip sm-chip-muted" type="button" onclick="showDashboard()">Home</button>
-						<button class="sm-chip sm-chip-accent" type="button" onclick="clearCart()">Clear</button>
+						<button class="sm-chip sm-chip-muted" type="button" onclick="holdCurrentBill()">Hold</button><a class="sm-chip sm-chip-muted" href="/reports?type=open-bills">Open Bills</a>
+						<button class="sm-chip sm-chip-accent" type="button" onclick="clearCart()">Clear All</button>
 						<button class="sm-main-button" type="button" onclick="openCheckout()">Proceed to Pay</button>
 					</div>
 				</section>
@@ -159,7 +160,7 @@
 		<div class="sm-drawer-head">
 			<div>
 				<p class="sm-pos-kicker">Checkout | చెల్లింపు</p>
-				<h3>Ready to Generate Bill?</h3>
+				<h3>Payment</h3>
 			</div>
 			<button class="sm-icon-button" type="button" onclick="closeCheckout()" aria-label="Back to cart">←</button>
 		</div>
@@ -182,17 +183,18 @@
 			</label>
 
 			<div class="sm-payment-block">
-				<span class="sm-section-label">Payment Options</span>
+				<span class="sm-section-label">Payment Method</span>
 				<div class="sm-payment-options" id="payment-options">
 					<button class="sm-payment-option active" type="button" data-payment="Cash"><span aria-hidden="true">▣</span>Cash<small>Pay with cash</small></button>
 					<button class="sm-payment-option" type="button" data-payment="UPI"><span aria-hidden="true">UPI</span>UPI<small>Scan QR or UPI ID</small></button>
 					<button class="sm-payment-option" type="button" data-payment="Card"><span aria-hidden="true">▰</span>Card<small>Debit / Credit Card</small></button>
+					<button class="sm-payment-option" type="button" data-payment="Split"><span aria-hidden="true">▦</span>Split Payment<small>Cash + Card</small></button>
 				</div>
 			</div>
 
 			<div class="sm-checkout-summary" id="checkout-cart-items"></div>
 
-			<div class="sm-payment-detail active" data-payment-panel="Cash">
+			<div class="sm-payment-detail active" data-payment-panel="Cash"><h3>Cash Payment</h3>
 				<label class="sm-field"><span>Cash Received</span><input id="cash-received" type="number" min="0" step="0.01" placeholder="0.00"></label>
 				<div class="sm-cash-shortcuts" id="cash-shortcuts"></div>
 				<div class="sm-change-row"><span>Change</span><strong id="cash-change">Rs 0.00</strong></div>
@@ -221,6 +223,7 @@
 				</div>
 			</div>
 
+            <div class="sm-payment-detail" data-payment-panel="Split"><h3>Split Payment</h3><p class="sm-payment-help">Record a payment received partly in cash and partly by card.</p><label class="sm-field"><span>Cash Amount</span><input id="split-cash" type="number" min="0.01" step="0.01" placeholder="0.00"></label><label class="sm-field"><span>Card Amount</span><input id="split-card" type="number" min="0.01" step="0.01" placeholder="0.00"></label></div>
 			<div class="sm-payment-detail" data-payment-panel="Card">
 				<span class="sm-section-label">Card Details</span>
 				<div class="sm-card-fields">
@@ -233,13 +236,13 @@
 			</div>
 		</div>
 
-		<div class="sm-drawer-footer">
+		<div class="sm-drawer-footer"><button class="sm-chip sm-chip-muted" type="button" onclick="closeCheckout()">Cancel</button>
 			<div class="sm-drawer-total">
 				<span>Grand Total</span>
 				<strong id="checkout-total">Rs 0.00</strong>
 			</div>
 			<button class="sm-main-button" id="checkout-submit" type="button" onclick="generateBill()">
-				Generate Bill
+				Complete Payment
 			</button>
 		</div>
 
@@ -253,6 +256,7 @@
 			<div><span>Paid to</span><b id="payment-result-payee">My Sales</b></div>
 			<div><span>Transaction ID</span><b id="payment-result-id">—</b></div>
 			<button class="sm-main-button" type="button" onclick="previewGeneratedBill()">View Bill</button>
+			<button class="sm-chip" type="button" onclick="shareGeneratedBill()">Share</button>
 			<button class="sm-main-button" type="button" onclick="printGeneratedBill()">Print Bill</button>
 			<button class="sm-main-button" type="button" onclick="finishCheckout()">New Sale</button>
 		</div>
@@ -1520,9 +1524,7 @@ function bindEvents() {
 		generateUpiQr(button);
 	}));
 
-	window.addEventListener("hashchange", () => {
-		showPosHome();
-	});
+
 
 	updateScreenResolution();
 }
@@ -1585,6 +1587,27 @@ function updateScreenResolution() {
 	screenBadge.textContent = `Screen: ${width} x ${height}${ratio}`;
 }
 
+function holdCurrentBill() {
+	if (!smPosState.cart.length) return frappe.msgprint("Add items before holding a bill.");
+	try {
+		if (sessionStorage.getItem(`my-sales-held-${frappe.session.user}`)) return frappe.msgprint("Resume the existing held bill before holding another.");
+		sessionStorage.setItem(`my-sales-held-${frappe.session.user}`, JSON.stringify(smPosState.cart));
+		clearCart();
+		frappe.show_alert({message:"Bill held on this device. Use Resume Held Bill to continue.",indicator:"green"});
+	} catch (_) { frappe.msgprint("Unable to save this bill on this device."); }
+}
+function resumeHeldBill() {
+	if (smPosState.cart.length) return frappe.msgprint("Complete or hold the current cart before resuming.");
+	try {
+		const key = `my-sales-held-${frappe.session.user}`;
+		const rows = JSON.parse(sessionStorage.getItem(key) || "[]");
+		if (!rows.length) return frappe.msgprint("No held bill on this device.");
+		smPosState.cart = rows;
+		sessionStorage.removeItem(key);
+		renderCart();
+		location.hash = "cart";
+	} catch (_) { frappe.msgprint("Unable to restore the held bill."); }
+}
 function startBilling() {
 	location.hash = "billing-panel";
 	document.getElementById("billing-panel").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1599,7 +1622,7 @@ function showDashboard() {
 function showPosHome() {
 	document.getElementById("dashboard-panel").hidden = false;
 	document.getElementById("billing-panel").hidden = false;
-	setActiveNavTab("pos");
+
 	showDashboard();
 }
 
@@ -1923,7 +1946,7 @@ function renderItems() {
 function renderItemCard(item, index) {
 	const image = item.image
 		? `<img src="${item.image}" alt="${escapeHtml(item.item_name || item.name)}">`
-		: `<div>${getItemEmoji(item.item_group)}</div>`;
+		: `<div>${getItemEmoji(item.item_name || item.item_group)}</div>`;
 
 	return `
 		<article class="sm-item-card">
@@ -1952,6 +1975,8 @@ function scrollToCategory(categoryId) {
 
 function getItemEmoji(groupName) {
 	const value = (groupName || "").toLowerCase();
+	const products = {sugar:"🍚",rice:"🍚",flour:"🌾",oil:"🫙",dal:"🥣",tea:"☕",coffee:"☕",milk:"🥛",bread:"🍞",biscuit:"🍪",egg:"🥚",chicken:"🍗",tomato:"🍅",onion:"🧅",potato:"🥔"};
+	for (const [name, emoji] of Object.entries(products)) if (value.includes(name)) return emoji;
 	if (value.includes("beverage")) return "🥤";
 	if (value.includes("house")) return "🧴";
 	if (value.includes("personal")) return "🪥";
@@ -2044,7 +2069,7 @@ document.getElementById("discount").textContent = `${discountPercent}%`;
 						</span>
 						<div>
 							<h4>${escapeHtml(item.item_name)}</h4>
-							<p>${escapeHtml(item.stock_uom)} • ${escapeHtml(item.item_group || "General")}</p>
+							<p>${item.quantity} ${escapeHtml(item.stock_uom)} × ${formatCurrency(item.standard_rate)}</p>
 						</div>
 					</div>
 				</div>
@@ -2102,7 +2127,7 @@ function selectPayment(paymentMode) {
 		panel.classList.toggle("active", panel.dataset.paymentPanel === paymentMode);
 	});
 	const submit = document.getElementById("checkout-submit");
-	submit.textContent = paymentMode === "Card" ? "Pay Now" : paymentMode === "UPI" ? "Confirm UPI Payment" : "Generate Bill";
+	submit.textContent = "Complete Payment";
 	updatePaymentDetails();
 }
 
@@ -2178,6 +2203,13 @@ function copyUpiId() {
 }
 
 function validateSelectedPayment() {
+	if (smPosState.selectedPayment === "Split") {
+		const cash = Number(document.getElementById("split-cash").value);
+		const card = Number(document.getElementById("split-card").value);
+		if (!Number.isFinite(cash) || !Number.isFinite(card) || cash <= 0 || card <= 0 || Math.abs(cash + card - smPosState.summary.total) > .005) {
+			frappe.msgprint("Cash and Card amounts must be greater than zero and add up to the total."); return false;
+		}
+	}
 	if (smPosState.selectedPayment === "Cash" && Number(document.getElementById("cash-received").value || 0) < smPosState.summary.total) {
 		frappe.msgprint("Cash received must be at least the grand total.");
 		return false;
@@ -2200,23 +2232,28 @@ function validateSelectedPayment() {
 }
 
 function generateBill() {
+	if (smPosState.submitting) return;
 	if (!smPosState.cart.length) {
 		frappe.msgprint("Cart is empty.");
 		return;
 	}
 	if (!validateSelectedPayment()) return;
 
+	smPosState.submitting = true;
+	document.getElementById("checkout-submit").disabled = true;
 	const customerName = document.getElementById("customer-name").value.trim();
 	const customerPhone = document.getElementById("customer-phone").value.trim();
 
 	frappe.call({
 		method: "store_management.api.create_pos_bill",
+		always() { smPosState.submitting = false; document.getElementById("checkout-submit").disabled = false; },
 		freeze: true,
 		freeze_message: "Generating invoice...",
 		args: {
 			customer: customerName,
 			customer_phone: customerPhone,
 			payment_method: smPosState.selectedPayment,
+			split_payments: smPosState.selectedPayment === "Split" ? [{method:"Cash",amount:Number(document.getElementById("split-cash").value)},{method:"Card",amount:Number(document.getElementById("split-card").value)}] : null,
 			payment_reference: smPosState.selectedPayment === "UPI" ? smPosState.upiPayment?.transaction_id : null,
 			additional_discount_amount: smPosState.summary.discount,
 			items: smPosState.cart.map(item => ({
@@ -2235,7 +2272,6 @@ function generateBill() {
 				indicator: "green"
 			});
 
-			window.open(`/printview?doctype=Sales%20Invoice&name=${encodeURIComponent(invoice.name)}&format=${encodeURIComponent("My Sales Thermal Receipt")}&no_letterhead=1&_lang=en`, "_blank");
 
 			document.getElementById("payment-result-total").textContent = formatCurrency(smPosState.summary.total);
 			document.getElementById("payment-result-bill").textContent = invoice.name;
@@ -2260,6 +2296,15 @@ function finishCheckout() {
 	renderCart();
 	loadBootstrap();
 	showDashboard();
+}
+
+async function shareGeneratedBill() {
+	if (!smPosState.lastInvoice) return;
+	const url = `${location.origin}/printview?doctype=Sales%20Invoice&name=${encodeURIComponent(smPosState.lastInvoice)}&format=${encodeURIComponent("My Sales Thermal Receipt")}&no_letterhead=1`;
+	try {
+		if (navigator.share) await navigator.share({title: `Bill ${smPosState.lastInvoice}`,url});
+		else { await navigator.clipboard.writeText(url); frappe.show_alert({message:"Bill link copied. The recipient needs access to this invoice.",indicator:"green"}); }
+	} catch (error) { if (error.name !== "AbortError") frappe.msgprint("Unable to share this bill. Use Print Bill to save a PDF."); }
 }
 
 function previewGeneratedBill() {

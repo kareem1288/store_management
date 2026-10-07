@@ -3,7 +3,7 @@
   document.documentElement.classList.add("my-sales-app");
 
   const APP_NAME = "My Sales";
-  const MOBILE_UI_VERSION = "20261007-3";
+  const MOBILE_UI_VERSION = "20261007-5";
   let installPrompt = null;
 
   const appLanguage = window.frappe?.boot?.lang || window.frappe?.boot?.user?.language || "en";
@@ -185,10 +185,11 @@
     nav.innerHTML = `
       <a href="/pos" class="sm-nav-link ${page === "home" ? "active" : ""}">${icons.home}<span>Home</span></a>
       <a href="/pos#billing-panel" class="sm-nav-link ${page === "pos" ? "active" : ""}">${icons.pos}<span>POS</span></a>
-      <a href="/reports?type=sales" class="sm-nav-link ${page === "reports" && (new URLSearchParams(location.search).get("type") || "sales") === "sales" ? "active" : ""}">${icons.pos}<span>Sales</span></a>
-      <a href="/reports" class="sm-nav-link ${page === "reports" && new URLSearchParams(location.search).get("type") !== "sales" ? "active" : ""}">${icons.reports}<span>Reports</span></a>
-      <a href="/masters" class="sm-nav-link ${page === "masters" ? "active" : ""}">${icons.more}<span>More</span></a>
+      <a href="/reports" class="sm-nav-link ${page === "reports" ? "active" : ""}">${icons.reports}<span>Reports</span></a>
+      <a href="/masters" class="sm-nav-link ${page === "masters" ? "active" : ""}">${icons.masters}<span>Masters</span></a>
+      <button type="button" class="sm-nav-link my-sales-more ${location.pathname.includes("assistant") ? "active" : ""}">${icons.more}<span>More</span></button>
     `;
+    nav.querySelector(".my-sales-more")?.addEventListener("click", () => document.querySelector(".my-sales-mobile-menu")?.click());
   }
 
   function buildMobileDrawer() {
@@ -214,6 +215,7 @@
         <details open><summary>${icons.pos}<span>POS</span></summary><div class="my-sales-mobile-submenu"><a href="/pos#billing-panel">New Sale</a><a href="/reports?type=open-bills">Open Bills</a><a href="/masters?doctype=Customer">Customers</a></div></details>
         <details open><summary>${icons.reports}<span>Reports</span></summary><div class="my-sales-mobile-submenu my-sales-report-links"><a href="/reports?type=sales">Sales Report</a><a href="/reports?type=items">Item Report</a><a href="/reports?type=customers">Customer Report</a></div></details>
         <details open><summary>${icons.masters}<span>Masters</span></summary><div class="my-sales-mobile-submenu"><a href="/masters?doctype=Item">Items</a><a href="/masters?doctype=Item%20Group">Item Groups</a><a href="/masters?doctype=Customer">Customers</a><a href="/masters?doctype=Item%20Tax%20Template">Tax Templates</a><a href="/masters?doctype=Company">Companies</a><a href="/masters?doctype=User">Users</a></div></details>
+        <a href="/assistant">✣ <span>MSA · My Sales Assistant</span></a>
         <a href="/masters?doctype=Company" data-section="settings">${icons.more}<span>Settings</span></a>
       </nav>
       <a class="my-sales-mobile-drawer-logout" href="/logout">↪ <span>Logout</span></a>`;
@@ -307,7 +309,6 @@
           <div class="my-sales-menu-items my-sales-report-links"><a href="/reports?type=sales" class="${requestedReport === "sales" ? "active" : ""}">Sales Report</a>
           <a href="/reports?type=items" class="${requestedReport === "items" ? "active" : ""}">Item Wise Sales</a></div>
         </div>
-        <a href="/reports">${icons.reports}<span>Reports</span></a>
         <div class="my-sales-menu-group collapsed"><button type="button" class="my-sales-menu-toggle" aria-expanded="false">${icons.masters}<span>Masters</span><b>⌄</b></button>
           <div class="my-sales-menu-items"><a href="/masters?doctype=Item" class="${active === "masters" && requestedMaster === "Item" ? "active" : ""}">Masters</a>
           <a href="/masters?doctype=Item%20Group" class="${requestedMaster === "Item Group" ? "active" : ""}">Item Groups</a><a href="/masters?doctype=Customer" class="${requestedMaster === "Customer" ? "active" : ""}">Customers</a>
@@ -318,6 +319,7 @@
         <a href="/reports?type=expenses">${icons.reports}<span>Expenses</span></a>
         <a href="/masters?doctype=Company">${icons.more}<span>Settings</span></a>
       </nav>
+      <a class="my-sales-msa-link" href="/assistant">✣ <span><strong>MSA</strong><small>My Sales Assistant</small></span></a>
       <div class="my-sales-sidebar-promo"><strong>♛ &nbsp; Go Premium</strong><p>Unlock powerful reports and advanced features.</p><a href="/contact">Upgrade Now</a></div>
       <div class="my-sales-sidebar-help"><strong>◉ &nbsp; Need Help?</strong><p>Our support team is here to help you.</p><a href="mailto:support@mysales.app">Contact Support</a></div>
     `;
@@ -470,7 +472,7 @@
     const selectedCompany = summary.period?.company || "";
     const stores = summary.stores || [];
     const selectedFrom = summary.period?.start || `${selectedYear}-${String(selectedMonth).padStart(2, "0")}-01`;
-    const selectedTo = summary.period?.end || now.toISOString().slice(0, 10);
+    const selectedTo = summary.period?.end || `${selectedYear}-${String(selectedMonth).padStart(2, "0")}-${new Date(selectedYear, selectedMonth, 0).getDate()}`;
     const shortDate = value => new Date(`${value}T00:00:00`).toLocaleDateString("en-IN", {day: "2-digit", month: "short", year: "numeric"});
     const periodLabel = `${shortDate(selectedFrom)} – ${shortDate(selectedTo)}`;
     const tickStep = Math.max(1, Math.ceil(trend.length / 7));
@@ -517,6 +519,7 @@
     });
     grid.querySelectorAll(".my-sales-trend,.my-sales-categories,.my-sales-hourly").forEach(card => card.remove());
     shell.prepend(dashboard);
+    window.dispatchEvent(new Event("my-sales-dashboard-updated"));
     if (window.matchMedia("(min-width: 769px)").matches) {
       const topNav = document.querySelector(".sm-pos-app .sm-top-nav");
       topNav?.querySelector(".my-sales-period-filter")?.remove();
@@ -610,6 +613,22 @@
     }
   }
 
+  window.matchMedia("(max-width:768px)").addEventListener("change", () => {
+    const top = document.querySelector(".sm-top-nav");
+    if (!top) return;
+    if (window.matchMedia("(max-width:768px)").matches) {
+      if (!top.querySelector(".sm-nav-primary")) {
+        const nav = document.createElement("nav");
+        nav.className = "sm-nav-primary";
+        nav.setAttribute("aria-label", "Main navigation");
+        top.appendChild(nav);
+      }
+      buildMobileNavigation();
+      buildMobileDrawer();
+    } else buildDesktopShell();
+    syncDesktopPosView();
+  });
+
   window.addEventListener("beforeinstallprompt", event => {
     event.preventDefault();
     installPrompt = event;
@@ -646,6 +665,7 @@
     syncDesktopPosView();
     document.documentElement.classList.toggle("my-sales-offline", !navigator.onLine);
     watchInterfaceTranslations();
+    window.dispatchEvent(new Event("my-sales-ready"));
   });
   window.addEventListener("hashchange", () => {
     syncDesktopPosView();
@@ -654,7 +674,7 @@
 
   if ("serviceWorker" in navigator && window.isSecureContext) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/my-sales-sw.js?v=46", { scope: "/" }).catch(error => {
+      navigator.serviceWorker.register("/my-sales-sw.js?v=48", { scope: "/" }).catch(error => {
         console.warn("My Sales offline support could not be enabled", error);
       });
     });

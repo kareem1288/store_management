@@ -2,6 +2,7 @@ import base64
 import io
 import json
 import mimetypes
+import math
 from pathlib import Path
 import secrets
 import re
@@ -517,8 +518,6 @@ def _get_dashboard_summary(month=None, year=None, company=None, from_date=None, 
 	else:
 		period_start = getdate(f"{selected_year:04d}-{selected_month:02d}-01")
 		period_end = get_last_day(period_start)
-		if selected_year == today_date.year and selected_month == today_date.month:
-			period_end = today_date
 	if company and not frappe.db.exists("Company", company):
 		frappe.throw(_("Select a valid store."))
 	today_filters = {"docstatus": 1, "posting_date": today}
@@ -1205,6 +1204,7 @@ def create_pos_bill(
 	items=None,
 	additional_discount_amount=0,
 	notes=None,
+	split_payments=None,
 ):
 	cart_items = _parse_items(items)
 	if not cart_items:
@@ -1259,13 +1259,14 @@ def create_pos_bill(
 	)
 
 	invoice.insert()
+	parts = _validate_split_payments(split_payments, invoice.rounded_total or invoice.grand_total) if payment_method == "Split" else []
 	invoice.submit()
 
-	payment_entry = _create_and_submit_payment_entry(
-		invoice,
-		payment_method=payment_method,
-		payment_reference=payment_reference,
-	)
+	payment_entries = [
+		_create_and_submit_payment_entry(invoice, payment_method=part["method"], amount=part["amount"])
+		for part in parts
+	] if parts else [_create_and_submit_payment_entry(invoice, payment_method=payment_method, payment_reference=payment_reference)]
+	payment_entry = payment_entries[0]
 	frappe.enqueue(
 		"store_management.api._attach_thermal_bill_job",
 		queue="short",
@@ -1280,14 +1281,37 @@ def create_pos_bill(
 		"rounded_total": invoice.rounded_total or invoice.grand_total,
 		"posting_date": invoice.posting_date,
 		"payment_entry": payment_entry.name,
+		"payment_entries": [entry.name for entry in payment_entries],
 		"bill_attachment_queued": True,
 	}
 
 
-def _create_and_submit_payment_entry(invoice, payment_method="Cash", payment_reference=None):
+def _validate_split_payments(parts, total):
+	if isinstance(parts, str):
+		parts = json.loads(parts)
+	if not isinstance(parts, list) or len(parts) != 2:
+		frappe.throw(_("Split payment requires Cash and Card amounts."))
+	parsed = []
+	for part in parts:
+		if not isinstance(part, dict) or part.get("method") not in {"Cash", "Card"}:
+			frappe.throw(_("Select valid split payment methods."))
+		try:
+			amount = float(part.get("amount", 0))
+		except (TypeError, ValueError):
+			frappe.throw(_("Enter valid split payment amounts."))
+		if not math.isfinite(amount) or round(amount, 2) <= 0:
+			frappe.throw(_("Each split payment amount must be greater than zero."))
+		parsed.append({"method": part["method"], "amount": round(amount, 2)})
+	if len({part["method"] for part in parsed}) != 2 or abs(sum(part["amount"] for part in parsed) - flt(total)) > 0.005:
+		frappe.throw(_("Cash and Card amounts must add up to the invoice total."))
+	return parsed
+
+
+def _create_and_submit_payment_entry(invoice, payment_method="Cash", payment_reference=None, amount=None):
 	from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry
 
-	payment_entry = get_payment_entry("Sales Invoice", invoice.name)
+	kwargs = {"party_amount": amount} if amount is not None else {}
+	payment_entry = get_payment_entry("Sales Invoice", invoice.name, **kwargs)
 	if frappe.db.exists("Mode of Payment", payment_method):
 		payment_entry.mode_of_payment = payment_method
 

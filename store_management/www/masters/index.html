@@ -10,8 +10,9 @@
 <meta name="theme-color" content="#146c43">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="My Sales">
-<script defer src="/assets/store_management/js/my_sales_mobile.js?v=20261007-3"></script>
-<link rel="stylesheet" href="/assets/store_management/css/my_sales_design.css?v=20261007-1">
+<script defer src="/assets/store_management/js/my_sales_mobile.js?v=20261007-5"></script>
+<link rel="stylesheet" href="/assets/store_management/css/my_sales_design.css?v=20261007-4">
+<script defer src="/assets/store_management/js/my_sales_reference.js?v=20261007-4"></script>
 {% endblock %}
 
 {% block page_content %}
@@ -82,6 +83,7 @@
 						>
 						<span class="sm-search-icon">🔍</span>
 					</div>
+					<div class="sm-item-list-filters"><select id="master-item-group" aria-label="Item group" onchange="renderList()"><option value="">All Item Groups</option></select><select id="master-item-status" aria-label="Item status" onchange="renderList()"><option value="">All Statuses</option><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
 					<button class="sm-masters-btn sm-btn-primary" onclick="openCreateForm()">
 						+ New Record
 					</button>
@@ -969,6 +971,7 @@ function hideStoreProfileMenuItems() {
 
 function selectDoctype(doctype) {
 	currentDoctype = doctype;
+	document.querySelector(".sm-item-list-filters").hidden = doctype !== "Item";
 	editingRecord = null;
 	currentFormData = {};
 	searchQuery = '';
@@ -1024,6 +1027,16 @@ function renderList() {
 		});
 	}
 
+	if (currentDoctype === 'Item') {
+		const group = document.getElementById('master-item-group');
+		const previous = group.value;
+		const groups = [...new Set(currentRecords.map(row => row.item_group).filter(Boolean))];
+		group.innerHTML = '<option value="">All Item Groups</option>' + groups.map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('');
+		group.value = groups.includes(previous) ? previous : '';
+		const status = document.getElementById('master-item-status').value;
+		filteredRecords = filteredRecords.filter(row => (!group.value || row.item_group === group.value) && (!status || (status === 'inactive' ? Number(row.disabled) === 1 : Number(row.disabled || 0) === 0)));
+	}
+	container.classList.toggle('sm-item-table', currentDoctype === 'Item');
 	if (!filteredRecords.length) {
 		const message = searchQuery 
 			? `No matching records found for "${searchQuery}"`
@@ -1039,7 +1052,8 @@ function renderList() {
 
 	// Build column headers
 	const columnLabels = {
-		'name': 'ID',
+		'name': currentDoctype === 'Item' ? 'Item Code' : 'ID',
+        'stock_uom': 'UOM', 'standard_rate': 'Selling Price', 'disabled': 'Status',
 		'item_name': 'Item Name',
 		'item_group': 'Item Group',
 		'item_group_name': 'Item Group Name',
@@ -1058,13 +1072,15 @@ function renderList() {
 		'user_type': 'User Type'
 	};
 	
-const displayFields = fields.slice(0, 3);
+const displayFields = currentDoctype === 'Item' ? ['name','item_name','item_group','stock_uom','standard_rate','disabled'] : fields.slice(0, 3);
 	const headers = displayFields.map(f => `<div>${columnLabels[f] || f}</div>`).join('');
 	const headersWithActions = headers + '<div>Actions</div>';
 
 	const rows = filteredRecords.map(record => {
 		const cells = displayFields.map(field => {
-			return `<div class="sm-table-cell">${escapeHtml(String(record[field] || '-'))}</div>`;
+			if (field === 'disabled') return `<div class="sm-table-cell"><span class="sm-item-status ${Number(record.disabled) === 1 ? 'inactive' : ''}">${Number(record.disabled) === 1 ? 'Inactive' : 'Active'}</span></div>`;
+			if (field === 'standard_rate') return `<div class="sm-table-cell">₹${Number(record.standard_rate || 0).toFixed(2)}</div>`;
+			return `<div class="sm-table-cell">${escapeHtml(String(record[field] ?? '-'))}</div>`;
 		}).join('');
 		return `
 			<div class="sm-table-row">
