@@ -5,12 +5,13 @@
 
 {% block head_include %}
 <link rel="stylesheet" href="/assets/store_management/css/store_management_ui.css?v=20260911-1">
-<link rel="stylesheet" href="/assets/store_management/css/my_sales_mobile.css?v=20260903-12">
+<link rel="stylesheet" href="/assets/store_management/css/my_sales_mobile.css?v=20261007-1">
 <link rel="manifest" href="/assets/store_management/my-sales.webmanifest?v=20260818-3">
 <meta name="theme-color" content="#146c43">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="My Sales">
-<script defer src="/assets/store_management/js/my_sales_mobile.js?v=20260903-12"></script>
+<script defer src="/assets/store_management/js/my_sales_mobile.js?v=20261007-3"></script>
+<link rel="stylesheet" href="/assets/store_management/css/my_sales_design.css?v=20261007-1">
 {% endblock %}
 
 {% block page_content %}
@@ -114,7 +115,7 @@
 					<div class="sm-bill-actions">
 						<button class="sm-chip sm-chip-muted" type="button" onclick="showDashboard()">Home</button>
 						<button class="sm-chip sm-chip-accent" type="button" onclick="clearCart()">Clear</button>
-						<button class="sm-main-button" type="button" onclick="openCheckout()">Proceed to Checkout</button>
+						<button class="sm-main-button" type="button" onclick="openCheckout()">Proceed to Pay</button>
 					</div>
 				</section>
 			</div>
@@ -183,9 +184,9 @@
 			<div class="sm-payment-block">
 				<span class="sm-section-label">Payment Options</span>
 				<div class="sm-payment-options" id="payment-options">
-					<button class="sm-payment-option active" type="button" data-payment="Cash">Cash</button>
-					<button class="sm-payment-option" type="button" data-payment="UPI">UPI</button>
-					<button class="sm-payment-option" type="button" data-payment="Card">Card</button>
+					<button class="sm-payment-option active" type="button" data-payment="Cash"><span aria-hidden="true">▣</span>Cash<small>Pay with cash</small></button>
+					<button class="sm-payment-option" type="button" data-payment="UPI"><span aria-hidden="true">UPI</span>UPI<small>Scan QR or UPI ID</small></button>
+					<button class="sm-payment-option" type="button" data-payment="Card"><span aria-hidden="true">▰</span>Card<small>Debit / Credit Card</small></button>
 				</div>
 			</div>
 
@@ -245,12 +246,13 @@
 		<div class="sm-payment-result" id="payment-result" aria-hidden="true">
 			<button class="sm-result-back" type="button" onclick="finishCheckout()" aria-label="Back to new sale">←</button>
 			<div class="sm-payment-result-icon">✓</div>
-			<h3>Bill Generated Successfully!</h3>
+			<h3>Payment Successful!</h3>
 			<p>Thank you for your purchase.</p>
 			<strong id="payment-result-total">Rs 0.00</strong>
 			<div><span>Bill No.</span><b id="payment-result-bill">—</b></div>
 			<div><span>Paid to</span><b id="payment-result-payee">My Sales</b></div>
 			<div><span>Transaction ID</span><b id="payment-result-id">—</b></div>
+			<button class="sm-main-button" type="button" onclick="previewGeneratedBill()">View Bill</button>
 			<button class="sm-main-button" type="button" onclick="printGeneratedBill()">Print Bill</button>
 			<button class="sm-main-button" type="button" onclick="finishCheckout()">New Sale</button>
 		</div>
@@ -1584,11 +1586,13 @@ function updateScreenResolution() {
 }
 
 function startBilling() {
+	location.hash = "billing-panel";
 	document.getElementById("billing-panel").scrollIntoView({ behavior: "smooth", block: "start" });
 	focusSearch();
 }
 
 function showDashboard() {
+	location.hash = "";
 	document.getElementById("dashboard-panel").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -1931,7 +1935,7 @@ function renderItemCard(item, index) {
 				<div class="sm-item-meta">${escapeHtml(item.item_group || "General")} • ${escapeHtml(item.stock_uom || "Nos")}</div>
 				<div class="sm-item-price-row">
 					<div class="sm-item-price">${formatCurrency(item.standard_rate || 0)}</div>
-					<button class="sm-add-button" type="button" onclick="addToCartByCode('${encodeURIComponent(item.name || "")}')">
+					<button class="sm-add-button" aria-label="Add ${escapeHtml(item.item_name || item.name)} to cart" type="button" onclick="addToCartByCode('${encodeURIComponent(item.name || "")}')">
 						Add
 					</button>
 				</div>
@@ -2258,13 +2262,33 @@ function finishCheckout() {
 	showDashboard();
 }
 
+function previewGeneratedBill() {
+	if (!smPosState.lastInvoice) return;
+	let preview = document.getElementById("my-sales-bill-preview");
+	if (!preview) {
+		preview = document.createElement("section");
+		preview.id = "my-sales-bill-preview";
+		preview.className = "my-sales-bill-preview";
+		preview.setAttribute("role", "dialog");
+		preview.setAttribute("aria-modal", "true");
+		preview.setAttribute("aria-label", "Generated bill");
+		preview.innerHTML = '<header><button type="button" data-close>← Back</button><strong>Generated Bill</strong><button type="button" onclick="printGeneratedBill()">Print / Save PDF</button></header><iframe title="Generated tax invoice"></iframe>';
+		preview.querySelector("[data-close]").addEventListener("click", () => { preview.hidden = true; document.querySelector('[onclick="previewGeneratedBill()"]')?.focus(); });
+		preview.addEventListener("keydown", event => { if (event.key === "Escape") preview.querySelector("[data-close]").click(); });
+		document.body.appendChild(preview);
+	}
+	preview.querySelector("iframe").src = `/printview?doctype=Sales%20Invoice&name=${encodeURIComponent(smPosState.lastInvoice)}&format=${encodeURIComponent("My Sales Thermal Receipt")}&no_letterhead=1&_lang=en`;
+	preview.hidden = false;
+	preview.querySelector("[data-close]").focus();
+}
+
 function printGeneratedBill() {
 	if (!smPosState.lastInvoice) return;
 	window.open(`/printview?doctype=Sales%20Invoice&name=${encodeURIComponent(smPosState.lastInvoice)}&format=${encodeURIComponent("My Sales Thermal Receipt")}&no_letterhead=1&_lang=en`, "_blank");
 }
 
 function formatCurrency(value) {
-	return `Rs ${Number(value || 0).toFixed(2)}`;
+	return `₹${Number(value || 0).toFixed(2)}`;
 }
 
 function parseBootstrapPayload(rawPayload) {

@@ -3,7 +3,7 @@
   document.documentElement.classList.add("my-sales-app");
 
   const APP_NAME = "My Sales";
-  const MOBILE_UI_VERSION = "20260903-12";
+  const MOBILE_UI_VERSION = "20261007-3";
   let installPrompt = null;
 
   const appLanguage = window.frappe?.boot?.lang || window.frappe?.boot?.user?.language || "en";
@@ -185,9 +185,9 @@
     nav.innerHTML = `
       <a href="/pos" class="sm-nav-link ${page === "home" ? "active" : ""}">${icons.home}<span>Home</span></a>
       <a href="/pos#billing-panel" class="sm-nav-link ${page === "pos" ? "active" : ""}">${icons.pos}<span>POS</span></a>
-      <a href="/reports?type=sales" class="sm-nav-link ${page === "reports" ? "active" : ""}">${icons.pos}<span>Sales</span></a>
-      <a href="/reports?type=items" class="sm-nav-link">${icons.reports}<span>Reports</span></a>
-      <a href="/masters?doctype=Item" class="sm-nav-link ${page === "masters" ? "active" : ""}">${icons.more}<span>More</span></a>
+      <a href="/reports?type=sales" class="sm-nav-link ${page === "reports" && (new URLSearchParams(location.search).get("type") || "sales") === "sales" ? "active" : ""}">${icons.pos}<span>Sales</span></a>
+      <a href="/reports" class="sm-nav-link ${page === "reports" && new URLSearchParams(location.search).get("type") !== "sales" ? "active" : ""}">${icons.reports}<span>Reports</span></a>
+      <a href="/masters" class="sm-nav-link ${page === "masters" ? "active" : ""}">${icons.more}<span>More</span></a>
     `;
   }
 
@@ -288,7 +288,7 @@
   }
 
   function buildDesktopShell() {
-    if (window.matchMedia("(max-width: 900px)").matches || document.querySelector(".my-sales-desktop-sidebar")) return;
+    if (window.matchMedia("(max-width: 768px)").matches || document.querySelector(".my-sales-desktop-sidebar")) return;
     const app = document.querySelector(".sm-page-app");
     if (!app) return;
     const active = location.pathname.includes("masters") ? "masters" : location.pathname.includes("reports") ? "reports" : "dashboard";
@@ -303,7 +303,7 @@
         <div class="my-sales-menu-group collapsed"><button type="button" class="my-sales-menu-toggle" aria-expanded="false">${icons.pos}<span>POS</span><b>⌄</b></button>
           <div class="my-sales-menu-items"><a href="/pos#billing-panel">New Sale</a><a href="/reports?type=open-bills" class="${requestedReport === "open-bills" ? "active" : ""}">Open Bills</a></div>
         </div>
-        <div class="my-sales-menu-group collapsed"><button type="button" class="my-sales-menu-toggle" aria-expanded="false">${icons.reports}<span>Sales</span><b>⌄</b></button>
+        <div class="my-sales-menu-group collapsed"><button type="button" class="my-sales-menu-toggle" aria-expanded="false">${icons.reports}<span>Reports</span><b>⌄</b></button>
           <div class="my-sales-menu-items my-sales-report-links"><a href="/reports?type=sales" class="${requestedReport === "sales" ? "active" : ""}">Sales Report</a>
           <a href="/reports?type=items" class="${requestedReport === "items" ? "active" : ""}">Item Wise Sales</a></div>
         </div>
@@ -321,6 +321,9 @@
       <div class="my-sales-sidebar-promo"><strong>♛ &nbsp; Go Premium</strong><p>Unlock powerful reports and advanced features.</p><a href="/contact">Upgrade Now</a></div>
       <div class="my-sales-sidebar-help"><strong>◉ &nbsp; Need Help?</strong><p>Our support team is here to help you.</p><a href="mailto:support@mysales.app">Contact Support</a></div>
     `;
+    sidebar.querySelector(".my-sales-sidebar-promo")?.remove();
+    sidebar.querySelector(".my-sales-sidebar-help")?.remove();
+    sidebar.insertAdjacentHTML("beforeend", `<a class="my-sales-desktop-logout" href="/logout">↪ &nbsp; Logout</a>`);
     document.body.appendChild(sidebar);
 
     sidebar.querySelectorAll(".my-sales-menu-toggle").forEach(toggle => {
@@ -402,12 +405,20 @@
   }
 
   function buildMonthlySummaryChart(rows) {
-    const max = Math.max(...rows.flatMap(row => [Number(row.sales || 0), Number(row.profit || 0)]), 1);
-    return `<div class="my-sales-month-chart"><svg viewBox="0 0 300 120" preserveAspectRatio="none" aria-label="Monthly sales and profit bar chart"><path d="M8 95H294M8 55H294M8 15H294" stroke="#e7eee9" stroke-dasharray="4 5"/>${rows.map((row,index) => {
-      const salesHeight = Math.max(3, Number(row.sales || 0) / max * 76);
-      const profitHeight = Math.max(3, Number(row.profit || 0) / max * 76);
-      const x = 25 + index * 55;
-      return `<rect class="sales-bar" x="${x}" y="${95-salesHeight}" width="13" height="${salesHeight}" rx="3" tabindex="0" data-chart-value="${row.month} sales: ${currency(row.sales)}"/><rect class="profit-bar" x="${x+16}" y="${95-profitHeight}" width="13" height="${profitHeight}" rx="3" tabindex="0" data-chart-value="${row.month} profit: ${currency(row.profit)}"/><text x="${x+14}" y="110" text-anchor="middle">${row.month}</text>`;
+    const values = rows.flatMap(row => [Number(row.sales || 0), Number(row.profit || 0)]);
+    const upper = Math.max(...values, 1);
+    const lower = Math.min(...values, 0);
+    const y = value => 95 - (value - lower) / (upper - lower) * 80;
+    const baseline = y(0);
+    const step = 280 / Math.max(rows.length, 1);
+    const barWidth = Math.max(2, step * .32);
+    return `<div class="my-sales-month-chart"><svg viewBox="0 0 300 120" preserveAspectRatio="none" aria-label="Current month daily sales and profit"><path d="M8 ${baseline}H294M8 55H294M8 15H294" stroke="#e7eee9" stroke-dasharray="4 5"/>${rows.map((row,index) => {
+      const date = new Date(`${row.date}T00:00:00`);
+      const label = date.toLocaleDateString("en-IN", {day:"numeric", month:"short"});
+      const x = 10 + index * step;
+      const bar = (value, offset, name) => `<rect class="${name}-bar" x="${x + offset}" y="${Math.min(baseline, y(value))}" width="${barWidth}" height="${Math.max(1, Math.abs(y(value) - baseline))}" rx="1" tabindex="0" data-chart-value="${label} ${name}: ${currency(value)}"/>`;
+      const tick = index % 5 === 0 || index === rows.length - 1 ? `<text x="${x + step / 2}" y="110" text-anchor="middle">${date.getDate()}</text>` : "";
+      return `${bar(Number(row.sales || 0), 0, "sales")}${bar(Number(row.profit || 0), barWidth + 1, "profit")}${tick}`;
     }).join("")}</svg><footer><span><i></i>Sales (₹)</span><span><i></i>Profit (₹)</span></footer></div>`;
   }
 
@@ -467,6 +478,11 @@
     const topItem = (summary.top_items || [])[0];
     const dailyTargetPercent = Math.min(100, Math.round(Number(summary.today_sales || 0) / Math.max(Number(summary.daily_target || 2000), 1) * 100));
     const monthlyTargetPercent = Math.min(100, Math.round(Number(summary.period_sales || 0) / Math.max(Number(summary.monthly_target || 5000), 1) * 100));
+    const currentWeek = summary.current_summaries?.week || {};
+    const currentMonth = summary.current_summaries?.month || {};
+    const currentWeeklyTrend = currentWeek.rows || [];
+    const currentWeeklyLabel = currentWeek.start && currentWeek.end ? `${shortDate(currentWeek.start)} – ${shortDate(currentWeek.end)}` : "Loading dates";
+    const currentMonthlyLabel = currentMonth.start && currentMonth.end ? `${shortDate(currentMonth.start)} – ${shortDate(currentMonth.end)}` : "Loading dates";
     const weeklyTrend = summary.weekly_trend || trend.slice(-7);
     const weeklyMax = Math.max(...weeklyTrend.map(row => Number(row.total || 0)), 1);
     const weeklyBars = `<div class="my-sales-week-bars">${weeklyTrend.map((row,index) => `<i tabindex="0" data-chart-value="${row.date || ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][index]}: ${currency(row.total)}" style="height:${Math.max(8, Number(row.total || 0)/weeklyMax*100)}%"><small>${["M","T","W","T","F","S","S"][index] || ""}</small></i>`).join("")}</div>`;
@@ -490,12 +506,18 @@
         <article class="my-sales-dash-card my-sales-table my-sales-top-products"><h2>Top Products <a href="/reports">View All →</a></h2><table><thead><tr><th>Item</th><th>Sold</th><th>Revenue</th></tr></thead><tbody>${topRows || `<tr><td colspan="3">No sales in ${periodLabel}</td></tr>`}</tbody></table></article>
         <article class="my-sales-dash-card my-sales-stores"><h2><span>Sales by Store<small>${periodLabel}</small></span></h2><div>${storeSales.map((row,index) => `<p><span>${row.label}</span><i><u tabindex="0" data-chart-value="${row.label}: ${currency(row.value)}" style="width:${Number(row.value || 0) / maxStore * 100}%;--store-index:${index}"></u></i><b>${currency(row.value)}</b></p>`).join("") || "<p>No store sales</p>"}</div></article>
         <article class="my-sales-dash-card my-sales-table my-sales-recent"><h2>Recent Sales <a href="/reports">View All →</a></h2><table><thead><tr><th>Bill No</th><th>Customer</th><th>Items</th><th>Amount</th><th>Time</th></tr></thead><tbody>${recentRows || `<tr><td colspan="5">No sales in ${periodLabel}</td></tr>`}</tbody></table></article>
-        <article class="my-sales-dash-card my-sales-weekly-overview"><h2><span>Weekly Summary (Current Week)<small>${periodLabel}</small></span></h2><div class="my-sales-week-summary"><span><i>🛒</i><b>${currency(summary.weekly_sales)}</b><small>Total Sales</small></span><span><i>▣</i><b>${weeklyTrend.reduce((sum,row) => sum + (Number(row.total || 0) > 0 ? 1 : 0), 0)}</b><small>Active Days</small></span><span><i>▤</i><b>${currency(summary.average_bill_value)}</b><small>Avg. Order Value</small></span></div>${buildWeeklyOverviewChart(weeklyTrend)}</article>
-        <article class="my-sales-dash-card my-sales-month-summary"><h2><span>Monthly Summary (Current Month)<small>${periodLabel}</small></span></h2><div class="my-sales-summary-metrics"><span><i>▧</i><small>Total Sales</small><b>${currency(summary.period_sales)}</b></span><span><i>▣</i><small>Total Orders</small><b>${summary.period_bills || 0}</b></span><span><i>▤</i><small>Total Expenses</small><b>${currency(summary.period_expenses)}</b></span><span><i>⌘</i><small>Net Profit</small><b>${currency(Number(summary.period_sales || 0)-Number(summary.period_expenses || 0))}</b></span></div>${buildMonthlySummaryChart(summary.monthly_overview || [])}</article>
+        <article class="my-sales-dash-card my-sales-weekly-overview"><h2><span>Weekly Summary (${currentWeeklyLabel})</span></h2><div class="my-sales-week-summary"><span><i>🛒</i><b>${currency(currentWeek.sales)}</b><small>Total Sales</small></span><span><i>▣</i><b>${currentWeek.active_days || 0}</b><small>Active Days</small></span><span><i>▤</i><b>${currency(currentWeek.average_bill_value)}</b><small>Avg. Order Value</small></span></div>${buildWeeklyOverviewChart(currentWeeklyTrend)}</article>
+        <article class="my-sales-dash-card my-sales-month-summary"><h2><span>Monthly Summary (${currentMonthlyLabel})</span></h2><div class="my-sales-summary-metrics"><span><i>▧</i><small>Total Sales</small><b>${currency(currentMonth.sales)}</b></span><span><i>▣</i><small>Total Orders</small><b>${currentMonth.orders || 0}</b></span><span><i>▤</i><small>Total Expenses</small><b>${currency(currentMonth.expenses)}</b></span><span><i>⌘</i><small>Net Profit</small><b>${currency(currentMonth.profit)}</b></span></div>${buildMonthlySummaryChart(currentMonth.rows || [])}</article>
         <article class="my-sales-dash-card my-sales-orders"><h2><span>Order Status<small>${periodLabel}</small></span></h2>${buildDonutChart(orderRows, orderColors, orderTotal, "Total Orders")}<ul>${orderRows.map((row,index) => { const percent = orderTotal ? Math.round(row.value/orderTotal*100) : 0; return `<li tabindex="0" data-chart-value="${row.label}: ${row.value} (${percent}%)"><i style="background:${orderColors[index]}"></i>${row.label} <b>${row.value}</b></li>`; }).join("")}</ul></article>
       </div>`;
+    const grid = dashboard.querySelector(".my-sales-dashboard-grid");
+    ["stores", "top-products", "recent", "weekly-overview", "month-summary", "orders"].forEach(name => {
+      const card = grid.querySelector(`.my-sales-${name}`);
+      if (card) grid.appendChild(card);
+    });
+    grid.querySelectorAll(".my-sales-trend,.my-sales-categories,.my-sales-hourly").forEach(card => card.remove());
     shell.prepend(dashboard);
-    if (window.matchMedia("(min-width: 901px)").matches) {
+    if (window.matchMedia("(min-width: 769px)").matches) {
       const topNav = document.querySelector(".sm-pos-app .sm-top-nav");
       topNav?.querySelector(".my-sales-period-filter")?.remove();
       const toolbarFilter = dashboard.querySelector(".my-sales-period-filter");
@@ -542,7 +564,11 @@
 
   function syncDesktopPosView() {
     if (!document.querySelector(".sm-pos-app")) return;
-    const billing = location.hash === "#billing-panel";
+    const billing = ["#billing-panel", "#cart"].includes(location.hash);
+    document.documentElement.classList.toggle("my-sales-cart-view", location.hash === "#cart");
+    const title = document.querySelector(".my-sales-mobile-title,.my-sales-desktop-title strong");
+    if (title) title.textContent = billing ? (location.hash === "#cart" ? "Cart" : window.matchMedia("(max-width:768px)").matches ? "POS" : "New Sale") : "Dashboard";
+    document.querySelector(".my-sales-desktop-sidebar nav > a")?.classList.toggle("active", !billing);
     document.documentElement.classList.toggle("my-sales-desktop-billing", billing);
     document.documentElement.classList.toggle("my-sales-mobile-billing", billing);
   }
@@ -551,6 +577,37 @@
     const workspace = document.querySelector(".sm-pos-workspace");
     const bill = document.querySelector(".sm-current-bill");
     if (workspace && bill && !workspace.contains(bill)) workspace.appendChild(bill);
+  }
+
+  function enhanceReferenceScreens() {
+    const workspace = document.querySelector(".sm-pos-workspace");
+    if (workspace) {
+      const bar = document.createElement("a");
+      bar.className = "my-sales-view-cart";
+      bar.href = "#cart";
+      bar.innerHTML = '<span>View Cart</span><strong>₹0.00</strong><span>→</span>';
+      workspace.appendChild(bar);
+      const sync = () => {
+        bar.querySelector("strong").textContent = document.getElementById("grand-total")?.textContent || document.querySelector(".sm-grand-total-box strong")?.textContent || "₹0.00";
+        bar.querySelector("span").textContent = `View Cart · ${document.getElementById("cart-count")?.textContent || "0 items"}`;
+      };
+      new MutationObserver(sync).observe(document.querySelector(".sm-current-bill"), {childList: true, subtree: true, characterData: true});
+      sync();
+    }
+    const masters = document.querySelector(".sm-masters-app");
+    if (masters && !new URLSearchParams(location.search).has("doctype")) {
+      masters.classList.add("my-sales-master-menu");
+      masters.querySelectorAll(".sm-nav-item").forEach(button => button.addEventListener("click", () => masters.classList.remove("my-sales-master-menu")));
+    }
+    const reports = document.querySelector(".sm-reports-app");
+    if (reports && !new URLSearchParams(location.search).has("type")) {
+      const menu = document.createElement("nav");
+      menu.className = "my-sales-report-menu";
+      menu.setAttribute("aria-label", "Reports");
+      menu.innerHTML = [["sales","Sales Register"],["items","Item Wise Sales"],["customers","Customer Ledger"],["open-bills","Open Bills"],["expenses","Expenses"]].map(([type,label],index) => `<a href="/reports?type=${type}" style="--menu-tone:${["#00ae66","#ff901a","#9857ed","#258aff","#e94780"][index]}"><i>${icons.reports}</i><span>${label}</span><b>›</b></a>`).join("");
+      reports.querySelector(".sm-top-nav")?.insertAdjacentElement("afterend", menu);
+      reports.classList.add("my-sales-reports-menu");
+    }
   }
 
   window.addEventListener("beforeinstallprompt", event => {
@@ -585,6 +642,7 @@
 	addBackButton();
     enhanceDesktopDashboard();
     arrangeDesktopBilling();
+    enhanceReferenceScreens();
     syncDesktopPosView();
     document.documentElement.classList.toggle("my-sales-offline", !navigator.onLine);
     watchInterfaceTranslations();
@@ -596,7 +654,7 @@
 
   if ("serviceWorker" in navigator && window.isSecureContext) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/my-sales-sw.js?v=18", { scope: "/" }).catch(error => {
+      navigator.serviceWorker.register("/my-sales-sw.js?v=46", { scope: "/" }).catch(error => {
         console.warn("My Sales offline support could not be enabled", error);
       });
     });

@@ -439,6 +439,61 @@ def _resolve_customer(customer=None, customer_phone=None):
 	return _get_default_customer()
 
 
+def _get_current_dashboard_summaries(today, company=None):
+	"""Calendar summaries independent of the dashboard's selected date range."""
+	today = getdate(today)
+	week_start = getdate(add_days(today, -today.weekday()))
+	week_end = getdate(add_days(week_start, 6))
+	month_start = getdate(get_first_day(today))
+	month_end = getdate(get_last_day(today))
+	filters = {
+		"docstatus": 1,
+		"posting_date": ["between", [min(week_start, month_start), max(week_end, month_end)]],
+	}
+	if company:
+		filters["company"] = company
+	sales = frappe.get_all(
+		"Sales Invoice", filters=filters,
+		fields=["posting_date", "grand_total"], limit_page_length=0,
+	)
+	expenses = frappe.get_all(
+		"Purchase Invoice", filters=filters,
+		fields=["posting_date", "grand_total"], limit_page_length=0,
+	)
+	sales_by_day, expenses_by_day, orders_by_day = {}, {}, {}
+	for row in sales:
+		day = getdate(row.posting_date)
+		sales_by_day[day] = sales_by_day.get(day, 0) + flt(row.grand_total)
+		orders_by_day[day] = orders_by_day.get(day, 0) + 1
+	for row in expenses:
+		day = getdate(row.posting_date)
+		expenses_by_day[day] = expenses_by_day.get(day, 0) + flt(row.grand_total)
+
+	def summarize(start, end):
+		rows = []
+		day = start
+		while day <= end:
+			sales_value = round(sales_by_day.get(day, 0), 2)
+			expense_value = round(expenses_by_day.get(day, 0), 2)
+			rows.append({
+				"date": str(day), "total": sales_value, "sales": sales_value,
+				"expenses": expense_value, "profit": round(sales_value - expense_value, 2),
+				"orders": orders_by_day.get(day, 0),
+			})
+			day = getdate(add_days(day, 1))
+		total = round(sum(row["sales"] for row in rows), 2)
+		cost = round(sum(row["expenses"] for row in rows), 2)
+		orders = sum(row["orders"] for row in rows)
+		return {
+			"start": str(start), "end": str(end), "rows": rows,
+			"sales": total, "expenses": cost, "profit": round(total - cost, 2),
+			"orders": orders, "active_days": sum(row["orders"] > 0 for row in rows),
+			"average_bill_value": round(total / orders, 2) if orders else 0,
+		}
+
+	return {"week": summarize(week_start, week_end), "month": summarize(month_start, month_end)}
+
+
 def _get_dashboard_summary(month=None, year=None, company=None, from_date=None, to_date=None):
 	today = nowdate()
 	today_date = getdate(today)
@@ -610,28 +665,7 @@ def _get_dashboard_summary(month=None, year=None, company=None, from_date=None, 
 		filters=period_filters,
 		fields=[{"SUM": "grand_total", "as": "total"}],
 	)
-	monthly_overview = []
-	for offset in range(4, -1, -1):
-		month_start = getdate(get_first_day(add_months(period_end, -offset)))
-		month_end = getdate(get_last_day(month_start))
-		month_filters = {"docstatus": 1, "posting_date": ["between", [month_start, month_end]]}
-		if company:
-			month_filters["company"] = company
-		month_sales = frappe.get_all(
-			"Sales Invoice", filters=month_filters, fields=[{"SUM": "grand_total", "as": "total"}]
-		)
-		month_expenses = frappe.get_all(
-			"Purchase Invoice", filters=month_filters, fields=[{"SUM": "grand_total", "as": "total"}]
-		)
-		sales_value = flt(month_sales[0].total if month_sales else 0)
-		expense_value = flt(month_expenses[0].total if month_expenses else 0)
-		monthly_overview.append(
-			{
-				"month": month_start.strftime("%b"),
-				"sales": round(sales_value, 2),
-				"profit": round(sales_value - expense_value, 2),
-			}
-		)
+	current_summaries = _get_current_dashboard_summaries(today_date, company)
 
 	return {
 		"today_sales": round(sum(flt(row.grand_total) for row in today_sales_rows), 2),
@@ -666,7 +700,8 @@ def _get_dashboard_summary(month=None, year=None, company=None, from_date=None, 
 			"pending": order_status.get("0", 0),
 			"cancelled": order_status.get("2", 0),
 		},
-		"monthly_overview": monthly_overview,
+		"monthly_overview": current_summaries["month"]["rows"],
+		"current_summaries": current_summaries,
 	}
 
 

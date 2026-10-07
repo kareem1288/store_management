@@ -769,9 +769,31 @@ body .page-footer {
 }
 </style>
 <link rel="stylesheet" href="/assets/store_management/css/store_management_auth.css">
+<link rel="stylesheet" href="/assets/store_management/css/my_sales_design.css?v=20261007-1">
 {% endblock %}
 
 {% block page_content %}
+<section class="my-sales-welcome" id="my-sales-welcome" hidden aria-label="Welcome to My Sales">
+  <img src="/api/method/store_management.api.get_brand_asset?name=my-sales-logo.svg" alt="My Sales">
+  <h1>My Sales</h1><small>RETAIL BILLING</small>
+  <div class="my-sales-welcome-art" aria-hidden="true">🏪</div>
+  <p>Simple. Smart. Reliable.</p>
+  <button type="button" id="my-sales-get-started">Get Started</button>
+</section>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const welcome = document.getElementById('my-sales-welcome');
+  let seen = false;
+  try { seen = sessionStorage.getItem('my-sales-welcome-seen') === '1'; } catch (_) {}
+  welcome.hidden = seen || !window.matchMedia('(max-width:768px)').matches;
+  document.getElementById('my-sales-get-started').addEventListener('click', () => {
+    welcome.hidden = true;
+    try { sessionStorage.setItem('my-sales-welcome-seen', '1'); } catch (_) {}
+    document.querySelector('#store-login-form input')?.focus();
+  });
+});
+</script>
+
 <section class="page-shell">
     <div class="login-shell">
         <div class="left-panel">
@@ -916,7 +938,7 @@ body .page-footer {
             <div class="login-card">
                 <div class="login-card-heading">
 					<span class="auth-eyebrow">Welcome back</span>
-					<h1>Sign in to your store</h1>
+					<h1>Welcome Back</h1>
                     <p>Sign in to continue to Retail Billing</p>
                 </div>
 
