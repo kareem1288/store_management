@@ -3,7 +3,7 @@
   document.documentElement.classList.add("my-sales-app");
 
   const APP_NAME = "My Sales";
-  const MOBILE_UI_VERSION = "20261012-1";
+  const MOBILE_UI_VERSION = "20261012-3";
   let installPrompt = null;
 
   const appLanguage = window.frappe?.boot?.lang || window.frappe?.boot?.user?.language || "en";
@@ -139,18 +139,38 @@
     const actions = document.createElement("div");
     actions.className = "my-sales-app-actions";
     actions.innerHTML = `
-      <button class="my-sales-install" type="button" hidden aria-label="Install ${APP_NAME}">Install App</button>
+      <button class="my-sales-install" type="button" aria-label="Install ${APP_NAME}">Install App</button>
       <span class="my-sales-connection" aria-label="Connection status"></span>
       ${window.matchMedia("(max-width: 900px)").matches ? `<a class="my-sales-logout" href="/logout" aria-label="Log out of ${APP_NAME}">Log out</a>` : ""}
     `;
     topNav.appendChild(actions);
 
-    actions.querySelector(".my-sales-install").addEventListener("click", async () => {
-      if (!installPrompt) return;
-      installPrompt.prompt();
-      await installPrompt.userChoice;
+    const installButton = actions.querySelector(".my-sales-install");
+    const standalone = () => window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+    installButton.hidden = Boolean(standalone());
+    window.matchMedia("(display-mode: standalone)").addEventListener("change", () => { installButton.hidden = Boolean(standalone()); });
+    installButton.addEventListener("click", async () => {
+      if (standalone()) return;
+      if (!installPrompt) {
+        let help = document.getElementById("my-sales-install-help");
+        if (!help) {
+          help = document.createElement("dialog");
+          help.id = "my-sales-install-help";
+          help.className = "my-sales-install-help";
+          help.setAttribute("aria-labelledby", "my-sales-install-title");
+          help.innerHTML = `<h2 id="my-sales-install-title">Install My Sales</h2><p>Use your browser menu and choose Install app or Add to Home Screen. On iPhone or iPad, open the Share menu and choose Add to Home Screen.</p><p>If the option is unavailable, the app may already be installed or your browser may not support installation. Open this site over HTTPS in a supported browser.</p><form method="dialog"><button type="submit">Got it</button></form>`;
+          document.body.appendChild(help);
+        }
+        help.showModal();
+        return;
+      }
+      const prompt = installPrompt;
       installPrompt = null;
-      actions.querySelector(".my-sales-install").hidden = true;
+      try {
+        await prompt.prompt();
+        const choice = await prompt.userChoice;
+        if (choice.outcome === "accepted") installButton.hidden = true;
+      } catch (_) { showStatus("Open your browser menu to install My Sales.", "info"); }
     });
   }
 
@@ -677,7 +697,7 @@
 
   if ("serviceWorker" in navigator && window.isSecureContext) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/my-sales-sw.js?v=50", { scope: "/" }).catch(error => {
+      navigator.serviceWorker.register("/my-sales-sw.js?v=51", { scope: "/" }).catch(error => {
         console.warn("My Sales offline support could not be enabled", error);
       });
     });

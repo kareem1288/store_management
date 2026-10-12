@@ -12,7 +12,7 @@ summary=dict(today_sales=1250,today_bills=14,weekly_sales=9450,period_sales=3800
 bootstrap=dict(items=items,summary=summary,categories=[dict(name='Grocery',color='#00994f')],shop_name='Main Store',default_customer='Walk-in Customer')
 MOCK='''<script>
 window.__errors=[];window.addEventListener('error',e=>__errors.push(e.message));window.addEventListener('unhandledrejection',e=>__errors.push(String(e.reason)));
-window.__=s=>s;localStorage.setItem('my-sales-ui-version','20261012-1');
+window.__=s=>s;localStorage.setItem('my-sales-ui-version','20261012-3');
 window.frappe={session:{user:'cashier@example.com'},csrf_token:'test',boot:{lang:'en'},utils:{},ready:fn=>{if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fn);else fn();},msgprint:m=>{window.__message=m;},show_alert:()=>{},call:async opts=>{const method=opts.method;let message=[];if(method.includes('get_pos_bootstrap'))message=BOOTSTRAP;else if(method.includes('get_dashboard_summary'))message=BOOTSTRAP.summary;else if(method.includes('get_master_records'))message=BOOTSTRAP.items;else if(method.includes('create_pos_bill'))message={name:'TEST-INVOICE',payment_entry:'TEST-PAYMENT'};else if(method.includes('assistant.ask'))message={text:'Sales summary',metrics:{Sales:'₹1,250.00',Bills:14}};else if(method.includes('query_report.run'))message={columns:[],result:[]};const res={message};opts.callback?.(res);opts.always?.();return res;}};
 </script>'''.replace('BOOTSTRAP',json.dumps(bootstrap))
 parent='<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">'+MOCK+'{% block head_include %}{% endblock %}</head><body>{% block page_content %}{% endblock %}{% block script %}{% endblock %}</body></html>'
@@ -67,6 +67,11 @@ try:
    results.append(dict(route=route,**evaluate(check)))
    if width==390 and route in ['/pos','/pos#billing-panel','/reports','/reports?type=sales','/masters','/assistant','/more','/store-login']:
     shot=cmd('Page.captureScreenshot',dict(format='png'));Path('/tmp/phone-'+route.replace('/','').replace('#','-').replace('?','-')+'.png').write_bytes(base64.b64decode(shot['data']))
+   if route=='/pos':
+    evaluate("const install=document.querySelector('.my-sales-install');if(!install || install.hidden || !install.getClientRects().length || getComputedStyle(install.parentElement).display==='none')throw new Error('Install button missing');window.dispatchEvent(new Event('appinstalled'));if(!install.hidden)throw new Error('Install state not updated');install.hidden=false;install.click();if(!document.getElementById('my-sales-install-help').open)throw new Error('Install guidance missing');document.getElementById('my-sales-install-help').close()")
+    evaluate("(async()=>{let called=false;const event=new Event('beforeinstallprompt',{cancelable:true});event.prompt=async()=>{called=true};event.userChoice=Promise.resolve({outcome:'dismissed'});window.dispatchEvent(event);document.querySelector('.my-sales-install').click();await Promise.resolve();if(!called)throw new Error('Native install prompt not used')})()")
+    if width<=768:
+     evaluate("for(const name of ['stores','top-products','recent','weekly-overview','month-summary','orders']) { const el=document.querySelector('.my-sales-'+name);if(!el||getComputedStyle(el).display==='none')throw new Error('Missing dashboard panel: '+name); } if([...document.querySelectorAll('.my-sales-kpis article')].some(el=>getComputedStyle(el).display==='none'))throw new Error('Hidden KPI card')")
    if route=='/pos' and width<=768:
     evaluate("document.querySelector('.my-sales-mobile-menu').click()");time.sleep(.05);results.append(dict(route='mobile-navigation',**evaluate(check)));evaluate("document.querySelector('.my-sales-mobile-overlay').click()")
    if route=='/pos#billing-panel':
