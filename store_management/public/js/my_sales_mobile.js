@@ -3,7 +3,7 @@
   document.documentElement.classList.add("my-sales-app");
 
   const APP_NAME = "My Sales";
-  const MOBILE_UI_VERSION = "20261007-5";
+  const MOBILE_UI_VERSION = "20261012-1";
   let installPrompt = null;
 
   const appLanguage = window.frappe?.boot?.lang || window.frappe?.boot?.user?.language || "en";
@@ -181,15 +181,14 @@
   function buildMobileNavigation() {
     const nav = document.querySelector(".sm-nav-primary");
     if (!nav) return;
-    const page = location.pathname.includes("masters") ? "masters" : location.pathname.includes("reports") ? "reports" : location.hash === "#billing-panel" ? "pos" : "home";
+    const page = location.pathname.includes("masters") ? "masters" : location.pathname.includes("reports") ? "reports" : ["#billing-panel", "#cart"].includes(location.hash) ? "pos" : "home";
     nav.innerHTML = `
-      <a href="/pos" class="sm-nav-link ${page === "home" ? "active" : ""}">${icons.home}<span>Home</span></a>
+      <a href="/pos" class="sm-nav-link ${page === "home" && !location.pathname.includes("more") && !location.pathname.includes("assistant") ? "active" : ""}">${icons.home}<span>Home</span></a>
       <a href="/pos#billing-panel" class="sm-nav-link ${page === "pos" ? "active" : ""}">${icons.pos}<span>POS</span></a>
       <a href="/reports" class="sm-nav-link ${page === "reports" ? "active" : ""}">${icons.reports}<span>Reports</span></a>
       <a href="/masters" class="sm-nav-link ${page === "masters" ? "active" : ""}">${icons.masters}<span>Masters</span></a>
-      <button type="button" class="sm-nav-link my-sales-more ${location.pathname.includes("assistant") ? "active" : ""}">${icons.more}<span>More</span></button>
+      <a href="/more" class="sm-nav-link my-sales-more ${location.pathname.includes("more") ? "active" : ""}">${icons.more}<span>More</span></a>
     `;
-    nav.querySelector(".my-sales-more")?.addEventListener("click", () => document.querySelector(".my-sales-mobile-menu")?.click());
   }
 
   function buildMobileDrawer() {
@@ -518,6 +517,10 @@
       if (card) grid.appendChild(card);
     });
     grid.querySelectorAll(".my-sales-trend,.my-sales-categories,.my-sales-hourly").forEach(card => card.remove());
+    const phoneTrend = document.createElement("article");
+    phoneTrend.className = "phone-sales-trend";
+    phoneTrend.innerHTML = `<h2>Sales Trend</h2>${buildWeeklyOverviewChart(weeklyTrend)}`;
+    dashboard.insertBefore(phoneTrend, grid);
     shell.prepend(dashboard);
     window.dispatchEvent(new Event("my-sales-dashboard-updated"));
     if (window.matchMedia("(min-width: 769px)").matches) {
@@ -607,7 +610,7 @@
       const menu = document.createElement("nav");
       menu.className = "my-sales-report-menu";
       menu.setAttribute("aria-label", "Reports");
-      menu.innerHTML = [["sales","Sales Register"],["items","Item Wise Sales"],["customers","Customer Ledger"],["open-bills","Open Bills"],["expenses","Expenses"]].map(([type,label],index) => `<a href="/reports?type=${type}" style="--menu-tone:${["#00ae66","#ff901a","#9857ed","#258aff","#e94780"][index]}"><i>${icons.reports}</i><span>${label}</span><b>›</b></a>`).join("");
+      menu.innerHTML = [["sales","Sales Register"],["items","Item-wise Sales"],["customers","Customer Ledger"],["open-bills","Accounts Receivable"],["profit-and-loss","Profit & Loss Statement"],["general-ledger","General Ledger"],["trial-balance","Trial Balance"]].map(([type,label],index) => `<a href="/reports?type=${type}" style="--menu-tone:${["#00ae66","#9857ed","#139ec5","#ff901a","#ad42f4","#9857ed","#f94779"][index]}"><i>${icons.reports}</i><span>${label}</span><b>›</b></a>`).join("");
       reports.querySelector(".sm-top-nav")?.insertAdjacentElement("afterend", menu);
       reports.classList.add("my-sales-reports-menu");
     }
@@ -674,7 +677,7 @@
 
   if ("serviceWorker" in navigator && window.isSecureContext) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/my-sales-sw.js?v=48", { scope: "/" }).catch(error => {
+      navigator.serviceWorker.register("/my-sales-sw.js?v=50", { scope: "/" }).catch(error => {
         console.warn("My Sales offline support could not be enabled", error);
       });
     });

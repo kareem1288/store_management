@@ -1,0 +1,12 @@
+# Python dependencies for Store Management and its test harness.
+# Frappe and ERPNext must be installed as Bench apps, not from this file.
+# Python >= 3.14 is required (see pyproject.toml).
+
+segno>=1.6,<2          # UPI QR codes
+requests~=2.33.0       # Ollama, UPI service, and Brevo HTTP requests
+Werkzeug~=3.1.6        # Website responses and redirects
+weasyprint~=68.0       # Invoice PDF generation; also requires native Pango libraries
+
+Jinja2~=3.1.6          # Browser test template rendering
+websockets~=15.0.1    # Browser test communication with Chrome
+# Headless Chrome/Chromium is required separately for tests/ui/check_screens.py.

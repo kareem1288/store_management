@@ -12,7 +12,7 @@ summary=dict(today_sales=1250,today_bills=14,weekly_sales=9450,period_sales=3800
 bootstrap=dict(items=items,summary=summary,categories=[dict(name='Grocery',color='#00994f')],shop_name='Main Store',default_customer='Walk-in Customer')
 MOCK='''<script>
 window.__errors=[];window.addEventListener('error',e=>__errors.push(e.message));window.addEventListener('unhandledrejection',e=>__errors.push(String(e.reason)));
-window.__=s=>s;localStorage.setItem('my-sales-ui-version','20261007-5');
+window.__=s=>s;localStorage.setItem('my-sales-ui-version','20261012-1');
 window.frappe={session:{user:'cashier@example.com'},csrf_token:'test',boot:{lang:'en'},utils:{},ready:fn=>{if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fn);else fn();},msgprint:m=>{window.__message=m;},show_alert:()=>{},call:async opts=>{const method=opts.method;let message=[];if(method.includes('get_pos_bootstrap'))message=BOOTSTRAP;else if(method.includes('get_dashboard_summary'))message=BOOTSTRAP.summary;else if(method.includes('get_master_records'))message=BOOTSTRAP.items;else if(method.includes('create_pos_bill'))message={name:'TEST-INVOICE',payment_entry:'TEST-PAYMENT'};else if(method.includes('assistant.ask'))message={text:'Sales summary',metrics:{Sales:'₹1,250.00',Bills:14}};else if(method.includes('query_report.run'))message={columns:[],result:[]};const res={message};opts.callback?.(res);opts.always?.();return res;}};
 </script>'''.replace('BOOTSTRAP',json.dumps(bootstrap))
 parent='<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">'+MOCK+'{% block head_include %}{% endblock %}</head><body>{% block page_content %}{% endblock %}{% block script %}{% endblock %}</body></html>'
@@ -23,7 +23,9 @@ class Handler(BaseHTTPRequestHandler):
   path=self.path.split('?')[0]
   if path.startswith('/assets/store_management/'):
    target=ROOT/'store_management/public'/path.split('/assets/store_management/')[1]
-   if target.exists():data=target.read_bytes();ctype='text/css' if target.suffix=='.css' else 'text/javascript'
+   if target.exists():
+    data=target.read_bytes();ctype='text/css' if target.suffix=='.css' else 'text/javascript'
+    if target.suffix=='.css':data=re.sub(rb'@import[^;]+;',b'',data)
    else:data=b'';ctype='text/plain'
   elif path.startswith('/api/'):
    data=b'<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><circle cx="20" cy="20" r="15" fill="green"/></svg>';ctype='image/svg+xml'
@@ -57,11 +59,16 @@ try:
  check="""(()=>{const visible=e=>e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden';const bad=[...document.querySelectorAll('.sm-top-nav,.my-sales-kpis,.my-sales-dashboard-grid,.sm-pos-browser,.sm-current-bill,.sm-checkout-drawer.open,.sm-masters-modal.open,.my-sales-bill-preview:not([hidden]),.my-sales-mobile-nav-open .my-sales-mobile-drawer,.msa-shell')].filter(visible).filter(e=>{const r=e.getBoundingClientRect();return r.left < -1||r.right>innerWidth+1}).map(e=>e.className);return {width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth+1,bad,errors:__errors}})()"""
  for width,height in [(320,720),(390,844),(768,1024),(844,390),(1440,1024)]:
   cmd('Emulation.setDeviceMetricsOverride',dict(width=width,height=height,deviceScaleFactor=1,mobile=width<=768))
-  for route in ['/pos','/pos#billing-panel','/masters?doctype=Item','/reports?type=sales','/assistant','/store-login','/store-signup']:
+  for route in ['/pos','/pos#billing-panel','/masters','/masters?doctype=Item','/reports','/reports?type=sales','/assistant','/more','/store-login','/store-signup']:
    cmd('Page.navigate',dict(url='http://127.0.0.1:8876'+route));time.sleep(.25)
+   for _ in range(50):
+    if evaluate("document.readyState==='complete' && (!document.querySelector('.sm-page-app') || !!document.querySelector('.my-sales-app-actions'))"):break
+    time.sleep(.1)
    results.append(dict(route=route,**evaluate(check)))
+   if width==390 and route in ['/pos','/pos#billing-panel','/reports','/reports?type=sales','/masters','/assistant','/more','/store-login']:
+    shot=cmd('Page.captureScreenshot',dict(format='png'));Path('/tmp/phone-'+route.replace('/','').replace('#','-').replace('?','-')+'.png').write_bytes(base64.b64decode(shot['data']))
    if route=='/pos' and width<=768:
-    evaluate("document.querySelector('.my-sales-more').click()");time.sleep(.05);results.append(dict(route='mobile-navigation',**evaluate(check)));evaluate("document.querySelector('.my-sales-mobile-overlay').click()")
+    evaluate("document.querySelector('.my-sales-mobile-menu').click()");time.sleep(.05);results.append(dict(route='mobile-navigation',**evaluate(check)));evaluate("document.querySelector('.my-sales-mobile-overlay').click()")
    if route=='/pos#billing-panel':
     evaluate("addToCartByCode('ITM-0');location.hash='cart'");time.sleep(.05);results.append(dict(route='cart',**evaluate(check)))
     evaluate('openCheckout()');time.sleep(.05);results.append(dict(route='payment',**evaluate(check)))
@@ -73,6 +80,9 @@ try:
     evaluate("if(document.querySelector('.sm-checkout-drawer').inert)throw new Error('Checkout stayed inert after preview closed')")
    if route=='/masters?doctype=Item':
     evaluate('openCreateForm()');time.sleep(.05);results.append(dict(route='master-editor',**evaluate(check)))
+   if route=='/reports?type=sales':
+    evaluate("renderSalesRegisterTable({columns:[{fieldname:'name',label:'Bill No'},{fieldname:'grand_total',label:'Amount'},{fieldname:'customer',label:'Customer'},{fieldname:'status',label:'Status'}],result:[{name:'INV-001',grand_total:283.50,customer:'Walk-in Customer',status:'Paid',posting_date:'2026-10-12',mode_of_payment:'Cash'},{name:'INV-002',grand_total:170,customer:'A customer with a very long name that must wrap safely',status:'Unpaid',posting_date:'2026-10-12'}]})");time.sleep(.05);results.append(dict(route='populated-sales-list',**evaluate(check)))
+    evaluate("if(document.querySelectorAll('.phone-report-record').length!==2)throw new Error('Mobile sales rows missing')")
    if route=='/assistant':
     evaluate("document.querySelector('[data-msa-question]').click()");time.sleep(.1);results.append(dict(route='assistant-response',**evaluate(check)))
    if width==390 and route in ['/pos','/pos#billing-panel','/assistant']:

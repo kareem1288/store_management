@@ -1,0 +1,62 @@
+{
+  "doctype": "DocType",
+  "name": "MSA Settings",
+  "module": "Store Management",
+  "issingle": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "enabled",
+    "provider",
+    "ollama_url",
+    "local_model",
+    "help"
+  ],
+  "fields": [
+    {
+      "fieldname": "enabled",
+      "fieldtype": "Check",
+      "label": "Enable General Answers",
+      "default": "0"
+    },
+    {
+      "fieldname": "provider",
+      "fieldtype": "Select",
+      "label": "AI Provider",
+      "options": "Ollama",
+      "default": "Ollama",
+      "reqd": 1
+    },
+    {
+      "fieldname": "ollama_url",
+      "fieldtype": "Data",
+      "label": "Ollama Server URL",
+      "default": "http://127.0.0.1:11434",
+      "mandatory_depends_on": "eval:doc.enabled"
+    },
+    {
+      "fieldname": "local_model",
+      "fieldtype": "Data",
+      "label": "Downloaded Ollama Model",
+      "mandatory_depends_on": "eval:doc.enabled",
+      "description": "Use the exact downloaded model name from ollama list."
+    },
+    {
+      "fieldname": "help",
+      "fieldtype": "HTML",
+      "options": "<p>MSA uses locally hosted Ollama without API keys or authentication headers. The Frappe server must be able to reach Ollama. Local mode has no live web search. Store report shortcuts continue to use ERP permissions.</p>"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    }
+  ],
+  "actions": [],
+  "links": [],
+  "states": [],
+  "sort_field": "modified",
+  "sort_order": "DESC"
+}

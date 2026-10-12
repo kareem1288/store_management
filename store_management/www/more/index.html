@@ -1,0 +1,26 @@
+{% extends "templates/web.html" %}
+{% block header %}{% endblock %}
+{% block navbar %}{% endblock %}
+{% block head_include %}
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="stylesheet" href="/assets/store_management/css/store_management_ui.css?v=20260911-1">
+<link rel="stylesheet" href="/assets/store_management/css/my_sales_mobile.css?v=20261007-1">
+<link rel="stylesheet" href="/assets/store_management/css/my_sales_design.css?v=20261007-4">
+<script defer src="/assets/store_management/js/my_sales_mobile.js?v=20261012-1"></script>
+<script defer src="/assets/store_management/js/my_sales_reference.js?v=20261012-2"></script>
+<link rel="stylesheet" href="/assets/store_management/css/my_sales_phone.css?v=20261012-1">
+<script defer src="/assets/store_management/js/my_sales_phone.js?v=20261012-2"></script>
+{% endblock %}
+{% block page_content %}
+<div class="sm-page-app sm-more-app">
+ <div class="sm-top-nav"><a class="sm-brand-lockup" href="/pos"><img class="sm-brand-mark" src="/api/method/store_management.api.get_brand_asset?name=my-sales-logo.svg" alt=""><span><strong>My Sales</strong><small>Retail Billing</small></span></a><nav class="sm-nav-primary" aria-label="Main navigation"></nav><div class="sm-user-chip">{{ frappe.session.user }}</div></div>
+ <main class="phone-more-screen">
+  <header class="phone-more-profile"><b>{{ user_initial | default('A') }}</b><div><strong>{{ full_name | default(frappe.session.user) }}</strong><small>{{ user_email | default(frappe.session.user) }}</small></div></header>
+  <details><summary><span>▣</span>Store Management</summary><a href="/masters?doctype=Company">Companies &amp; Stores</a><a href="/masters?doctype=User">Users</a></details>
+  <details><summary><span>▤</span>Expenses</summary><a href="/reports?type=profit-and-loss">Profit &amp; Loss</a><a href="/reports?type=general-ledger">General Ledger</a></details>
+  <details><summary><span>⚙</span>Settings</summary><a href="/masters?doctype=Company">Company Settings</a><a href="/store-login/forgot-password">Reset Password</a></details>
+  <a class="phone-more-msa" href="/assistant"><span>✣</span><div><strong>MSA</strong><small>My Sales Assistant</small></div><b>›</b></a>
+  <a class="phone-more-logout" href="/logout"><span>⇥</span>Logout</a>
+ </main>
+</div>
+{% endblock %}

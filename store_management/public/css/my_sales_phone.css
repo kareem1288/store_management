@@ -1,0 +1,257 @@
+/* Mobile Retail App showcase. Desktop uses the existing shared design. */
+.phone-sales-trend,.phone-header-brand,.phone-account,.phone-clear-cart,.phone-report-records { display:none; }
+.phone-more-screen { padding:18px; max-width:600px; margin:auto; }
+.phone-more-profile { display:flex; align-items:center; gap:14px; padding:18px 0 22px; border-bottom:1px solid #e8edf6; }
+.phone-more-profile > b { width:48px; height:48px; display:grid; place-items:center; border-radius:50%; background:linear-gradient(135deg,#00b36c,#006d43); color:white; font-size:24px; }
+.phone-more-profile strong,.phone-more-profile small { display:block; }
+.phone-more-profile strong { font-size:15px; }
+.phone-more-profile small { margin-top:5px; font-size:12px; color:#66759d; }
+.phone-more-screen details { border-bottom:1px solid #e8edf6; }
+.phone-more-screen summary,.phone-more-screen > a { display:flex; align-items:center; gap:16px; padding:20px 2px; font-size:14px; color:#101a3a; text-decoration:none; list-style:none; }
+.phone-more-screen summary::after { content:'⌄'; margin-left:auto; }
+.phone-more-screen summary::-webkit-details-marker { display:none; }
+.phone-more-screen summary > span,.phone-more-screen > a > span { width:26px; font-size:24px; }
+.phone-more-screen details > a { display:block; color:#52608a; font-size:12px; padding:10px 0 14px 42px; text-decoration:none; }
+.phone-more-msa small { display:block; font-size:11px; color:#61719b; }
+.phone-more-msa b { margin-left:auto; }
+.phone-more-screen .phone-more-logout { color:#ed263c; border-top:1px solid #e8edf6; }
+@media(max-width:768px) {
+ :root { --phone-ink:#10163e; --phone-muted:#526393; --phone-line:#e6edf8; }
+ body:has(.sm-page-app) { background:#fff!important; }
+ .sm-page-app { color:var(--phone-ink)!important; }
+ .sm-page-app .sm-top-nav { height:64px!important; min-height:64px!important; padding:10px 14px!important; border-color:var(--phone-line)!important; }
+ .my-sales-mobile-title { font-size:14px!important; color:var(--phone-ink); }
+ .phone-dashboard-header .my-sales-mobile-menu,.phone-dashboard-header .my-sales-mobile-title,.phone-dashboard-header .my-sales-back { display:none!important; }
+ .phone-header-brand { display:none; align-items:center; gap:10px; text-decoration:none; color:var(--phone-ink); }
+ .phone-dashboard-header .phone-header-brand { display:flex; }
+ .phone-header-brand img { width:36px; height:36px; object-fit:contain; }
+ .phone-header-brand strong { display:block; font-size:17px; }
+ .phone-header-brand small { display:block; font-size:10px; color:#56678e; margin-top:3px; }
+ .phone-account { margin-left:auto; width:30px; height:30px; display:grid; place-items:center; border-radius:50%; background:#009453; color:white; text-decoration:none; font-size:13px; font-weight:700; }
+ .my-sales-cart-view .phone-account,.sm-reports-app .phone-account,.sm-masters-app .phone-account,.sm-assistant-app .phone-account,.sm-more-app .phone-account { display:none; }
+ .sm-page-app .sm-nav-primary { height:calc(64px + env(safe-area-inset-bottom,0px))!important; background:#fff!important; border-top:1px solid var(--phone-line)!important; box-shadow:none!important; padding:7px 5px calc(7px + env(safe-area-inset-bottom,0px))!important; }
+ .sm-page-app .sm-nav-link { min-height:44px!important; font-size:10px!important; gap:4px!important; color:#354270!important; position:relative; }
+ .sm-page-app .sm-nav-link svg { width:19px!important; height:19px!important; }
+ .sm-page-app .sm-nav-link.active { color:#00994f!important; }
+ .sm-page-app .sm-nav-link.active::after { display:block!important; content:''; position:absolute; height:2px; width:24px; bottom:-7px; left:50%; transform:translateX(-50%); background:#00a057; border-radius:3px; }
+ .sm-pos-app .sm-page-shell { padding:12px!important; }
+ .my-sales-period-filter { grid-template-columns:1fr 1fr!important; gap:0!important; padding:4px; border:1px solid var(--phone-line); border-radius:7px; background:#fbfdff; }
+ .my-sales-period-filter .phone-store-filter { display:block!important; }
+ .my-sales-period-filter label { margin:0!important; border:0!important; padding:0!important; }
+ .my-sales-period-filter input { border:0!important; background:transparent!important; padding:7px!important; height:32px!important; color:#27325f!important; font-size:11px!important; }
+ .my-sales-kpis { gap:10px!important; }
+ .my-sales-kpis article { display:flex!important; align-items:start!important; padding:12px 10px!important; min-height:104px!important; border-radius:9px!important; border:1px solid var(--phone-line)!important; }
+ .my-sales-kpis article:nth-child(n+5) { display:none!important; }
+ .my-sales-kpis article[data-tone='green'] { background:linear-gradient(135deg,#e8fff0,#f3fff8)!important; }
+ .my-sales-kpis article[data-tone='purple'] { background:linear-gradient(135deg,#f0e9ff,#faf7ff)!important; }
+ .my-sales-kpis article[data-tone='blue'] { background:linear-gradient(135deg,#e4f4ff,#f4fbff)!important; }
+ .my-sales-kpis article[data-tone='orange'] { background:linear-gradient(135deg,#fff0db,#fff9f1)!important; }
+ .my-sales-kpis article > i { width:34px!important; height:34px!important; flex-basis:34px!important; }
+ .my-sales-kpis article > span { font-size:10px!important; }
+ .my-sales-kpis strong { font-size:17px!important; white-space:normal!important; }
+ .my-sales-kpis small { font-size:10px!important; }
+ .phone-sales-trend { display:block; border:1px solid var(--phone-line); border-radius:9px; padding:12px 10px; background:#fff; }
+ .phone-sales-trend h2 { font-size:14px; margin:0 0 4px; }
+ .phone-sales-trend .my-sales-weekly-chart svg { width:100%; height:110px; display:block; }
+ .phone-sales-trend .chart-value,.phone-sales-trend .chart-date { display:none; }
+ .phone-sales-trend .chart-day { font-size:10px; fill:#7284ad; }
+ .phone-sales-trend rect { fill:#0fb7ef; }
+ .my-sales-dashboard-grid { display:block!important; }
+ .my-sales-dashboard-grid > .my-sales-stores { display:none!important; }
+ .my-sales-dashboard-grid > .my-sales-top-products { display:block!important; max-height:none!important; padding:0!important; border:0!important; overflow:visible!important; }
+ .my-sales-top-products h2 { font-size:14px!important; margin:4px 0 10px!important; }
+ .my-sales-top-products h2 a { font-size:11px!important; }
+ .my-sales-top-products table { display:table!important; width:100%; }
+ .my-sales-top-products thead { display:none; }
+ .my-sales-top-products th,.my-sales-top-products td { padding:9px 6px!important; font-size:11px!important; }
+ .my-sales-top-products tbody tr { background:linear-gradient(90deg,#f8faff,#f1fff8); }
+ .my-sales-top-products td:first-child { width:55%; }
+ .my-sales-mobile-billing .phone-sales-trend { display:none; }
+ .my-sales-mobile-billing .sm-search-box { min-height:38px!important; border-radius:6px!important; }
+ .my-sales-mobile-billing .sm-search-box input { font-size:11px!important; }
+ .my-sales-mobile-billing .sm-category-pill { min-height:30px!important; font-size:10px!important; padding:6px 10px!important; }
+ .my-sales-mobile-billing .sm-item-card { border-color:var(--phone-line)!important; border-radius:7px!important; }
+ .my-sales-mobile-billing .sm-item-visual { height:94px!important; padding:10px!important; font-size:43px!important; }
+ .my-sales-mobile-billing .sm-item-body { padding:8px!important; }
+ .my-sales-mobile-billing .sm-item-name { font-size:12px!important; font-weight:700; }
+ .my-sales-mobile-billing .sm-item-price { font-size:11px!important; }
+ .my-sales-mobile-billing .sm-add-button { width:24px!important; height:24px!important; min-height:24px!important; }
+ .my-sales-cart-view .sm-top-nav .my-sales-mobile-menu { display:none!important; }
+ .my-sales-cart-view .sm-page-app .sm-nav-primary { display:none!important; }
+ .my-sales-cart-view .sm-page-app { padding-bottom:0!important; }
+ .my-sales-cart-view .sm-current-bill { min-height:calc(100dvh - 88px)!important; }
+ .my-sales-cart-view .sm-current-bill-head { display:flex; gap:8px; border:0!important; padding:0 0 6px; }
+ .my-sales-cart-view .sm-current-bill-head h3,.my-sales-cart-view #cart-count,.my-sales-cart-view .sm-resume-held { display:none!important; }
+ .phone-clear-cart { display:block; color:#f52b48; background:white; border:0; font-size:12px; margin-left:auto; padding:7px 0; }
+ .my-sales-cart-view .sm-cart-item { display:grid!important; grid-template-columns:minmax(0,1fr) auto!important; gap:8px!important; padding:18px 0!important; }
+ .my-sales-cart-view .sm-cart-item > div:first-child { grid-column:1!important; padding:0!important; }
+ .my-sales-cart-view .sm-cart-item > div:nth-child(2) { grid-column:1; margin-left:42px; }
+ .my-sales-cart-view .sm-cart-item > div:nth-child(4) { top:20px!important; right:0!important; font-size:13px; color:#10163e; }
+ .my-sales-cart-view .sm-cart-item h4 { font-size:14px!important; }
+ .my-sales-cart-view .sm-cart-item p { font-size:12px!important; color:#536393; }
+ .my-sales-cart-view .sm-qty-button { width:28px!important; height:28px!important; min-height:28px!important; border-radius:5px; background:#f4f6fc!important; }
+ .my-sales-cart-view .sm-bill-actions .sm-chip { display:none!important; }
+ .my-sales-cart-view .sm-bill-actions { display:block!important; }
+ .my-sales-cart-view .sm-bill-actions .sm-main-button { width:100%; min-height:48px; font-size:14px; }
+ .my-sales-cart-view .sm-bill-meta { gap:10px!important; }
+ .my-sales-cart-view .sm-mini-total span,.my-sales-cart-view .sm-mini-total strong { font-size:13px!important; }
+ .phone-payment-options .sm-pos-app .sm-drawer-head { min-height:64px; justify-content:center; position:relative; border-bottom:1px solid var(--phone-line); }
+ .phone-payment-options .sm-pos-app .sm-drawer-head .sm-icon-button { position:absolute; left:12px; border:0!important; background:transparent!important; }
+ .phone-payment-options .sm-checkout-content > .sm-field-grid,.phone-payment-options .sm-checkout-content > .sm-field { display:none!important; }
+ .phone-payment-options .sm-checkout-content { padding:18px!important; }
+ .phone-payment-options .sm-section-label { display:none!important; }
+ .phone-payment-options .sm-payment-block { margin-top:68px; }
+ .phone-payment-options .sm-payment-options { gap:12px!important; }
+ .phone-payment-options .sm-payment-option { min-height:76px!important; border-radius:8px!important; border-color:var(--phone-line)!important; padding:16px!important; gap:16px!important; font-size:15px!important; display:grid!important; grid-template-columns:42px 1fr!important; grid-template-rows:auto auto!important; text-align:left; justify-content:start!important; }
+ .phone-payment-options .sm-payment-option > span { grid-row:1/3; width:40px; height:40px; display:grid; place-items:center; color:white!important; border-radius:7px; background:#009b55; font-size:24px!important; }
+ .phone-payment-options .sm-payment-option[data-payment='UPI'] > span { background:#008aff; }
+ .phone-payment-options .sm-payment-option[data-payment='Card'] > span { background:#9254ff; }
+ .phone-payment-options .sm-payment-option small { grid-column:2; font-size:12px!important; margin:0!important; }
+ .phone-payment-options .sm-payment-option.active { box-shadow:none!important; }
+ .phone-payment-options .sm-payment-option.phone-split-toggle { min-height:44px!important; display:flex!important; border:0!important; padding:6px 2px!important; font-size:12px!important; gap:14px!important; }
+ .phone-payment-options .phone-split-toggle > span { height:22px; width:40px; border-radius:18px; font-size:0!important; background:#c8d2e5; position:relative; }
+ .phone-payment-options .phone-split-toggle > span::after { content:''; position:absolute; left:3px; top:3px; width:16px; height:16px; border-radius:50%; background:white; }
+ .phone-payment-options .phone-split-toggle small { display:none!important; }
+ .phone-payment-options .sm-payment-detail { display:none!important; }
+ .phone-show-payment-detail .sm-payment-detail.active { display:block!important; }
+ .phone-payment-options:not(.phone-show-payment-detail) .sm-drawer-footer > button { display:none!important; }
+ .phone-payment-options .sm-drawer-total { position:absolute; top:82px; left:18px; right:18px; text-align:center; background:white!important; padding:0!important; pointer-events:none; border:0!important; }
+ .phone-payment-options .sm-drawer-total span { font-size:12px!important; color:#536393; }
+ .phone-payment-options .sm-drawer-total strong { display:block; margin-top:6px; color:#10163e!important; font-size:24px!important; }
+ .phone-show-payment-detail .sm-payment-block { margin-top:70px; }
+ .phone-payment-options .sm-payment-result { padding:85px 20px 70px!important; align-content:start!important; background:#fff!important; }
+ .phone-payment-options .sm-payment-result-icon { width:96px; height:96px; font-size:55px; margin-bottom:16px; background:linear-gradient(135deg,#29b704,#089a12)!important; }
+ .phone-payment-options .phone-payment-reference { display:none!important; }
+ .phone-payment-options .sm-payment-result > button[onclick='previewGeneratedBill()'] { min-height:48px!important; background:linear-gradient(135deg,#00ad57,#00743f)!important; color:white!important; margin-top:24px; }
+ .phone-payment-options .sm-payment-result > button[onclick='finishCheckout()']:not(.sm-result-back),.phone-payment-options .sm-payment-result > button[onclick='shareGeneratedBill()'] { background:white!important; color:#10163e!important; border:1px solid var(--phone-line)!important; min-height:44px!important; }
+ .sm-page-app .sm-nav-primary { z-index:2700!important; }
+ .my-sales-cart-view:not(:has(.sm-payment-result.open)) .sm-nav-primary { display:none!important; }
+ .phone-payment-options .sm-nav-primary { display:grid!important; }
+ .my-sales-bill-preview { padding:0 0 calc(64px + env(safe-area-inset-bottom,0px))!important; }
+ .my-sales-bill-preview header { padding:12px; min-height:64px; margin:0; border-bottom:1px solid var(--phone-line); }
+ .my-sales-bill-preview iframe { border:0; border-radius:0; width:100%; height:calc(100dvh - 128px - env(safe-area-inset-bottom,0px)); }
+ .my-sales-bill-preview strong { font-size:14px; }
+ .my-sales-report-menu { gap:10px; padding:14px 12px; }
+ .my-sales-report-menu a { border-color:var(--phone-line)!important; min-height:48px; padding:10px; font-size:13px; border-radius:7px; }
+ .my-sales-report-menu i { color:white!important; background:var(--menu-tone)!important; border-radius:5px; }
+ .sm-reports-app .sm-report-toolbar,.phone-sales-list .sm-report-summary,.phone-sales-list .sm-report-visuals,.phone-sales-list .sm-report-table-wrap { display:none!important; }
+ .phone-sales-list .phone-report-records { display:block; }
+ .phone-report-record { display:block; padding:16px 2px; border-bottom:1px solid var(--phone-line); text-decoration:none; color:var(--phone-ink); }
+ .phone-report-record-heading,.phone-report-record-meta { display:flex; align-items:start; justify-content:space-between; gap:12px; }
+ .phone-report-record-heading { font-size:13px; margin-bottom:8px; }
+ .phone-report-record-meta { color:#586995; font-size:11px; line-height:1.7; }
+ .phone-report-status { background:#d6fbe5; color:#00864a; border-radius:5px; padding:1px 7px; font-size:10px; }
+ .sm-masters-app .sm-nav-item { min-height:49px!important; border-color:var(--phone-line)!important; gap:12px!important; }
+ .sm-masters-app .sm-nav-item strong { font-size:13px!important; }
+ .my-sales-master-icon { color:#008bff!important; background:#e8f4ff!important; }
+ .msa-shell { height:calc(100dvh - 128px - env(safe-area-inset-bottom,0px)); padding:12px!important; grid-template-rows:auto minmax(0,1fr); }
+ .msa-heading { display:none; }
+ .msa-chat { grid-row:1/-1; }
+ .msa-conversation { flex:0 1 auto; min-height:0; padding:0; }
+ .msa-message { color:var(--phone-ink); padding:14px; font-size:12px; border-color:var(--phone-line); }
+ .phone-msa-welcome { background:linear-gradient(135deg,#fafbff,#fff); }
+ .phone-msa-welcome > strong,.phone-msa-welcome > b { display:block; line-height:1.4; }
+ .phone-msa-welcome > strong { font-size:19px; }
+ .phone-msa-welcome > b { font-size:14px; max-width:190px; }
+ .phone-msa-welcome p { margin:10px 0 0; }
+ .phone-msa-try { font-size:13px; margin:0; }
+ .msa-suggestions { flex-wrap:wrap!important; overflow:visible!important; gap:8px; }
+ .msa-suggestions button,.msa-suggestions a { white-space:normal; text-align:left; font-size:11px; padding:8px 10px; border-radius:18px; }
+ #msa-form { margin-top:auto; padding:6px; min-height:44px; }
+ #msa-question { font-size:12px; }
+ .phone-msa-has-response .msa-conversation { flex:1; overflow-y:auto; }
+ .phone-msa-has-response .msa-suggestions,.phone-msa-has-response .phone-msa-try { display:none; }
+ .phone-msa-has-response .phone-msa-welcome { display:none; }
+ .msa-user { background:#ccfbe2; border:0; align-self:end; }
+ .msa-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .msa-metrics div { background:white; border-color:var(--phone-line); padding:12px 10px; }
+ .msa-metrics small { font-size:11px; color:#10163e; }
+ .msa-metrics strong { color:#10163e; font-size:19px; }
+ .sm-assistant-app .my-sales-mobile-title::after { content:none!important; }
+ .sm-assistant-app .my-sales-mobile-title { font-size:16px!important; }
+ .sm-more-app .my-sales-mobile-title { margin-left:12px!important; margin-right:auto!important; }
+ .phone-more-screen { padding:0 16px; }
+ .my-sales-welcome:not([hidden]) { background:linear-gradient(145deg,#f8fffb,#eefff6)!important; padding:42px 24px!important; gap:8px!important; }
+ .my-sales-welcome img { width:115px!important; height:115px!important; margin-top:6vh; }
+ .my-sales-welcome h1 { color:#10163e!important; font-size:32px!important; }
+ .my-sales-welcome small { font-size:12px!important; letter-spacing:1px!important; color:#526393!important; }
+ .my-sales-welcome p { font-size:19px!important; font-weight:700; color:#10163e!important; line-height:1.35; }
+ .my-sales-welcome-art { width:240px!important; height:170px!important; margin:24px 0 8px!important; border-radius:0!important; background:transparent!important; }
+ .phone-shop { width:180px; height:115px; position:relative; border-radius:8px; background:linear-gradient(135deg,#cbffdc,#8cebac); box-shadow:0 5px 0 #82dca0; margin-top:40px; }
+ .phone-shop-awning { position:absolute; inset:-36px -14px auto; height:45px; border-radius:8px 8px 14px 14px; background:repeating-linear-gradient(90deg,#04a94e 0 30px,#eaffee 30px 60px); transform:perspective(140px) rotateX(15deg); box-shadow:0 7px 0 #00923d; }
+ .phone-shop-door { position:absolute; left:24px; bottom:0; width:48px; height:80px; background:linear-gradient(110deg,#0aad56,#007a3b); border:4px solid #73d994; border-bottom:0; border-radius:10px 10px 0 0; }
+ .phone-shop-door::after { content:''; position:absolute; right:8px; top:35px; width:5px; height:5px; background:white; border-radius:50%; }
+ .phone-shop-window { position:absolute; right:18px; top:22px; width:66px; height:64px; border:5px solid white; border-radius:4px; background:linear-gradient(135deg,#8861eb 0 30%,#5ddcd1 30% 58%,#ee81d4 58%); }
+ .phone-shop-tree { position:absolute; left:-26px; top:42px; height:58px; width:22px; border-radius:50%; background:linear-gradient(#00b86e,#51dc76); }
+ .phone-shop-tree::after { content:''; position:absolute; width:5px; height:32px; background:#9e693c; left:9px; top:35px; }
+ .phone-welcome-dots { display:flex; gap:5px; margin:16px 0; }
+ .phone-welcome-dots i { width:14px; height:4px; border-radius:4px; background:#c1f3d7; }
+ .phone-welcome-dots i:first-child,.phone-welcome-dots i:nth-child(2) { background:#00a94c; }
+ .my-sales-welcome button { min-height:48px!important; font-size:15px; }
+ .page-shell .login-card-heading { margin:0 0 24px!important; }
+ .page-shell .login-card-heading::before { width:110px!important; height:100px!important; margin-bottom:16px!important; }
+ .page-shell .login-card-heading h1 { font-size:22px!important; }
+ .page-shell .login-card-heading p { font-size:13px!important; color:#10163e!important; }
+ .page-shell .input-shell { min-height:54px!important; background:#fcfdff!important; border-color:var(--phone-line)!important; }
+ .page-shell .form-field label { font-size:12px!important; color:#536393!important; }
+ .page-shell .btn-submit { min-height:48px!important; font-size:15px; }
+}
+@media(max-width:350px) {
+ .my-sales-kpis article { gap:7px!important; padding:10px 8px!important; }
+ .my-sales-kpis article > i { width:28px!important; height:28px!important; flex-basis:28px!important; }
+ .my-sales-kpis strong { font-size:15px!important; }
+ .my-sales-mobile-billing .sm-item-visual { height:74px!important; }
+ .phone-payment-options .sm-payment-option { min-height:64px!important; }
+ .my-sales-welcome img { margin-top:0; width:90px!important; height:90px!important; }
+ .my-sales-welcome-art { margin:16px 0!important; }
+}
+.phone-dialog-nav { display:none; }
+.phone-msa-chart { display:flex; align-items:end; justify-content:space-between; gap:10px; margin:16px 0 4px; height:82px; overflow-x:auto; }
+.phone-msa-chart > span { display:flex; flex-direction:column; align-items:center; justify-content:end; gap:5px; min-width:25px; height:82px; }
+.phone-msa-chart i { display:block; width:12px; background:linear-gradient(#a968ff,#7541ed); border-radius:3px 3px 0 0; }
+.phone-msa-chart small { font-size:8px; color:#61719d; }
+@media(max-width:768px) {
+ .phone-payment-options .sm-pos-app .sm-checkout-drawer { padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))!important; }
+ .phone-dialog-nav { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); position:absolute; inset:auto 0 0; height:calc(64px + env(safe-area-inset-bottom,0px)); padding:7px 5px calc(7px + env(safe-area-inset-bottom,0px)); background:white; border-top:1px solid #e6edf8; z-index:10; }
+ .phone-dialog-nav .sm-nav-link { display:flex!important; flex-direction:column; align-items:center; justify-content:center; gap:4px; font-size:10px!important; color:#354270; text-decoration:none; }
+ .phone-dialog-nav .sm-nav-link svg { width:19px; height:19px; fill:none; stroke:currentColor; stroke-width:1.8; }
+ .phone-dialog-nav .sm-nav-link.active { color:#00994f; background:white!important; }
+}
+@media(max-width:768px) {
+ .sm-pos-app { position:relative; }
+ .my-sales-period-filter .phone-store-filter { position:absolute!important; z-index:1101; top:32px; left:59px; width:150px; height:22px; background:white; border:0!important; }
+ .my-sales-period-filter .phone-store-filter > span { display:none!important; }
+ .my-sales-period-filter .phone-store-filter select { width:150px!important; min-width:0!important; height:22px!important; border:0!important; padding:0!important; color:#526393!important; font-size:10px!important; background:white!important; }
+ .phone-dashboard-header .phone-header-brand small { visibility:hidden; }
+ .my-sales-mobile-billing .phone-store-filter { display:none!important; }
+ .my-sales-period-filter label { grid-column:auto!important; }
+ .my-sales-dashboard > header { border:0!important; border-radius:0!important; background:transparent!important; overflow:visible!important; padding:0!important; }
+ .my-sales-dashboard > header::after { display:none!important; }
+ #billing-panel { scroll-margin-top:74px; }
+ .sm-reports-app .my-sales-mobile-menu,.sm-masters-app .my-sales-mobile-menu,.sm-assistant-app .my-sales-mobile-menu { display:none!important; }
+ .phone-clear-cart { position:fixed; top:20px; right:16px; z-index:1110; }
+ .phone-sales-trend .my-sales-weekly-chart rect { fill:#12b8eb!important; }
+ .phone-sales-trend .my-sales-weekly-chart .chart-value,.phone-sales-trend .my-sales-weekly-chart .chart-date { display:none!important; }
+ .phone-msa-try,.msa-suggestions { max-width:100%; }
+ .sm-assistant-app .msa-suggestions button { font-size:11px!important; min-height:32px!important; padding:7px 10px!important; }
+}
+@media(max-width:768px) {
+ .my-sales-period-filter .phone-store-filter { position:fixed!important; }
+ .my-sales-mobile-billing .sm-add-button { border:0!important; }
+ .msa-assistant:has(.msa-metrics) { display:flex; flex-direction:column; }
+ .msa-assistant .msa-metrics { order:1; }
+ .msa-assistant .phone-msa-chart { order:2; }
+}
+@media(max-width:768px) {
+ .phone-sales-list .sm-report-visual-grid { display:none!important; }
+ .phone-has-records .sm-report-status { display:none!important; }
+ .phone-report-record-heading > strong:first-child { min-width:0; overflow-wrap:anywhere; }
+ .phone-report-record-heading > strong:last-child { flex-shrink:0; }
+ .phone-report-record-meta > span:first-child { min-width:0; overflow-wrap:anywhere; }
+ .phone-report-record-meta > span:last-child { flex-shrink:0; }
+ .phone-sales-list .sm-report-filters { padding-bottom:12px; border-bottom:1px solid #e6edf8; }
+ .phone-sales-list .sm-report-field:has(input[type=date]) span { display:none; }
+ .my-sales-cart-view .sm-bill-actions .sm-main-button::after { content:' →'; margin-left:18px; }
+ .my-sales-cart-view .sm-page-shell { padding-bottom:max(16px,env(safe-area-inset-bottom,0px))!important; }
+ .page-shell .remember-row input[type=checkbox] { accent-color:#00994f; }
+}

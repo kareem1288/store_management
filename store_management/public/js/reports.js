@@ -546,6 +546,7 @@ function renderSalesRegisterTable(data) {
 	const columns = data.columns || [];
 	const result = data.result || [];
 
+	window.dispatchEvent(new CustomEvent("my-sales-report-data", {detail: data}));
 	headEl.innerHTML = `<tr>${columns.map(col => `<th>${escapeHtml(col.label)}</th>`).join("")}</tr>`;
 	bodyEl.innerHTML = result.map(row => {
 		if (Array.isArray(row)) {

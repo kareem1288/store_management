@@ -770,15 +770,17 @@ body .page-footer {
 </style>
 <link rel="stylesheet" href="/assets/store_management/css/store_management_auth.css">
 <link rel="stylesheet" href="/assets/store_management/css/my_sales_design.css?v=20261007-4">
-<script defer src="/assets/store_management/js/my_sales_reference.js?v=20261007-4"></script>
+<script defer src="/assets/store_management/js/my_sales_reference.js?v=20261012-2"></script>
+<link rel="stylesheet" href="/assets/store_management/css/my_sales_phone.css?v=20261012-1">
+<script defer src="/assets/store_management/js/my_sales_phone.js?v=20261012-2"></script>
 {% endblock %}
 
 {% block page_content %}
 <section class="my-sales-welcome" id="my-sales-welcome" hidden aria-label="Welcome to My Sales">
   <img src="/api/method/store_management.api.get_brand_asset?name=my-sales-logo.svg" alt="My Sales">
   <h1>My Sales</h1><small>RETAIL BILLING</small>
-  <div class="my-sales-welcome-art" aria-hidden="true">🏪</div>
-  <p>Simple. Smart. Reliable.</p>
+  <div class="my-sales-welcome-art" aria-hidden="true"><div class="phone-shop"><i class="phone-shop-awning"></i><i class="phone-shop-door"></i><i class="phone-shop-window"></i><i class="phone-shop-tree"></i></div></div>
+  <p>Smart Sales.<br>Simpler Business.</p><div class="phone-welcome-dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
   <button type="button" id="my-sales-get-started">Get Started</button>
 </section>
 <script>

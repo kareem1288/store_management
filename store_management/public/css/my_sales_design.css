@@ -436,3 +436,5 @@ body:has(.sm-page-app) .page-header-wrapper,body:has(.sm-page-app) .page-breadcr
 .sm-item-table .sm-table-head,.sm-item-table .sm-table-row { display:grid!important; grid-template-columns:minmax(90px,1fr) minmax(120px,1.3fr) minmax(90px,1fr) 55px 85px 65px 100px!important; gap:10px; min-width:730px; }
 .sm-item-status { display:inline-block; background:#eaf9f1; color:#00854a; padding:4px 8px; border-radius:5px; font-size:10px; }
 .sm-item-status.inactive { color:#737d9c; background:#f0f2f7; }
+.msa-sources { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.msa-sources a { color:#00854a; border:1px solid #e5eaf2; border-radius:5px; padding:5px 8px; font-size:11px; text-decoration:none; overflow-wrap:anywhere; }
