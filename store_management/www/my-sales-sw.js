@@ -1,13 +1,13 @@
-const CACHE_NAME = "my-sales-shell-v53";
+const CACHE_NAME = "my-sales-shell-v55";
 const APP_SHELL = [
   "/offline",
-  "/assets/store_management/css/my_sales_phone.css?v=20261012-5",
-  "/assets/store_management/js/my_sales_phone.js?v=20261012-2",
+  "/assets/store_management/css/my_sales_phone.css?v=20261012-7",
+  "/assets/store_management/js/my_sales_phone.js?v=20261012-7",
   "/assets/store_management/js/my_sales_reference.js?v=20261012-2",
   "/assets/store_management/css/my_sales_design.css?v=20261007-4",
   "/assets/store_management/css/store_management_ui.css?v=20260911-1",
   "/assets/store_management/css/my_sales_mobile.css?v=20261007-1",
-  "/assets/store_management/js/my_sales_mobile.js?v=20261012-4",
+  "/assets/store_management/js/my_sales_mobile.js?v=20261012-7",
   "/assets/store_management/js/reports.js?v=20261012-1",
   "/assets/store_management/js/reports_bootstrap.js?v=20261012-1",
   "/api/method/store_management.api.get_brand_asset?name=my-sales-icon-192.png",

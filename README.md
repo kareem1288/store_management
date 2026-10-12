@@ -208,13 +208,13 @@ The fixed store shortcuts retrieve today’s sales, this week’s sales, top-sel
 ## Install the web or mobile app
 
 1. Open your My Sales site over HTTPS and sign in.
-2. In a mobile browser, use the **Install app?** dialog with My Sales branding, Cancel, and Install. Desktop browsers retain the **Install App** button.
+2. In a mobile browser, use the single-line **Install My Sales?** bar with Install and a dismiss control. Desktop browsers retain the **Install App** button.
 3. When available, accept the browser’s native installation prompt.
 4. If the prompt is unavailable, follow the displayed browser-menu instructions. On iPhone/iPad, use **Share → Add to Home Screen** when supported.
 
-### Mobile installation dialog
+### Mobile installation bar
 
-In the mobile browser interface, the header install button is replaced by an automatically offered **Install app?** dialog. It shows the My Sales icon, application name, current site hostname, **Cancel**, **Install**, and a close control.
+In the mobile browser interface, the header install button is replaced by an automatically offered, single-line **Install My Sales?** bar. It shows a small app icon, **Install**, and a dismiss control without blocking the screen.
 
 - **Install** opens the browser's native prompt when the browser has supplied one. Otherwise, it opens instructions for the browser menu or Add to Home Screen.
 - **Cancel**, the close control, or dismissing the dialog suppresses the offer for **seven days** on that browser. Completing the dialog's Install action also closes this offer.

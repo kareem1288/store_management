@@ -3,7 +3,7 @@
   document.documentElement.classList.add("my-sales-app");
 
   const APP_NAME = "My Sales";
-  const MOBILE_UI_VERSION = "20261012-4";
+  const MOBILE_UI_VERSION = "20261012-7";
   let installPrompt = null;
 
   const appLanguage = window.frappe?.boot?.lang || window.frappe?.boot?.user?.language || "en";
@@ -145,18 +145,20 @@
       dialog.id = 'my-sales-install-offer';
       dialog.className = 'my-sales-install-offer';
       dialog.setAttribute('aria-labelledby', 'my-sales-offer-title');
-      dialog.innerHTML = `<button type="button" class="my-sales-offer-close" aria-label="Close install dialog">×</button><h2 id="my-sales-offer-title">Install app?</h2><div class="my-sales-offer-brand"><img src="/api/method/store_management.api.get_brand_asset?name=my-sales-icon-192.png" alt=""><div><strong>My Sales</strong><small></small></div></div><footer><button type="button" data-cancel>Cancel</button><button type="button" data-install>Install</button></footer>`;
-      dialog.querySelector('small').textContent = location.host;
+      dialog.innerHTML = `<img class="my-sales-offer-icon" src="/api/method/store_management.api.get_brand_asset?name=my-sales-icon-192.png" alt=""><h2 id="my-sales-offer-title">Install My Sales?</h2><button type="button" data-install>Install</button><button type="button" class="my-sales-offer-close" data-cancel aria-label="Dismiss installation offer">×</button>`;
       dialog.addEventListener('close', () => { try { localStorage.setItem('my-sales-install-dismissed', String(Date.now())); } catch (_) {} });
       dialog.querySelector('[data-cancel]').addEventListener('click', () => dialog.close());
-      dialog.querySelector('.my-sales-offer-close').addEventListener('click', () => dialog.close());
       dialog.querySelector('[data-install]').addEventListener('click', () => {
         dialog.close();
         document.querySelector('.my-sales-install')?.click();
       });
       document.body.appendChild(dialog);
     }
-    if (!dialog.open) dialog.showModal();
+    if (!dialog.open) {
+      const previousFocus = document.activeElement;
+      dialog.show();
+      previousFocus?.focus({preventScroll:true});
+    }
   }
 
   function addAppActions() {
@@ -389,7 +391,7 @@
     const top = app.querySelector(".sm-top-nav");
     if (top) {
       const title = active === "dashboard" ? "Dashboard" : active[0].toUpperCase() + active.slice(1);
-      top.querySelector(".sm-brand-lockup")?.remove();
+      top.querySelector(".sm-brand-lockup")?.classList.add("my-sales-header-brand");
       top.querySelector(".sm-nav-primary")?.remove();
       top.insertAdjacentHTML("afterbegin", `<button class="my-sales-sidebar-toggle" type="button">☰</button><div class="my-sales-desktop-title">${icons[active] || icons.home}<strong>${title}</strong></div>`);
       top.querySelector(".my-sales-sidebar-toggle")?.addEventListener("click", () => document.documentElement.classList.toggle("my-sales-sidebar-collapsed"));
@@ -731,7 +733,7 @@
 
   if ("serviceWorker" in navigator && window.isSecureContext) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/my-sales-sw.js?v=53", { scope: "/" }).catch(error => {
+      navigator.serviceWorker.register("/my-sales-sw.js?v=55", { scope: "/" }).catch(error => {
         console.warn("My Sales offline support could not be enabled", error);
       });
     });

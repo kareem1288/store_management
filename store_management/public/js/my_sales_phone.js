@@ -16,7 +16,7 @@
       brand=node('a','phone-header-brand');brand.href='/pos';
       const img=node('img');img.src='/api/method/store_management.api.get_brand_asset?name=my-sales-logo.svg';img.alt='';
       const label=node('span');label.append(node('strong','','My Sales'),node('small','','Main Store'));
-      brand.append(img,label);top.append(brand);
+      brand.append(img,label);top.prepend(brand);
       const account=node('a','phone-account',(window.frappe?.session?.user || 'A').slice(0,1).toUpperCase());account.href='/more';account.setAttribute('aria-label','Account and more');top.append(account);
     }
     const title=top.querySelector('.my-sales-mobile-title');

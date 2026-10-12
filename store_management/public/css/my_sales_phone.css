@@ -287,14 +287,32 @@
 @media(max-width:768px) {
  .sm-page-app .my-sales-install:not([hidden]) { display:none!important; }
 }
-.my-sales-install-offer { position:fixed; inset:16px 0 auto; margin:0 auto; width:calc(100% - 24px); max-width:300px; border:1px solid #dadce0; border-radius:10px; padding:14px; color:#303134; background:#fff; box-shadow:0 6px 24px #0002; font-family:Arial,sans-serif; }
-.my-sales-install-offer::backdrop { background:#0003; }
-.my-sales-install-offer h2 { margin:0 28px 12px 0; font-size:18px; font-weight:500; }
-.my-sales-offer-close { position:absolute; right:8px; top:6px; border:0; background:transparent; color:#666; width:32px; height:32px; font-size:28px; }
-.my-sales-offer-brand { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
-.my-sales-offer-brand img { width:40px; height:40px; border-radius:8px; object-fit:contain; }
-.my-sales-offer-brand strong { display:block; font-size:16px; font-weight:500; }
-.my-sales-offer-brand small { display:block; margin-top:3px; color:#70757a; font-size:12px; overflow-wrap:anywhere; }
-.my-sales-install-offer footer { display:flex; justify-content:flex-end; gap:8px; }
-.my-sales-install-offer footer button { min-height:36px; padding:8px 14px; border:1px solid #dadce0; border-radius:6px; background:white; color:#1a73e8; font-size:13px; font-weight:600; }
-.my-sales-install-offer footer [data-install] { background:#1a73e8; border-color:#1a73e8; color:white; }
+.my-sales-install-offer { position:fixed; inset:auto 12px calc(74px + env(safe-area-inset-bottom,0px)); margin:0 auto; width:calc(100% - 24px); max-width:360px; box-sizing:border-box; border:1px solid #dfe5ed; border-radius:8px; padding:7px 9px; color:#303134; background:#fff; box-shadow:0 3px 14px #0002; font-family:Arial,sans-serif; z-index:2800; }
+.my-sales-install-offer[open] { display:flex; align-items:center; gap:8px; }
+.my-sales-offer-icon { width:24px; height:24px; border-radius:5px; object-fit:contain; flex-shrink:0; }
+.my-sales-install-offer h2 { margin:0; flex:1; min-width:0; font-size:12px; line-height:18px; font-weight:600; white-space:nowrap; }
+.my-sales-install-offer [data-install] { min-height:30px; padding:5px 10px; border:0; border-radius:5px; background:#1a73e8; color:white; font-size:12px; font-weight:600; flex-shrink:0; }
+.my-sales-offer-close { position:static; width:26px; height:28px; padding:0; border:0; background:transparent; color:#666; font-size:23px; line-height:28px; flex-shrink:0; }
+/* Persistent application branding in desktop and phone headers. */
+@media(min-width:769px) {
+ .sm-page-app .sm-top-nav .sm-brand-lockup.my-sales-header-brand { display:flex!important; flex-shrink:0; order:-20; gap:7px; }
+ .sm-page-app .my-sales-header-brand .sm-brand-mark { width:30px; height:30px; }
+ .sm-page-app .my-sales-header-brand strong { font-size:14px; white-space:nowrap; }
+ .sm-page-app .my-sales-header-brand small { font-size:7px; }
+}
+@media(min-width:769px) and (max-width:1100px) {
+ .sm-page-app .my-sales-desktop-title { display:none!important; }
+ .sm-page-app .sm-user-chip { max-width:100px; }
+ .sm-page-app .sm-top-nav { gap:8px!important; padding-inline:12px!important; }
+}
+@media(max-width:768px) {
+ .sm-page-app .sm-top-nav .phone-header-brand { display:flex!important; order:-20; flex-shrink:0; gap:6px; }
+ .sm-page-app .phone-header-brand img { width:28px; height:28px; }
+ .sm-page-app .phone-header-brand strong { font-size:13px; white-space:nowrap; }
+ .sm-page-app .phone-header-brand small { display:none; }
+ .sm-page-app .phone-dashboard-header .phone-header-brand small { display:block; }
+ .sm-page-app .sm-top-nav { gap:7px!important; }
+ .sm-page-app .my-sales-mobile-title { font-size:12px!important; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+ .sm-page-app .sm-top-nav .my-sales-app-actions { display:none!important; }
+ .sm-page-app .my-sales-back { flex-shrink:0; }
+}
