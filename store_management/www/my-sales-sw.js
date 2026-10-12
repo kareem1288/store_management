@@ -1,7 +1,7 @@
-const CACHE_NAME = "my-sales-shell-v52";
+const CACHE_NAME = "my-sales-shell-v53";
 const APP_SHELL = [
   "/offline",
-  "/assets/store_management/css/my_sales_phone.css?v=20261012-4",
+  "/assets/store_management/css/my_sales_phone.css?v=20261012-5",
   "/assets/store_management/js/my_sales_phone.js?v=20261012-2",
   "/assets/store_management/js/my_sales_reference.js?v=20261012-2",
   "/assets/store_management/css/my_sales_design.css?v=20261007-4",

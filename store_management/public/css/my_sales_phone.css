@@ -287,14 +287,14 @@
 @media(max-width:768px) {
  .sm-page-app .my-sales-install:not([hidden]) { display:none!important; }
 }
-.my-sales-install-offer { position:fixed; inset:16px 0 auto; margin:0 auto; width:calc(100% - 24px); max-width:420px; border:1px solid #dadce0; border-radius:10px; padding:24px; color:#303134; background:#fff; box-shadow:0 6px 24px #0002; font-family:Arial,sans-serif; }
+.my-sales-install-offer { position:fixed; inset:16px 0 auto; margin:0 auto; width:calc(100% - 24px); max-width:300px; border:1px solid #dadce0; border-radius:10px; padding:14px; color:#303134; background:#fff; box-shadow:0 6px 24px #0002; font-family:Arial,sans-serif; }
 .my-sales-install-offer::backdrop { background:#0003; }
-.my-sales-install-offer h2 { margin:0 0 26px; font-size:24px; font-weight:500; }
-.my-sales-offer-close { position:absolute; right:14px; top:10px; border:0; background:transparent; color:#666; width:32px; height:32px; font-size:28px; }
-.my-sales-offer-brand { display:flex; align-items:center; gap:16px; margin-bottom:32px; }
-.my-sales-offer-brand img { width:64px; height:64px; border-radius:12px; object-fit:contain; }
-.my-sales-offer-brand strong { display:block; font-size:20px; font-weight:500; }
-.my-sales-offer-brand small { display:block; margin-top:5px; color:#70757a; font-size:14px; overflow-wrap:anywhere; }
-.my-sales-install-offer footer { display:flex; justify-content:flex-end; gap:12px; }
-.my-sales-install-offer footer button { min-height:42px; padding:10px 22px; border:1px solid #dadce0; border-radius:6px; background:white; color:#1a73e8; font-size:16px; font-weight:600; }
+.my-sales-install-offer h2 { margin:0 28px 12px 0; font-size:18px; font-weight:500; }
+.my-sales-offer-close { position:absolute; right:8px; top:6px; border:0; background:transparent; color:#666; width:32px; height:32px; font-size:28px; }
+.my-sales-offer-brand { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+.my-sales-offer-brand img { width:40px; height:40px; border-radius:8px; object-fit:contain; }
+.my-sales-offer-brand strong { display:block; font-size:16px; font-weight:500; }
+.my-sales-offer-brand small { display:block; margin-top:3px; color:#70757a; font-size:12px; overflow-wrap:anywhere; }
+.my-sales-install-offer footer { display:flex; justify-content:flex-end; gap:8px; }
+.my-sales-install-offer footer button { min-height:36px; padding:8px 14px; border:1px solid #dadce0; border-radius:6px; background:white; color:#1a73e8; font-size:13px; font-weight:600; }
 .my-sales-install-offer footer [data-install] { background:#1a73e8; border-color:#1a73e8; color:white; }
