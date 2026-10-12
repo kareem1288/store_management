@@ -3,7 +3,7 @@
   document.documentElement.classList.add("my-sales-app");
 
   const APP_NAME = "My Sales";
-  const MOBILE_UI_VERSION = "20261012-3";
+  const MOBILE_UI_VERSION = "20261012-4";
   let installPrompt = null;
 
   const appLanguage = window.frappe?.boot?.lang || window.frappe?.boot?.user?.language || "en";
@@ -132,6 +132,33 @@
     );
   }
 
+  function offerMobileInstall() {
+    if (!matchMedia('(max-width:768px)').matches || matchMedia('(display-mode: standalone)').matches || navigator.standalone || !document.querySelector('.my-sales-install')) return;
+    if (document.querySelector('dialog[open],.sm-checkout-drawer.open,.sm-masters-modal.open')) return;
+    try {
+      if (Date.now() - Number(localStorage.getItem('my-sales-install-dismissed') || 0) < 7 * 86400000) return;
+      if (!installPrompt && localStorage.getItem('my-sales-installed') === '1') return;
+    } catch (_) {}
+    let dialog = document.getElementById('my-sales-install-offer');
+    if (!dialog) {
+      dialog = document.createElement('dialog');
+      dialog.id = 'my-sales-install-offer';
+      dialog.className = 'my-sales-install-offer';
+      dialog.setAttribute('aria-labelledby', 'my-sales-offer-title');
+      dialog.innerHTML = `<button type="button" class="my-sales-offer-close" aria-label="Close install dialog">×</button><h2 id="my-sales-offer-title">Install app?</h2><div class="my-sales-offer-brand"><img src="/api/method/store_management.api.get_brand_asset?name=my-sales-icon-192.png" alt=""><div><strong>My Sales</strong><small></small></div></div><footer><button type="button" data-cancel>Cancel</button><button type="button" data-install>Install</button></footer>`;
+      dialog.querySelector('small').textContent = location.host;
+      dialog.addEventListener('close', () => { try { localStorage.setItem('my-sales-install-dismissed', String(Date.now())); } catch (_) {} });
+      dialog.querySelector('[data-cancel]').addEventListener('click', () => dialog.close());
+      dialog.querySelector('.my-sales-offer-close').addEventListener('click', () => dialog.close());
+      dialog.querySelector('[data-install]').addEventListener('click', () => {
+        dialog.close();
+        document.querySelector('.my-sales-install')?.click();
+      });
+      document.body.appendChild(dialog);
+    }
+    if (!dialog.open) dialog.showModal();
+  }
+
   function addAppActions() {
     const topNav = document.querySelector(".sm-top-nav");
     if (!topNav || document.querySelector(".my-sales-app-actions")) return;
@@ -144,6 +171,7 @@
       ${window.matchMedia("(max-width: 900px)").matches ? `<a class="my-sales-logout" href="/logout" aria-label="Log out of ${APP_NAME}">Log out</a>` : ""}
     `;
     topNav.appendChild(actions);
+    setTimeout(offerMobileInstall, 1200);
 
     const installButton = actions.querySelector(".my-sales-install");
     const standalone = () => window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
@@ -169,7 +197,10 @@
       try {
         await prompt.prompt();
         const choice = await prompt.userChoice;
-        if (choice.outcome === "accepted") installButton.hidden = true;
+        if (choice.outcome === "accepted") {
+          installButton.hidden = true;
+          try { localStorage.setItem("my-sales-installed", "1"); } catch (_) {}
+        }
       } catch (_) { showStatus("Open your browser menu to install My Sales.", "info"); }
     });
   }
@@ -657,9 +688,12 @@
     installPrompt = event;
     const button = document.querySelector(".my-sales-install");
     if (button) button.hidden = false;
+    offerMobileInstall();
   });
 
   window.addEventListener("appinstalled", () => {
+    try { localStorage.setItem("my-sales-installed", "1"); } catch (_) {}
+    document.getElementById("my-sales-install-offer")?.close();
     installPrompt = null;
     document.querySelector(".my-sales-install")?.setAttribute("hidden", "");
     showStatus(`${APP_NAME} installed`, "online");
@@ -697,7 +731,7 @@
 
   if ("serviceWorker" in navigator && window.isSecureContext) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/my-sales-sw.js?v=51", { scope: "/" }).catch(error => {
+      navigator.serviceWorker.register("/my-sales-sw.js?v=52", { scope: "/" }).catch(error => {
         console.warn("My Sales offline support could not be enabled", error);
       });
     });

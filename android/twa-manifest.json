@@ -21,8 +21,8 @@
     "path": "/home/caratred/frappe16/apps/store_management/android/android.keystore",
     "alias": "android"
   },
-  "appVersionName": "2",
-  "appVersionCode": 2,
+  "appVersionName": "3",
+  "appVersionCode": 3,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://mysales.m.frappe.cloud/assets/store_management/my-sales.webmanifest",
@@ -48,5 +48,5 @@
     "standalone",
     "minimal-ui"
   ],
-  "appVersion": "2"
+  "appVersion": "3"
 }
